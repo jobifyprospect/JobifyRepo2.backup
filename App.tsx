@@ -1,118 +1,136 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useEffect, useState} from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import Login from './src/screens/auth/Login';
+import Transaction from './src/screens/Transaction';
+import Profile from './src/screens/Profile';
+import {onAuthStateChanged} from '@react-native-firebase/auth';
+import {FIREBASE_AUTH} from './src/config/firebase';
+import {User} from '@react-native-google-signin/google-signin';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+  faHouse,
+  faFile,
+  faUser,
+  faBell,
+} from '@fortawesome/free-solid-svg-icons';
+import {library} from '@fortawesome/fontawesome-svg-core';
+import Notification from './src/screens/Notification';
+import Dashboard from './src/screens/client/Dashboard';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+library.add(faHouse, faFile, faUser, faBell);
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+const Stack = createNativeStackNavigator();
+const InsideStack = createNativeStackNavigator();
+const InsideLayout = () => {
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <InsideStack.Navigator>
+      <InsideStack.Screen
+        name="Dashboard"
+        component={Dashboard}
+        options={{headerShown: false}}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <InsideStack.Screen
+        name="Notification"
+        component={Notification}
+        options={{headerShown: false}}
+      />
+    </InsideStack.Navigator>
+  );
+};
+
+const Tab = createBottomTabNavigator();
+
+export const HomeIcon = ({color}: {color: string}) => (
+  <FontAwesomeIcon icon={faHouse} size={16} color={color} />
+);
+
+export const TransactionIcon = ({color}: {color: string}) => (
+  <FontAwesomeIcon icon={faFile} size={16} color={color} />
+);
+
+export const ProfileIcon = ({color}: {color: string}) => (
+  <FontAwesomeIcon icon={faUser} size={16} color={color} />
+);
+
+const TabLayout = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={({route}) => ({
+        tabBarActiveTintColor: '#00A1D7',
+        tabBarInactiveTintColor: '#979090',
+        tabBarLabelStyle: {
+          fontSize: 12,
+        },
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 40,
+          elevation: 5,
+          backgroundColor: '#fff',
+          borderRadius: 8,
+          height: 60,
+          left: 24,
+          right: 24,
+          paddingBottom: 10,
+          paddingTop: 10,
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+        },
+        //TODO Fix lint issue
+        // eslint-disable-next-line react/no-unstable-nested-components
+        tabBarIcon: ({color, focused}) => {
+          switch (route.name) {
+            case 'Home':
+              return <HomeIcon color={focused ? color : '#979090'} />;
+            case 'Transaction':
+              return <TransactionIcon color={focused ? color : '#979090'} />;
+            case 'Profile':
+              return <ProfileIcon color={focused ? color : '#979090'} />;
+            default:
+              return null;
+          }
+        },
+      })}>
+      <Tab.Screen name="Home" component={InsideLayout} />
+      <Tab.Screen name="Transaction" component={Transaction} />
+      <Tab.Screen name="Profile" component={Profile} />
+    </Tab.Navigator>
+  );
+};
+
+export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  //TODO Role Base Access Control
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(
+      FIREBASE_AUTH,
+      (authUser: User | null) => {
+        setUser(authUser);
+      },
+    );
+    return unsubscribe;
+  }, []);
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Login">
+        {user ? (
+          <Stack.Screen
+            name="Inside"
+            component={TabLayout}
+            options={{headerShown: false}}
+          />
+        ) : (
+          <Stack.Screen
+            name="Login"
+            component={Login}
+            options={{headerShown: false}}
+          />
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
-export default App;
