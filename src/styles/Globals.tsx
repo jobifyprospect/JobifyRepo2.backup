@@ -46,6 +46,7 @@ export const styles = StyleSheet.create({
     fontSize: Fonts.sizes.large,
     fontWeight: Fonts.weights.bold,
     color: Colors.primary,
+    zIndex: 3,
   },
   xlargeHeading: {
     fontSize: Fonts.sizes.xlarge,

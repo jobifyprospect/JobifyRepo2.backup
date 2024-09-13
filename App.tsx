@@ -18,6 +18,8 @@ import {
 import {library} from '@fortawesome/fontawesome-svg-core';
 import Notification from './src/screens/Notification';
 import Dashboard from './src/screens/client/Dashboard';
+import CreateAccount from './src/screens/auth/create/CreateAccount';
+import ForgotPassword from './src/screens/auth/forgot/ForgotPassword';
 
 library.add(faHouse, faFile, faUser, faBell);
 
@@ -130,6 +132,16 @@ export default function App() {
             options={{headerShown: false}}
           />
         )}
+        <Stack.Screen
+          name="Create"
+          component={CreateAccount}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Forgot"
+          component={ForgotPassword}
+          options={{headerShown: false}}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
