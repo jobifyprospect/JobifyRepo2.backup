@@ -1,38 +1,38 @@
 import {StyleSheet} from 'react-native';
+import Colors from './Colors';
 //TODO ALIGN TO FIGMA DESIGN
 export const dynamicTextInputStyles = StyleSheet.create({
   container: {
     marginVertical: 10,
   },
   labelContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  label: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   required: {
-    color: 'red',
+    color: Colors.danger,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: Colors.white,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    padding: 10,
+    borderColor: Colors.placeholder,
+    borderRadius: 8,
+    height: 44,
+    // padding: 10,
+    paddingLeft: 14,
+    paddingRight: 14,
   },
   focusedInput: {
-    borderColor: '#007AFF',
+    borderColor: Colors.primary,
   },
   errorInput: {
-    borderColor: 'red',
+    borderColor: Colors.danger,
   },
   input: {
     flex: 1,
     fontSize: 16,
+    color: Colors.labelText,
   },
   textArea: {
     height: 100,
@@ -41,9 +41,10 @@ export const dynamicTextInputStyles = StyleSheet.create({
   iconContainer: {
     marginRight: 10,
   },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 5,
+  iconColor: {
+    color: Colors.danger,
+  },
+  errorContainer: {
+    marginTop: 6,
   },
 });
