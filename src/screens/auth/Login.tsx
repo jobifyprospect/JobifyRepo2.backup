@@ -66,11 +66,9 @@ const Login = ({navigation}: RouterProps) => {
 
   return (
     <View style={loginScreenStyles.container}>
-      <View style={loginScreenStyles.topCircle}></View>
-      <View style={loginScreenStyles.bottomCircle}></View>
-
-      <View style={loginScreenStyles.bottom}></View>
-
+      <View style={loginScreenStyles.topCircle} />
+      <View style={loginScreenStyles.bottomCircle} />
+      <View style={loginScreenStyles.bottom} />
       <Text style={styles.largeHeading}>Login</Text>
       <KeyboardAvoidingView
         style={loginScreenStyles.inputContainer}
