@@ -72,7 +72,7 @@ const DynamicTextInput = ({
     <View style={dynamicTextInputStyles.container}>
       {/* Label */}
       <View style={dynamicTextInputStyles.labelContainer}>
-        <Text style={styles.smallText}>
+        <Text style={styles.smallSemiBoldText}>
           {label}{' '}
           {isRequired && <Text style={dynamicTextInputStyles.required}>*</Text>}
         </Text>

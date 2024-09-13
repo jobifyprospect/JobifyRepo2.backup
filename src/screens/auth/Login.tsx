@@ -1,21 +1,15 @@
 import React, {useState} from 'react';
-import {
-  ActivityIndicator,
-  Button,
-  KeyboardAvoidingView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {KeyboardAvoidingView, StyleSheet, View} from 'react-native';
 import {FIREBASE_AUTH} from '../../config/firebase';
 import {showAlert} from '../../components/AlertDialog';
 import DynamicTextInput from '../../components/DynamicTextInput';
+import DynamicButton from '../../components/DynamicButton';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [suffixIcon, setSuffixIcon] = useState('eye');
   const [obscure, setObscure] = useState(true);
-  const [loading, setLoading] = useState(false);
 
   const auth = FIREBASE_AUTH;
 
@@ -25,34 +19,28 @@ const Login = () => {
   };
 
   const signIn = async () => {
-    setLoading(true);
     try {
       const response = await auth.signInWithEmailAndPassword(email, password);
       console.log(response);
     } catch (error: any) {
       showAlert('Sign in failed', error.message || 'An error occurred');
-    } finally {
-      setLoading(false);
     }
   };
 
-  const signUp = async () => {
-    setLoading(true);
-    try {
-      const response = await auth.createUserWithEmailAndPassword(
-        email,
-        password,
-      );
-      console.log(response);
-    } catch (error: any) {
-      showAlert(
-        'Account creation failed',
-        error.message || 'An error occurred',
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const signUp = async () => {
+  //   try {
+  //     const response = await auth.createUserWithEmailAndPassword(
+  //       email,
+  //       password,
+  //     );
+  //     console.log(response);
+  //   } catch (error: any) {
+  //     showAlert(
+  //       'Account creation failed',
+  //       error.message || 'An error occurred',
+  //     );
+  //   }
+  // };
 
   // Validation checks
   const isEmailValid = email.includes('@');
@@ -89,25 +77,20 @@ const Login = () => {
           isValid={isPasswordValid}
           errorMessage="Password must be at least 6 characters"
         />
-
         {/* Loading Indicator or Buttons */}
-        {loading ? (
+        {/* {loading ? (
           <ActivityIndicator size={'large'} color={'#0000ff'} />
-        ) : (
-          <>
-            {/* Disable button until both inputs are valid */}
-            <Button
-              title="Login"
-              onPress={signIn}
-              disabled={!isEmailValid || !isPasswordValid}
-            />
-            <Button
-              title="Create Account"
-              onPress={signUp}
-              disabled={!isEmailValid || !isPasswordValid}
-            />
-          </>
-        )}
+        ) : ( */}
+        <>
+          {/* Disable button until both inputs are valid */}
+          <DynamicButton
+            title="Login"
+            onPress={signIn}
+            disabled={!isEmailValid || !isPasswordValid}
+            type="primary"
+          />
+        </>
+        {/* )} */}
       </KeyboardAvoidingView>
     </View>
   );

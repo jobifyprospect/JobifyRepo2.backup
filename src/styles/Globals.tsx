@@ -17,6 +17,11 @@ export const styles = StyleSheet.create({
     fontWeight: Fonts.weights.regular,
     color: Colors.labelText,
   },
+  smallSemiBoldText: {
+    fontSize: Fonts.sizes.small,
+    fontWeight: Fonts.weights.semiBold,
+    color: Colors.labelText,
+  },
   errorText: {
     fontSize: Fonts.sizes.small,
     fontWeight: Fonts.weights.regular,
