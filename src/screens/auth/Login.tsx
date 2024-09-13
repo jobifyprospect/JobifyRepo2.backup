@@ -154,6 +154,7 @@ const loginScreenStyles = StyleSheet.create({
     padding: 48,
     gap: 1.25,
     backgroundColor: Colors.white,
+    overflow: 'hidden',
   },
   topCircle: {
     position: 'absolute',
