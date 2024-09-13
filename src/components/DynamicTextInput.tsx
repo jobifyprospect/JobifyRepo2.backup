@@ -18,6 +18,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {dynamicTextInputStyles} from '../styles/DynamicTextInput';
+import Colors from '../styles/Colors';
+import {styles} from '../styles/globals';
 
 library.add(faSearch, faUser, faLock, faUserAlt, faEnvelope, faEye, faEyeSlash);
 
@@ -70,7 +72,7 @@ const DynamicTextInput = ({
     <View style={dynamicTextInputStyles.container}>
       {/* Label */}
       <View style={dynamicTextInputStyles.labelContainer}>
-        <Text style={dynamicTextInputStyles.label}>
+        <Text style={styles.smallText}>
           {label}{' '}
           {isRequired && <Text style={dynamicTextInputStyles.required}>*</Text>}
         </Text>
@@ -85,7 +87,11 @@ const DynamicTextInput = ({
         {/* Prefix Icon */}
         {prefixIcon && (
           <View style={dynamicTextInputStyles.iconContainer}>
-            <FontAwesomeIcon icon={prefixIcon} size={20} color="#000" />
+            <FontAwesomeIcon
+              icon={prefixIcon}
+              size={16}
+              color={Colors.labelText}
+            />
           </View>
         )}
 
@@ -95,6 +101,7 @@ const DynamicTextInput = ({
             dynamicTextInputStyles.input,
             multiline && dynamicTextInputStyles.textArea,
           ]}
+          selectionColor={Colors.primary}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -110,14 +117,20 @@ const DynamicTextInput = ({
         {/* Suffix Icon */}
         {suffixIcon && (
           <TouchableOpacity onPress={suffixOnClick}>
-            <FontAwesomeIcon icon={suffixIcon} size={20} color="#000" />
+            <FontAwesomeIcon
+              icon={suffixIcon}
+              size={16}
+              color={Colors.placeholder}
+            />
           </TouchableOpacity>
         )}
       </View>
 
       {/* Error Message */}
       {hasTouched && !isValid && errorMessage && (
-        <Text style={dynamicTextInputStyles.errorText}>{errorMessage}</Text>
+        <View style={dynamicTextInputStyles.errorContainer}>
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        </View>
       )}
     </View>
   );

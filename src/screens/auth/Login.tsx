@@ -15,31 +15,27 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [suffixIcon, setSuffixIcon] = useState('eye');
   const [obscure, setObscure] = useState(true);
-
   const [loading, setLoading] = useState(false);
 
   const auth = FIREBASE_AUTH;
-  // Function to handle the event emitted from the child component
+
   const handleChildClick = () => {
-    if (obscure) {
-      setSuffixIcon('eye-slash');
-    } else {
-      setSuffixIcon('eye');
-    }
     setObscure(!obscure);
+    setSuffixIcon(obscure ? 'eye-slash' : 'eye');
   };
+
   const signIn = async () => {
     setLoading(true);
     try {
       const response = await auth.signInWithEmailAndPassword(email, password);
       console.log(response);
     } catch (error: any) {
-      // console.log(error);
       showAlert('Sign in failed', error.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
+
   const signUp = async () => {
     setLoading(true);
     try {
@@ -49,7 +45,6 @@ const Login = () => {
       );
       console.log(response);
     } catch (error: any) {
-      // console.log(error);
       showAlert(
         'Account creation failed',
         error.message || 'An error occurred',
@@ -58,6 +53,10 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  // Validation checks
+  const isEmailValid = email.includes('@');
+  const isPasswordValid = password.length >= 6;
 
   return (
     <View style={styles.container}>
@@ -71,7 +70,7 @@ const Login = () => {
           keyboardType="email-address"
           prefixIcon="envelope"
           isRequired
-          isValid={email.includes('@')}
+          isValid={isEmailValid}
           errorMessage="Invalid email"
         />
 
@@ -87,15 +86,26 @@ const Login = () => {
           suffixIcon={suffixIcon}
           suffixOnClick={handleChildClick}
           isRequired
-          isValid={password.length >= 6}
+          isValid={isPasswordValid}
           errorMessage="Password must be at least 6 characters"
         />
+
+        {/* Loading Indicator or Buttons */}
         {loading ? (
           <ActivityIndicator size={'large'} color={'#0000ff'} />
         ) : (
           <>
-            <Button title="Login" onPress={() => signIn()} />
-            <Button title="Create Account" onPress={() => signUp()} />
+            {/* Disable button until both inputs are valid */}
+            <Button
+              title="Login"
+              onPress={signIn}
+              disabled={!isEmailValid || !isPasswordValid}
+            />
+            <Button
+              title="Create Account"
+              onPress={signUp}
+              disabled={!isEmailValid || !isPasswordValid}
+            />
           </>
         )}
       </KeyboardAvoidingView>
@@ -104,18 +114,11 @@ const Login = () => {
 };
 
 export default Login;
+
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 20,
     flex: 1,
     justifyContent: 'center',
-  },
-  input: {
-    marginVertical: 4,
-    height: 44,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    backgroundColor: '#fff',
   },
 });
