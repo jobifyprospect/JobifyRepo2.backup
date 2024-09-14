@@ -6,14 +6,14 @@ interface TextButtonProps {
   title: string;
   onPress: () => void;
   disabled?: boolean;
-  textStyle?: TextStyle; // Optional custom text style
+  textStyle?: TextStyle;
 }
 
 const TextButton: React.FC<TextButtonProps> = ({
   title,
   onPress,
   disabled = false,
-  textStyle = {}, // Optional custom text style
+  textStyle = {},
 }) => {
   return (
     <TouchableOpacity
@@ -34,10 +34,10 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 14,
-    color: Colors.primary, // Default to primary color
+    color: Colors.primary,
   },
   disabledText: {
-    color: Colors.placeholder, // Grey out text when disabled
+    color: Colors.placeholder,
   },
 });
 

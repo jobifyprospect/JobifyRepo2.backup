@@ -1,10 +1,14 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {
   Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import {FIREBASE_AUTH} from '../../config/firebase';
@@ -30,6 +34,9 @@ const Login = ({navigation}: RouterProps) => {
   const [obscure, setObscure] = useState(true);
 
   const auth = FIREBASE_AUTH;
+  // Refs for inputs
+  const passwordInputRef = useRef<TextInput>(null);
+  const buttonRef = useRef<{triggerPress: () => void}>(null);
 
   const handleChildClick = () => {
     setObscure(!obscure);
@@ -37,6 +44,10 @@ const Login = ({navigation}: RouterProps) => {
   };
 
   const signIn = async () => {
+    Keyboard.dismiss();
+    if (obscure === false) {
+      handleChildClick();
+    }
     try {
       const response = await auth.signInWithEmailAndPassword(email, password);
       console.log(response);
@@ -65,83 +76,101 @@ const Login = ({navigation}: RouterProps) => {
   const isPasswordValid = password.length >= 6;
 
   return (
-    <View style={loginScreenStyles.container}>
-      <View style={loginScreenStyles.topCircle} />
-      <View style={loginScreenStyles.bottomCircle} />
-      <View style={loginScreenStyles.bottom} />
-      <Text style={styles.largeHeading}>Login</Text>
-      <KeyboardAvoidingView
-        style={loginScreenStyles.inputContainer}
-        behavior="padding">
-        {/* Email Field */}
-        <DynamicTextInput
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          prefixIcon="envelope"
-          isRequired
-          isValid={isEmailValid}
-          errorMessage="Invalid email"
-        />
-
-        {/* Password Field */}
-        <DynamicTextInput
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Enter your password"
-          keyboardType="default"
-          secureTextEntry={obscure}
-          prefixIcon="lock"
-          suffixIcon={suffixIcon}
-          suffixOnClick={handleChildClick}
-          isRequired
-          isValid={isPasswordValid}
-          errorMessage="Password must be at least 6 characters"
-        />
-        <View style={loginScreenStyles.textButtonContainer}>
-          <TextButton
-            title="Forgot Password?"
-            onPress={() => navigation.navigate('Forgot')}
-          />
-          <TextButton
-            title="Create Account"
-            onPress={() => navigation.navigate('Create')}
-          />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={loginScreenStyles.container}>
+        <View style={loginScreenStyles.topCircle} />
+        <View style={loginScreenStyles.bottomCircle} />
+        <View style={loginScreenStyles.bottom} />
+        <Text style={styles.largeHeading}>Login</Text>
+        <View style={loginScreenStyles.inputContainer}>
+          <KeyboardAvoidingView behavior="padding">
+            {/* Email Field */}
+            <DynamicTextInput
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Enter your email"
+              keyboardType="email-address"
+              returnKeyType="next" // Use 'next' for this input
+              onSubmitEditing={() => {
+                passwordInputRef.current?.focus(); // Move focus to password input
+              }}
+              prefixIcon="envelope"
+              isRequired
+              isValid={isEmailValid}
+              errorMessage="Invalid email"
+            />
+          </KeyboardAvoidingView>
+          <KeyboardAvoidingView behavior="padding">
+            {/* Password Field */}
+            <DynamicTextInput
+              label="Password"
+              ref={passwordInputRef}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter your password"
+              keyboardType="default"
+              secureTextEntry={obscure}
+              prefixIcon="lock"
+              suffixIcon={suffixIcon}
+              suffixOnClick={handleChildClick}
+              isRequired
+              isValid={isPasswordValid}
+              returnKeyType="done" // Use 'done' for the last input
+              onSubmitEditing={() => {
+                if (isEmailValid || isPasswordValid) {
+                  buttonRef.current?.triggerPress();
+                }
+                // Perform login or submit action here
+              }}
+              errorMessage="Password must be at least 6 characters"
+            />
+          </KeyboardAvoidingView>
         </View>
-        <DynamicButton
-          title="Login"
-          onPress={signIn}
-          disabled={!isEmailValid || !isPasswordValid}
-          type="primary"
-        />
-        <View style={loginScreenStyles.subContainer}>
-          <Text style={styles.smallText}>or Connect With</Text>
-          <View style={loginScreenStyles.logoContainer}>
-            <TouchableOpacity
-              style={loginScreenStyles.iconButton}
-              onPress={() => {}}>
-              <FontAwesomeIcon
-                icon={faGoogle}
-                size={20}
-                color={Colors.primary}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={loginScreenStyles.iconButton}
-              onPress={() => {}}>
-              <FontAwesomeIcon
-                icon={faFacebookF}
-                size={20}
-                color={Colors.primary}
-              />
-            </TouchableOpacity>
+        <View style={loginScreenStyles.elevate}>
+          <View style={loginScreenStyles.textButtonContainer}>
+            <TextButton
+              title="Forgot Password?"
+              onPress={() => navigation.navigate('Forgot')}
+            />
+            <TextButton
+              title="Create Account"
+              onPress={() => navigation.navigate('Create')}
+            />
+          </View>
+          <DynamicButton
+            ref={buttonRef}
+            title="Login"
+            onPress={signIn}
+            disabled={!isEmailValid || !isPasswordValid}
+            type="primary"
+          />
+          <View style={loginScreenStyles.subContainer}>
+            <Text style={styles.smallText}>or Connect With</Text>
+            <View style={loginScreenStyles.logoContainer}>
+              <TouchableOpacity
+                style={loginScreenStyles.iconButton}
+                onPress={() => {}}>
+                <FontAwesomeIcon
+                  icon={faGoogle}
+                  size={20}
+                  color={Colors.primary}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={loginScreenStyles.iconButton}
+                onPress={() => {}}>
+                <FontAwesomeIcon
+                  icon={faFacebookF}
+                  size={20}
+                  color={Colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -156,15 +185,19 @@ const loginScreenStyles = StyleSheet.create({
     backgroundColor: Colors.white,
     overflow: 'hidden',
   },
+  elevate: {
+    zIndex: 3,
+  },
   topCircle: {
     position: 'absolute',
-    top: -450,
+    top: Platform.OS === 'ios' ? -450 : -480,
     left: -100,
     width: 600,
     height: 600,
     aspectRatio: 1,
     backgroundColor: Colors.primary,
     borderRadius: 600,
+    zIndex: 3,
   },
   bottomCircle: {
     position: 'absolute',

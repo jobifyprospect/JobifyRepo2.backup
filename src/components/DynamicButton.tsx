@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, forwardRef, useImperativeHandle} from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -12,37 +12,42 @@ import Colors from '../styles/Colors';
 
 interface DynamicButtonProps {
   title: string;
-  onPress: () => Promise<void>; // Assuming the onPress is async to handle success/failure
-  type?: 'primary' | 'secondary'; // Button type: primary (solid) or secondary (outlined)
-  disabled?: boolean; // Disabled state
+  onPress: () => Promise<void>;
+  type?: 'primary' | 'secondary';
+  disabled?: boolean;
 }
 
-const DynamicButton: React.FC<DynamicButtonProps> = ({
-  title,
-  onPress,
-  type = 'primary', // Default to primary if not specified
-  disabled = false,
-}) => {
+const DynamicButton = forwardRef<
+  {
+    triggerPress: () => void;
+  },
+  DynamicButtonProps
+>(({title, onPress, type = 'primary', disabled = false}, ref) => {
   const [loading, setLoading] = useState(false);
 
-  // Handle button press with loading state
   const handlePress = async () => {
     setLoading(true);
     try {
-      await onPress(); // Assuming onPress returns a Promise
+      await onPress();
     } catch (error) {
-      console.error(error); // Handle any errors
+      console.error(error);
     } finally {
-      setLoading(false); // Set loading to false after success or failure
+      setLoading(false);
     }
   };
 
-  // Determine the styles based on the button type
+  useImperativeHandle(ref, () => ({
+    triggerPress: () => {
+      handlePress();
+    },
+  }));
+
   const containerStyle: ViewStyle[] = [
     dynamicButtonStyles.button,
     type === 'primary'
       ? dynamicButtonStyles.primary
       : dynamicButtonStyles.secondary,
+    disabled ? dynamicButtonStyles.disabled : {},
   ];
 
   const textStyle: TextStyle = {
@@ -54,8 +59,7 @@ const DynamicButton: React.FC<DynamicButtonProps> = ({
       style={containerStyle}
       onPress={handlePress}
       activeOpacity={0.7}
-      disabled={disabled || loading} // Disable button when loading
-    >
+      disabled={disabled || loading}>
       {loading ? (
         <ActivityIndicator
           size="small"
@@ -66,7 +70,7 @@ const DynamicButton: React.FC<DynamicButtonProps> = ({
       )}
     </TouchableOpacity>
   );
-};
+});
 
 const dynamicButtonStyles = StyleSheet.create({
   button: {
@@ -86,7 +90,7 @@ const dynamicButtonStyles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   disabled: {
-    backgroundColor: Colors.placeholder, // Grey out if disabled
+    backgroundColor: Colors.placeholder,
     borderColor: Colors.placeholder,
   },
 });
