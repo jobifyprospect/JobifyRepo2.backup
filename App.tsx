@@ -20,6 +20,7 @@ import Notification from './src/screens/Notification';
 import Dashboard from './src/screens/client/Dashboard';
 import CreateAccount from './src/screens/auth/create/CreateAccount';
 import ForgotPassword from './src/screens/auth/forgot/ForgotPassword';
+import {Platform} from 'react-native';
 
 library.add(faHouse, faFile, faUser, faBell);
 
@@ -67,7 +68,7 @@ const TabLayout = () => {
         },
         tabBarStyle: {
           position: 'absolute',
-          bottom: 40,
+          bottom: Platform.OS === 'ios' ? 40 : 20,
           elevation: 5,
           backgroundColor: '#fff',
           borderRadius: 8,
