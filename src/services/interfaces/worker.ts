@@ -6,7 +6,10 @@ export interface Worker {
   firstName?: string;
   lastName?: string;
   profilePicture?: string;
+  validationId?: string;
+  addressId?: string;
+  phoneNumber: string;
+  applicationsList?: string[];
   createdAt: FirebaseFirestoreTypes.Timestamp;
   updatedAt: FirebaseFirestoreTypes.Timestamp;
-  applicationsList?: string[];
 }

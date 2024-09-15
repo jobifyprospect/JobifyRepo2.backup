@@ -5,7 +5,10 @@ export interface Client {
   firstName?: string;
   lastName?: string;
   profilePicture?: string;
+  validationId?: string;
+  addressId?: string;
+  phoneNumber: string;
+  jobsList?: string[]; // List of Job IDs
   createdAt: FirebaseFirestoreTypes.Timestamp;
   updatedAt: FirebaseFirestoreTypes.Timestamp;
-  jobsList?: string[]; // List of Job IDs
 }
