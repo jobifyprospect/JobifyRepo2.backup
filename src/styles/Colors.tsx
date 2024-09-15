@@ -1,5 +1,6 @@
 const Colors = {
   primary: '#00A1D7',
+  primaryWithOpacity10: 'rgba(0, 161, 215, 0.1)',
   secondary: '#FF5733',
   accent: '#FFC107',
   background: '#F5F5F5',

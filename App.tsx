@@ -6,8 +6,7 @@ import Login from './src/screens/auth/Login';
 import Transaction from './src/screens/Transaction';
 import Profile from './src/screens/Profile';
 import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {FIREBASE_AUTH} from './src/config/firebase';
-import {User} from '@react-native-google-signin/google-signin';
+import {FIREBASE_AUTH, FIRESTORE_DB} from './src/config/firebase';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faHouse,
@@ -16,35 +15,25 @@ import {
   faBell,
 } from '@fortawesome/free-solid-svg-icons';
 import {library} from '@fortawesome/fontawesome-svg-core';
-import Notification from './src/screens/Notification';
-import Dashboard from './src/screens/client/Dashboard';
-import CreateAccount from './src/screens/auth/create/CreateAccount';
+import WorkerDashboard from './src/screens/worker/Dashboard'; // worker dashboard
+import ClientDashboard from './src/screens/client/Dashboard'; // client dashboard
 import ForgotPassword from './src/screens/auth/forgot/ForgotPassword';
 import {Platform} from 'react-native';
+import UserTypeSelection from './src/screens/auth/create/UserTypeSelection';
+import PersonalDetails from './src/screens/auth/create/PersonalDetails';
+import {RootStackParamList} from './src/screens/interfaces/CreateInterfaceParams';
+import AddressDetails from './src/screens/auth/create/AddressDetails';
+import LoginInfo from './src/screens/auth/create/LoginInfo';
+import PasswordCreation from './src/screens/auth/create/PasswordCreation';
+import IDUpload from './src/screens/auth/create/IdUpload';
+import Success from './src/screens/utils/Success';
 
 library.add(faHouse, faFile, faUser, faBell);
 
-const Stack = createNativeStackNavigator();
-const InsideStack = createNativeStackNavigator();
-const InsideLayout = () => {
-  return (
-    <InsideStack.Navigator>
-      <InsideStack.Screen
-        name="Dashboard"
-        component={Dashboard}
-        options={{headerShown: false}}
-      />
-      <InsideStack.Screen
-        name="Notification"
-        component={Notification}
-        options={{headerShown: false}}
-      />
-    </InsideStack.Navigator>
-  );
-};
-
+const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 
+// Icon Components
 export const HomeIcon = ({color}: {color: string}) => (
   <FontAwesomeIcon icon={faHouse} size={16} color={color} />
 );
@@ -57,15 +46,17 @@ export const ProfileIcon = ({color}: {color: string}) => (
   <FontAwesomeIcon icon={faUser} size={16} color={color} />
 );
 
-const TabLayout = () => {
+// Tab Layout, but we conditionally change the Home screen based on role
+const TabLayout = ({role}: {role: string | null}) => {
+  const DashboardComponent =
+    role === 'worker' ? WorkerDashboard : ClientDashboard;
+
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
         tabBarActiveTintColor: '#00A1D7',
         tabBarInactiveTintColor: '#979090',
-        tabBarLabelStyle: {
-          fontSize: 12,
-        },
+        tabBarLabelStyle: {fontSize: 12},
         tabBarStyle: {
           position: 'absolute',
           bottom: Platform.OS === 'ios' ? 40 : 20,
@@ -82,7 +73,6 @@ const TabLayout = () => {
           shadowOpacity: 0.3,
           shadowRadius: 4,
         },
-        //TODO Fix lint issue
         // eslint-disable-next-line react/no-unstable-nested-components
         tabBarIcon: ({color, focused}) => {
           switch (route.name) {
@@ -97,7 +87,7 @@ const TabLayout = () => {
           }
         },
       })}>
-      <Tab.Screen name="Home" component={InsideLayout} />
+      <Tab.Screen name="Home" component={DashboardComponent} />
       <Tab.Screen name="Transaction" component={Transaction} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
@@ -105,15 +95,31 @@ const TabLayout = () => {
 };
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  //TODO Role Base Access Control
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState<string | null>(null);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
       FIREBASE_AUTH,
-      (authUser: User | null) => {
-        setUser(authUser);
+      async (authUser: any) => {
+        if (authUser) {
+          setUser(authUser);
+          // Fetch role from Firestore
+          const userDoc = await FIRESTORE_DB.collection('users')
+            .doc(authUser.uid)
+            .get();
+          if (userDoc.exists) {
+            setRole(userDoc.data()?.role || null);
+          } else {
+            setRole(null);
+          }
+        } else {
+          setUser(null);
+          setRole(null);
+        }
       },
     );
+
     return unsubscribe;
   }, []);
 
@@ -123,26 +129,58 @@ export default function App() {
         {user ? (
           <Stack.Screen
             name="Inside"
-            component={TabLayout}
+            children={() => <TabLayout role={role} />}
             options={{headerShown: false}}
           />
         ) : (
-          <Stack.Screen
-            name="Login"
-            component={Login}
-            options={{headerShown: false}}
-          />
+          <>
+            <Stack.Screen
+              name="Login"
+              component={Login}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="UserTypeSelection"
+              component={UserTypeSelection}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="PersonalDetails"
+              component={PersonalDetails}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="AddressDetails"
+              component={AddressDetails}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="LoginInfo"
+              component={LoginInfo}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="PasswordCreation"
+              component={PasswordCreation}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="IDUpload"
+              component={IDUpload}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Success"
+              component={Success}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Forgot"
+              component={ForgotPassword}
+              options={{headerShown: false}}
+            />
+          </>
         )}
-        <Stack.Screen
-          name="Create"
-          component={CreateAccount}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="Forgot"
-          component={ForgotPassword}
-          options={{headerShown: false}}
-        />
       </Stack.Navigator>
     </NavigationContainer>
   );

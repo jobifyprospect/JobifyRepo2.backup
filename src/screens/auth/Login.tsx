@@ -1,9 +1,7 @@
 import React, {useRef, useState} from 'react';
 import {
-  Dimensions,
   Keyboard,
   KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -21,11 +19,12 @@ import {styles} from '../../styles/globals';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faFacebookF, faGoogle} from '@fortawesome/free-brands-svg-icons';
 import Colors from '../../styles/Colors';
+import Background from '../../components/Background';
+import {isEmailValid, isPasswordValid} from '../../utils/Utils';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
-var width = Dimensions.get('window').width; //full width
 
 const Login = ({navigation}: RouterProps) => {
   const [email, setEmail] = useState('');
@@ -35,6 +34,7 @@ const Login = ({navigation}: RouterProps) => {
 
   const auth = FIREBASE_AUTH;
   // Refs for inputs
+  const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const buttonRef = useRef<{triggerPress: () => void}>(null);
 
@@ -43,6 +43,15 @@ const Login = ({navigation}: RouterProps) => {
     setSuffixIcon(obscure ? 'eye-slash' : 'eye');
   };
 
+  const resetForm = () => {
+    emailInputRef.current?.focus();
+    setEmail('');
+    emailInputRef.current?.clear();
+
+    passwordInputRef.current?.focus();
+    setPassword('');
+    emailInputRef.current?.clear();
+  };
   const signIn = async () => {
     Keyboard.dismiss();
     if (obscure === false) {
@@ -56,6 +65,40 @@ const Login = ({navigation}: RouterProps) => {
     }
   };
 
+  // Sign-in function
+  // const handleSignIn = async () => {
+  //   try {
+  //     // Sign in user with Firebase Authentication
+  //     const userCredential = await auth.signInWithEmailAndPassword(
+  //       email,
+  //       password,
+  //     );
+
+  //     // Get the current user's uid
+  //     const userId = userCredential.user.uid;
+
+  //     // Fetch the user's role from Firestore
+  //     const userDoc = await FIRESTORE_DB.collection('users').doc(userId).get();
+
+  //     if (userDoc.exists) {
+  //       const userData = userDoc.data();
+  //       const userRole = userData?.role; // Assuming "role" is a field in your "users" collection
+
+  //       // Navigate based on the user's role
+  //       if (userRole === 'worker') {
+  //         navigation.navigate('WorkerDashboard');
+  //       } else if (userRole === 'client') {
+  //         navigation.navigate('ClientDashboard');
+  //       } else {
+  //         console.error('Role not recognized');
+  //       }
+  //     } else {
+  //       console.error('User document does not exist in Firestore');
+  //     }
+  //   } catch (error) {
+  //     console.error('Sign-in error:', error);
+  //   }
+  // };
   // const signUp = async () => {
   //   try {
   //     const response = await auth.createUserWithEmailAndPassword(
@@ -71,34 +114,29 @@ const Login = ({navigation}: RouterProps) => {
   //   }
   // };
 
-  // Validation checks
-  const isEmailValid = email.includes('@');
-  const isPasswordValid = password.length >= 6;
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={loginScreenStyles.container}>
-        <View style={loginScreenStyles.topCircle} />
-        <View style={loginScreenStyles.bottomCircle} />
-        <View style={loginScreenStyles.bottom} />
+        <Background />
         <Text style={styles.largeHeading}>Login</Text>
         <View style={loginScreenStyles.inputContainer}>
           <KeyboardAvoidingView behavior="padding">
             {/* Email Field */}
             <DynamicTextInput
               label="Email"
+              ref={emailInputRef}
               value={email}
               onChangeText={setEmail}
               placeholder="Enter your email"
               keyboardType="email-address"
-              returnKeyType="next" // Use 'next' for this input
+              returnKeyType="next"
               onSubmitEditing={() => {
-                passwordInputRef.current?.focus(); // Move focus to password input
+                passwordInputRef.current?.focus();
               }}
               prefixIcon="envelope"
               isRequired
-              isValid={isEmailValid}
-              errorMessage="Invalid email"
+              // isValid={isEmailValid(email)}
+              // errorMessage="Invalid email"
             />
           </KeyboardAvoidingView>
           <KeyboardAvoidingView behavior="padding">
@@ -115,15 +153,14 @@ const Login = ({navigation}: RouterProps) => {
               suffixIcon={suffixIcon}
               suffixOnClick={handleChildClick}
               isRequired
-              isValid={isPasswordValid}
-              returnKeyType="done" // Use 'done' for the last input
+              // isValid={isPasswordValid(password) ?? true}
+              returnKeyType="done"
               onSubmitEditing={() => {
-                if (isEmailValid || isPasswordValid) {
+                if (isEmailValid(email) || isPasswordValid(password)) {
                   buttonRef.current?.triggerPress();
                 }
-                // Perform login or submit action here
               }}
-              errorMessage="Password must be at least 6 characters"
+              // errorMessage="Password must be at least 6 characters"
             />
           </KeyboardAvoidingView>
         </View>
@@ -131,18 +168,26 @@ const Login = ({navigation}: RouterProps) => {
           <View style={loginScreenStyles.textButtonContainer}>
             <TextButton
               title="Forgot Password?"
-              onPress={() => navigation.navigate('Forgot')}
+              onPress={() => {
+                Keyboard.dismiss();
+                resetForm();
+                navigation.navigate('Forgot');
+              }}
             />
             <TextButton
               title="Create Account"
-              onPress={() => navigation.navigate('Create')}
+              onPress={() => {
+                Keyboard.dismiss();
+                resetForm();
+                navigation.navigate('UserTypeSelection');
+              }}
             />
           </View>
           <DynamicButton
             ref={buttonRef}
             title="Login"
             onPress={signIn}
-            disabled={!isEmailValid || !isPasswordValid}
+            disabled={!isEmailValid(email) || !isPasswordValid(password)}
             type="primary"
           />
           <View style={loginScreenStyles.subContainer}>
@@ -174,8 +219,6 @@ const Login = ({navigation}: RouterProps) => {
   );
 };
 
-export default Login;
-
 const loginScreenStyles = StyleSheet.create({
   container: {
     flex: 1,
@@ -187,36 +230,6 @@ const loginScreenStyles = StyleSheet.create({
   },
   elevate: {
     zIndex: 3,
-  },
-  topCircle: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? -450 : -480,
-    left: -100,
-    width: 600,
-    height: 600,
-    aspectRatio: 1,
-    backgroundColor: Colors.primary,
-    borderRadius: 600,
-    zIndex: 3,
-  },
-  bottomCircle: {
-    position: 'absolute',
-    bottom: 50,
-    left: -100,
-    width: 600,
-    height: 600,
-    aspectRatio: 1,
-    backgroundColor: Colors.white,
-    borderRadius: 600,
-    zIndex: 2,
-  },
-  bottom: {
-    position: 'absolute',
-    bottom: 0,
-    height: 200,
-    backgroundColor: Colors.primary,
-    flex: 1,
-    width: width,
   },
   inputContainer: {
     paddingTop: 20,
@@ -245,3 +258,5 @@ const loginScreenStyles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
 });
+
+export default Login;

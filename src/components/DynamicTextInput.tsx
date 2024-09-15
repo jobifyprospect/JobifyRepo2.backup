@@ -15,13 +15,24 @@ import {
   faEnvelope,
   faEye,
   faEyeSlash,
+  faMobile,
 } from '@fortawesome/free-solid-svg-icons';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {dynamicTextInputStyles} from '../styles/DynamicTextInput';
 import Colors from '../styles/Colors';
 import {styles} from '../styles/globals';
+import {formatPhoneNumber} from '../utils/Utils';
 
-library.add(faSearch, faUser, faLock, faUserAlt, faEnvelope, faEye, faEyeSlash);
+library.add(
+  faSearch,
+  faUser,
+  faLock,
+  faUserAlt,
+  faEnvelope,
+  faEye,
+  faEyeSlash,
+  faMobile,
+);
 
 type InputProps = {
   label: string;
@@ -37,6 +48,7 @@ type InputProps = {
   isValid?: boolean;
   multiline?: boolean;
   editable?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   suffixOnClick?: () => void;
   returnKeyType?: 'done' | 'next';
   onSubmitEditing?: () => void;
@@ -59,6 +71,7 @@ const DynamicTextInput = forwardRef<TextInput, InputProps>(
       multiline = false,
       editable = true,
       suffixOnClick,
+      autoCapitalize = 'none',
       returnKeyType = 'done',
       onSubmitEditing,
     },
@@ -66,14 +79,35 @@ const DynamicTextInput = forwardRef<TextInput, InputProps>(
   ) => {
     const [isFocused, setIsFocused] = useState(false);
     const [hasTouched, setHasTouched] = useState(false);
-
     const handleFocus = () => {
       setIsFocused(true);
-      setHasTouched(true);
     };
+
+    // useEffect(() => {
+    //   if (value === '') {
+    //     setHasTouched(false); // Reset hasTouched when value is an empty string or null
+    //   }
+    // }, [value]);
 
     const handleBlur = () => {
       setIsFocused(false);
+      if (!isValid) {
+        setHasTouched(true);
+      }
+    };
+
+    const handleChangeText = (text: string) => {
+      if (text) {
+        setHasTouched(true);
+      } else {
+        setHasTouched(false);
+      }
+      if (keyboardType === 'phone-pad') {
+        const formattedPhone = formatPhoneNumber(text);
+        onChangeText(formattedPhone);
+      } else {
+        onChangeText(text);
+      }
     };
 
     return (
@@ -113,8 +147,9 @@ const DynamicTextInput = forwardRef<TextInput, InputProps>(
               multiline && dynamicTextInputStyles.textArea,
             ]}
             selectionColor={Colors.primary}
+            placeholderTextColor={Colors.placeholder}
             value={value}
-            onChangeText={onChangeText}
+            onChangeText={handleChangeText}
             placeholder={placeholder}
             keyboardType={keyboardType}
             secureTextEntry={secureTextEntry}
@@ -122,7 +157,7 @@ const DynamicTextInput = forwardRef<TextInput, InputProps>(
             onBlur={handleBlur}
             multiline={multiline}
             editable={editable}
-            autoCapitalize="none"
+            autoCapitalize={autoCapitalize}
             returnKeyType={returnKeyType}
             onSubmitEditing={onSubmitEditing}
           />
