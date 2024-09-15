@@ -1,51 +1,40 @@
-// src/services/firestore/workers.ts
-
-import firestore from '@react-native-firebase/firestore';
-import {Worker} from '../interfaces/worker';
+import {showAlert} from '../../components/AlertDialog';
 import {FIRESTORE_DB} from '../../config/firebase';
+import {Worker} from '../interfaces/worker';
 
 const workersRef = FIRESTORE_DB.collection('workers');
 
-export const addWorker = async (
-  workerData: Omit<Worker, 'id' | 'createdAt' | 'updatedAt'>,
-): Promise<void> => {
+export const createWorker = async (worker: Worker): Promise<void> => {
   try {
-    await workersRef.add({
-      ...workerData,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    });
+    await workersRef.doc(worker.workerId).set(worker);
   } catch (error) {
-    console.error('Error adding worker: ', error);
+    showAlert('Error', 'Failed to create worker.');
+    console.error(error);
   }
 };
 
-export const getWorkerById = async (
+export const getWorker = async (
   workerId: string,
 ): Promise<Worker | undefined> => {
   try {
-    const doc = await workersRef.doc(workerId).get();
-    if (doc.exists) {
-      return {id: doc.id, ...doc.data()} as Worker;
-    }
-    return undefined;
+    const workerDoc = await workersRef.doc(workerId).get();
+    return workerDoc.exists ? (workerDoc.data() as Worker) : undefined;
   } catch (error) {
-    console.error('Error getting worker: ', error);
+    showAlert('Error', 'Failed to retrieve worker.');
+    console.error(error);
     return undefined;
   }
 };
 
 export const updateWorker = async (
   workerId: string,
-  workerData: Partial<Omit<Worker, 'id' | 'createdAt'>>,
+  updates: Partial<Worker>,
 ): Promise<void> => {
   try {
-    await workersRef.doc(workerId).update({
-      ...workerData,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    });
+    await workersRef.doc(workerId).update(updates);
   } catch (error) {
-    console.error('Error updating worker: ', error);
+    showAlert('Error', 'Failed to update worker.');
+    console.error(error);
   }
 };
 
@@ -53,6 +42,7 @@ export const deleteWorker = async (workerId: string): Promise<void> => {
   try {
     await workersRef.doc(workerId).delete();
   } catch (error) {
-    console.error('Error deleting worker: ', error);
+    showAlert('Error', 'Failed to delete worker.');
+    console.error(error);
   }
 };

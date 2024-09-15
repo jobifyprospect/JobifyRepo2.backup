@@ -1,72 +1,54 @@
-import firestore from '@react-native-firebase/firestore';
-import {Application} from '../interfaces/application';
+import {showAlert} from '../../components/AlertDialog';
 import {FIRESTORE_DB} from '../../config/firebase';
+import {Application} from '../interfaces/application';
 
-// Firestore collection reference
 const applicationsRef = FIRESTORE_DB.collection('applications');
 
-// Add a new application
-export const addApplication = async (
-  applicationData: Omit<
-    Application,
-    'applicationId' | 'createdAt' | 'updatedAt'
-  >,
+export const createApplication = async (
+  application: Application,
 ): Promise<void> => {
   try {
-    await applicationsRef.add({
-      ...applicationData,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    });
+    await applicationsRef.doc(application.applicationId).set(application);
   } catch (error) {
-    console.error('Error adding application: ', error);
+    showAlert('Error', 'Failed to create application.');
+    console.error(error);
   }
 };
 
-// Get all applications
-export const getApplications = async (): Promise<Application[]> => {
-  const snapshot = await applicationsRef.get();
-  return snapshot.docs.map(doc => ({
-    applicationId: doc.id,
-    ...doc.data(),
-  })) as Application[];
-};
-
-// Get applications by worker ID
-export const getApplicationsByWorkerId = async (
-  workerId: string,
-): Promise<Application[]> => {
-  const snapshot = await applicationsRef
-    .where('workerId', '==', workerId)
-    .get();
-  return snapshot.docs.map(doc => ({
-    applicationId: doc.id,
-    ...doc.data(),
-  })) as Application[];
-};
-
-// Update the status of an application
-export const updateApplicationStatus = async (
+export const getApplication = async (
   applicationId: string,
-  status: 'pending' | 'accepted' | 'rejected',
-): Promise<void> => {
+): Promise<Application | undefined> => {
   try {
-    await applicationsRef.doc(applicationId).update({
-      status,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    });
+    const applicationDoc = await applicationsRef.doc(applicationId).get();
+    return applicationDoc.exists
+      ? (applicationDoc.data() as Application)
+      : undefined;
   } catch (error) {
-    console.error('Error updating application status: ', error);
+    showAlert('Error', 'Failed to retrieve application.');
+    console.error(error);
+    return undefined;
   }
 };
 
-// Delete an application
+export const updateApplication = async (
+  applicationId: string,
+  updates: Partial<Application>,
+): Promise<void> => {
+  try {
+    await applicationsRef.doc(applicationId).update(updates);
+  } catch (error) {
+    showAlert('Error', 'Failed to update application.');
+    console.error(error);
+  }
+};
+
 export const deleteApplication = async (
   applicationId: string,
 ): Promise<void> => {
   try {
     await applicationsRef.doc(applicationId).delete();
   } catch (error) {
-    console.error('Error deleting application: ', error);
+    showAlert('Error', 'Failed to delete application.');
+    console.error(error);
   }
 };

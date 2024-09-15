@@ -1,63 +1,46 @@
-import firestore from '@react-native-firebase/firestore';
-import {Role} from '../interfaces/role';
+import {showAlert} from '../../components/AlertDialog';
 import {FIRESTORE_DB} from '../../config/firebase';
+import {Role} from '../interfaces/role';
 
-// Firestore collection reference
 const rolesRef = FIRESTORE_DB.collection('roles');
 
-// Add a new role
-export const addRole = async (
-  roleData: Omit<Role, 'roleId' | 'createdAt' | 'updatedAt'>,
-): Promise<void> => {
+export const createRole = async (role: Role): Promise<void> => {
   try {
-    await rolesRef.add({
-      ...roleData,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    });
+    await rolesRef.doc(role.roleId).set(role);
   } catch (error) {
-    console.error('Error adding role: ', error);
+    showAlert('Error', 'Failed to create role.');
+    console.error(error);
   }
 };
 
-// Get all roles by client ID
-export const getRolesByClientId = async (clientId: string): Promise<Role[]> => {
-  const snapshot = await rolesRef.where('clientId', '==', clientId).get();
-  return snapshot.docs.map(doc => ({
-    roleId: doc.id,
-    ...doc.data(),
-  })) as Role[];
+export const getRole = async (roleId: string): Promise<Role | undefined> => {
+  try {
+    const roleDoc = await rolesRef.doc(roleId).get();
+    return roleDoc.exists ? (roleDoc.data() as Role) : undefined;
+  } catch (error) {
+    showAlert('Error', 'Failed to retrieve role.');
+    console.error(error);
+    return undefined;
+  }
 };
 
-// Get all roles by worker ID
-export const getRolesByWorkerId = async (workerId: string): Promise<Role[]> => {
-  const snapshot = await rolesRef.where('workerId', '==', workerId).get();
-  return snapshot.docs.map(doc => ({
-    roleId: doc.id,
-    ...doc.data(),
-  })) as Role[];
-};
-
-// Update role data
 export const updateRole = async (
   roleId: string,
-  roleData: Partial<Role>,
+  updates: Partial<Role>,
 ): Promise<void> => {
   try {
-    await rolesRef.doc(roleId).update({
-      ...roleData,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    });
+    await rolesRef.doc(roleId).update(updates);
   } catch (error) {
-    console.error('Error updating role: ', error);
+    showAlert('Error', 'Failed to update role.');
+    console.error(error);
   }
 };
 
-// Delete a role
 export const deleteRole = async (roleId: string): Promise<void> => {
   try {
     await rolesRef.doc(roleId).delete();
   } catch (error) {
-    console.error('Error deleting role: ', error);
+    showAlert('Error', 'Failed to delete role.');
+    console.error(error);
   }
 };

@@ -1,47 +1,38 @@
-import firestore from '@react-native-firebase/firestore';
-import {Job} from '../interfaces/job';
+import {showAlert} from '../../components/AlertDialog';
 import {FIRESTORE_DB} from '../../config/firebase';
+import {Job} from '../interfaces/job';
 
 const jobsRef = FIRESTORE_DB.collection('jobs');
 
-export const addJob = async (
-  jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>,
-): Promise<void> => {
+export const createJob = async (job: Job): Promise<void> => {
   try {
-    await jobsRef.add({
-      ...jobData,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    });
+    await jobsRef.doc(job.jobId).set(job);
   } catch (error) {
-    console.error('Error adding job: ', error);
+    showAlert('Error', 'Failed to create job.');
+    console.error(error);
   }
 };
 
-export const getJobById = async (jobId: string): Promise<Job | undefined> => {
+export const getJob = async (jobId: string): Promise<Job | undefined> => {
   try {
-    const doc = await jobsRef.doc(jobId).get();
-    if (doc.exists) {
-      return {id: doc.id, ...doc.data()} as Job;
-    }
-    return undefined;
+    const jobDoc = await jobsRef.doc(jobId).get();
+    return jobDoc.exists ? (jobDoc.data() as Job) : undefined;
   } catch (error) {
-    console.error('Error getting job: ', error);
+    showAlert('Error', 'Failed to retrieve job.');
+    console.error(error);
     return undefined;
   }
 };
 
 export const updateJob = async (
   jobId: string,
-  jobData: Partial<Omit<Job, 'id' | 'createdAt'>>,
+  updates: Partial<Job>,
 ): Promise<void> => {
   try {
-    await jobsRef.doc(jobId).update({
-      ...jobData,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    });
+    await jobsRef.doc(jobId).update(updates);
   } catch (error) {
-    console.error('Error updating job: ', error);
+    showAlert('Error', 'Failed to update job.');
+    console.error(error);
   }
 };
 
@@ -49,6 +40,7 @@ export const deleteJob = async (jobId: string): Promise<void> => {
   try {
     await jobsRef.doc(jobId).delete();
   } catch (error) {
-    console.error('Error deleting job: ', error);
+    showAlert('Error', 'Failed to delete job.');
+    console.error(error);
   }
 };

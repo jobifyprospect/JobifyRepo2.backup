@@ -6,6 +6,7 @@ export interface Application {
   jobId: string; // Reference to a Job
   offer: number; // Monetary offer or other terms
   status: 'pending' | 'accepted' | 'rejected';
+  reviewId?: string;
   createdAt: FirebaseFirestoreTypes.Timestamp;
   updatedAt: FirebaseFirestoreTypes.Timestamp;
 }
