@@ -12,7 +12,7 @@ import Colors from '../styles/Colors';
 
 interface DynamicButtonProps {
   title: string;
-  onPress: () => Promise<void>;
+  onPress: () => void | Promise<void>;
   type?: 'primary' | 'secondary';
   disabled?: boolean;
 }

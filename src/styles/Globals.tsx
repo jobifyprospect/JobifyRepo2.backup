@@ -6,6 +6,21 @@ import Fonts from './FontSizes';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    padding: 48,
+    gap: 1.25,
+    backgroundColor: Colors.white,
+    overflow: 'hidden',
+  },
+  headerContainer: {
+    gap: 10,
+    paddingBottom: 10,
+  },
+  bottomContainer: {
+    paddingTop: 20,
+  },
+  elevate: {
+    zIndex: 3,
   },
   contentText: {
     fontSize: 24,
