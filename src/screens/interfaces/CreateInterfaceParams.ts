@@ -66,7 +66,7 @@ export type RootStackParamList = {
     idImage: string;
     selfieImage: string;
   };
-  Login: undefined; // Assuming no params are needed
-  Forgot: undefined; // Assuming no params are needed
-  Inside: {role: string | null}; // Assuming 'role' is passed here
+  Login: undefined;
+  Forgot: undefined;
+  Inside: {role: string | null};
 };

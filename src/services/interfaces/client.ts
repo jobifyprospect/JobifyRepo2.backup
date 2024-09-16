@@ -9,6 +9,10 @@ export interface Client {
   addressId?: string;
   phoneNumber: string;
   jobsList?: string[]; // List of Job IDs
-  createdAt: FirebaseFirestoreTypes.Timestamp;
-  updatedAt: FirebaseFirestoreTypes.Timestamp;
+  createdAt:
+    | FirebaseFirestoreTypes.Timestamp
+    | FirebaseFirestoreTypes.FieldValue;
+  updatedAt:
+    | FirebaseFirestoreTypes.Timestamp
+    | FirebaseFirestoreTypes.FieldValue;
 }

@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import 'react-native-get-random-values';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -27,13 +28,14 @@ import LoginInfo from './src/screens/auth/create/LoginInfo';
 import PasswordCreation from './src/screens/auth/create/PasswordCreation';
 import IDUpload from './src/screens/auth/create/IdUpload';
 import Success from './src/screens/utils/Success';
+import {getRole} from './src/services/firestore/roles';
+import {showAlert} from './src/components/AlertDialog';
 
 library.add(faHouse, faFile, faUser, faBell);
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 
-// Icon Components
 export const HomeIcon = ({color}: {color: string}) => (
   <FontAwesomeIcon icon={faHouse} size={16} color={color} />
 );
@@ -46,7 +48,6 @@ export const ProfileIcon = ({color}: {color: string}) => (
   <FontAwesomeIcon icon={faUser} size={16} color={color} />
 );
 
-// Tab Layout, but we conditionally change the Home screen based on role
 const TabLayout = ({role}: {role: string | null}) => {
   const DashboardComponent =
     role === 'worker' ? WorkerDashboard : ClientDashboard;
@@ -103,14 +104,35 @@ export default function App() {
       FIREBASE_AUTH,
       async (authUser: any) => {
         if (authUser) {
-          setUser(authUser);
-          // Fetch role from Firestore
-          const userDoc = await FIRESTORE_DB.collection('users')
-            .doc(authUser.uid)
-            .get();
-          if (userDoc.exists) {
-            setRole(userDoc.data()?.role || null);
-          } else {
+          try {
+            setUser(authUser);
+            const userDoc = await FIRESTORE_DB.collection('users')
+              .doc(authUser.uid)
+              .get();
+            if (userDoc.exists) {
+              const userData = userDoc.data();
+              if (userData && userData.roleId) {
+                const foundRole = await getRole(userData.roleId);
+                if (foundRole) {
+                  if (foundRole.clientId) {
+                    setRole('client');
+                  } else if (foundRole.workerId) {
+                    setRole('worker');
+                  } else {
+                    setRole(null);
+                  }
+                } else {
+                  showAlert('Error', 'Role not found.');
+                  setRole(null);
+                }
+              } else {
+                setRole(null);
+              }
+            } else {
+              setRole(null);
+            }
+          } catch (error) {
+            showAlert('Error', 'Failed to retrieve user data.');
             setRole(null);
           }
         } else {

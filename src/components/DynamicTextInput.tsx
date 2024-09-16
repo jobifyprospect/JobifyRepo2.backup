@@ -75,19 +75,13 @@ const DynamicTextInput = forwardRef<TextInput, InputProps>(
       returnKeyType = 'done',
       onSubmitEditing,
     },
-    ref, // Receive the ref from parent
+    ref,
   ) => {
     const [isFocused, setIsFocused] = useState(false);
     const [hasTouched, setHasTouched] = useState(false);
     const handleFocus = () => {
       setIsFocused(true);
     };
-
-    // useEffect(() => {
-    //   if (value === '') {
-    //     setHasTouched(false); // Reset hasTouched when value is an empty string or null
-    //   }
-    // }, [value]);
 
     const handleBlur = () => {
       setIsFocused(false);

@@ -39,11 +39,9 @@ const AddressDetails = ({navigation, route}: AddressDetailsProps) => {
   const [cities, setCities] = useState<Option[]>([]);
 
   useEffect(() => {
-    // Detect country from phone number and set it
     const detectedCountry = detectCountryFromPhone(phoneNumber);
     setCountry(detectedCountry);
 
-    // Initialize regions based on detected country
     const initialRegions = Object.keys(
       countryData[detectedCountry]?.Regions || {},
     ).map(regionMap => ({
@@ -55,7 +53,6 @@ const AddressDetails = ({navigation, route}: AddressDetailsProps) => {
   }, [phoneNumber]);
 
   useEffect(() => {
-    // Update regions when country changes
     const initialRegions = Object.keys(countryData[country]?.Regions || {}).map(
       regionMap => ({
         id: regionMap,
@@ -74,7 +71,6 @@ const AddressDetails = ({navigation, route}: AddressDetailsProps) => {
     setCities([]);
     setPostalCode('');
 
-    // Populate provinces for the selected region
     const selectProvinces = Object.keys(
       countryData[country]?.Regions[selectedRegion]?.Provinces || {},
     ).map(provinceMap => ({
@@ -90,7 +86,6 @@ const AddressDetails = ({navigation, route}: AddressDetailsProps) => {
     setCity('');
     setPostalCode('');
 
-    // Populate cities for the selected province
     const selectCities =
       countryData[country]?.Regions[region]?.Provinces[
         selectedProvince
@@ -121,7 +116,7 @@ const AddressDetails = ({navigation, route}: AddressDetailsProps) => {
             options={regions}
             value={region}
             onSelect={handleRegionSelect}
-            isEnabled={!!country} // Enable if a country is selected
+            isEnabled={!!country}
           />
 
           <DynamicDropdown
@@ -130,7 +125,7 @@ const AddressDetails = ({navigation, route}: AddressDetailsProps) => {
             options={provinces}
             value={province}
             onSelect={handleProvinceSelect}
-            isEnabled={!!region} // Enable if a region is selected
+            isEnabled={!!region}
           />
 
           <DynamicDropdown
@@ -139,7 +134,7 @@ const AddressDetails = ({navigation, route}: AddressDetailsProps) => {
             options={cities}
             value={city}
             onSelect={handleCitySelect}
-            isEnabled={!!province} // Enable if a province is selected
+            isEnabled={!!province}
           />
 
           <DynamicTextInput

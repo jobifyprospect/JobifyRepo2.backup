@@ -7,6 +7,10 @@ export interface Application {
   offer: number; // Monetary offer or other terms
   status: 'pending' | 'accepted' | 'rejected';
   reviewId?: string;
-  createdAt: FirebaseFirestoreTypes.Timestamp;
-  updatedAt: FirebaseFirestoreTypes.Timestamp;
+  createdAt:
+    | FirebaseFirestoreTypes.Timestamp
+    | FirebaseFirestoreTypes.FieldValue;
+  updatedAt:
+    | FirebaseFirestoreTypes.Timestamp
+    | FirebaseFirestoreTypes.FieldValue;
 }
