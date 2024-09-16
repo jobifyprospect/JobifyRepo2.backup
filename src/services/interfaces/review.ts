@@ -5,6 +5,10 @@ export interface Review {
   applicationId: string; // Reference to an Application
   rating: number; // Rating out of 5
   comment?: string; // Optional comment or feedback
-  createdAt: FirebaseFirestoreTypes.Timestamp;
-  updatedAt: FirebaseFirestoreTypes.Timestamp;
+  createdAt:
+    | FirebaseFirestoreTypes.Timestamp
+    | FirebaseFirestoreTypes.FieldValue;
+  updatedAt:
+    | FirebaseFirestoreTypes.Timestamp
+    | FirebaseFirestoreTypes.FieldValue;
 }

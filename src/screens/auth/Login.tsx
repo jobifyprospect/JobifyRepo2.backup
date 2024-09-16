@@ -33,7 +33,6 @@ const Login = ({navigation}: RouterProps) => {
   const [obscure, setObscure] = useState(true);
 
   const auth = FIREBASE_AUTH;
-  // Refs for inputs
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const buttonRef = useRef<{triggerPress: () => void}>(null);
@@ -58,61 +57,12 @@ const Login = ({navigation}: RouterProps) => {
       handleChildClick();
     }
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const response = await auth.signInWithEmailAndPassword(email, password);
-      console.log(response);
     } catch (error: any) {
       showAlert('Sign in failed', error.message || 'An error occurred');
     }
   };
-
-  // Sign-in function
-  // const handleSignIn = async () => {
-  //   try {
-  //     // Sign in user with Firebase Authentication
-  //     const userCredential = await auth.signInWithEmailAndPassword(
-  //       email,
-  //       password,
-  //     );
-
-  //     // Get the current user's uid
-  //     const userId = userCredential.user.uid;
-
-  //     // Fetch the user's role from Firestore
-  //     const userDoc = await FIRESTORE_DB.collection('users').doc(userId).get();
-
-  //     if (userDoc.exists) {
-  //       const userData = userDoc.data();
-  //       const userRole = userData?.role; // Assuming "role" is a field in your "users" collection
-
-  //       // Navigate based on the user's role
-  //       if (userRole === 'worker') {
-  //         navigation.navigate('WorkerDashboard');
-  //       } else if (userRole === 'client') {
-  //         navigation.navigate('ClientDashboard');
-  //       } else {
-  //         console.error('Role not recognized');
-  //       }
-  //     } else {
-  //       console.error('User document does not exist in Firestore');
-  //     }
-  //   } catch (error) {
-  //     console.error('Sign-in error:', error);
-  //   }
-  // };
-  // const signUp = async () => {
-  //   try {
-  //     const response = await auth.createUserWithEmailAndPassword(
-  //       email,
-  //       password,
-  //     );
-  //     console.log(response);
-  //   } catch (error: any) {
-  //     showAlert(
-  //       'Account creation failed',
-  //       error.message || 'An error occurred',
-  //     );
-  //   }
-  // };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -135,8 +85,6 @@ const Login = ({navigation}: RouterProps) => {
               }}
               prefixIcon="envelope"
               isRequired
-              // isValid={isEmailValid(email)}
-              // errorMessage="Invalid email"
             />
           </KeyboardAvoidingView>
           <KeyboardAvoidingView behavior="padding">
@@ -153,14 +101,12 @@ const Login = ({navigation}: RouterProps) => {
               suffixIcon={suffixIcon}
               suffixOnClick={handleChildClick}
               isRequired
-              // isValid={isPasswordValid(password) ?? true}
               returnKeyType="done"
               onSubmitEditing={() => {
                 if (isEmailValid(email) || isPasswordValid(password)) {
                   buttonRef.current?.triggerPress();
                 }
               }}
-              // errorMessage="Password must be at least 6 characters"
             />
           </KeyboardAvoidingView>
         </View>

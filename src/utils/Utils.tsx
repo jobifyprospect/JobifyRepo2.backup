@@ -1,4 +1,5 @@
 // TODO VALIDATORS
+import RNFS from 'react-native-fs'; // Required for converting to base64
 
 export const isNotEmpty = (input: string): boolean => {
   return input.trim().length >= 3;
@@ -60,4 +61,16 @@ export const validatePassword = (password: string) => {
     hasNumber &&
     hasSpecialChar
   );
+};
+
+export const convertImageToBase64 = async (
+  uri: string,
+): Promise<string | null> => {
+  try {
+    const base64String = await RNFS.readFile(uri, 'base64');
+    return `data:image/jpeg;base64,${base64String}`;
+  } catch (error) {
+    console.error('Error converting image to Base64:', error);
+    return null;
+  }
 };

@@ -41,12 +41,10 @@ const PasswordCreation = ({navigation, route}: PasswordCreationProps) => {
     setObscure2(!obscure2);
     setSuffixIcon2(obscure2 ? 'eye-slash' : 'eye');
   };
-  // Validate password on change
   const handlePasswordChange = useCallback(
     (newPassword: string) => {
       setPassword(newPassword);
       setIsPasswordValid(validatePassword(newPassword));
-      // Reset password confirmation if password changes
       setPasswordConfirmation('');
       if (obscure2 === false) {
         setObscure2(true);
@@ -65,7 +63,6 @@ const PasswordCreation = ({navigation, route}: PasswordCreationProps) => {
   const isFormValid = () => {
     return isPasswordValid && password === passwordConfirmation;
   };
-  console.log(route.params);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
