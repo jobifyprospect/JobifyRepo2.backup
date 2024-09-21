@@ -15,7 +15,7 @@ import DynamicTextInput from '../../components/DynamicTextInput';
 import DynamicButton from '../../components/DynamicButton';
 import TextButton from '../../components/TextButton';
 import {NavigationProp} from '@react-navigation/native';
-import {styles} from '../../styles/globals';
+import {styles} from '../../styles/Globals';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faFacebookF, faGoogle} from '@fortawesome/free-brands-svg-icons';
 import Colors from '../../styles/Colors';

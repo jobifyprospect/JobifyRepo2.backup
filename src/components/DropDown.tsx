@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import Colors from '../styles/Colors';
-import {styles} from '../styles/globals';
+import {styles} from '../styles/Globals';
 
 interface Option {
   id: string;

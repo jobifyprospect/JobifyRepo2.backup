@@ -6,7 +6,7 @@ import {
   TextInput,
 } from 'react-native';
 import React, {useState, useCallback, useRef} from 'react';
-import {styles} from '../../../styles/globals';
+import {styles} from '../../../styles/Globals';
 import DynamicTextInput from '../../../components/DynamicTextInput';
 import {RootStackParamList} from '../../interfaces/CreateInterfaceParams';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';

@@ -20,7 +20,7 @@ import {
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {dynamicTextInputStyles} from '../styles/DynamicTextInput';
 import Colors from '../styles/Colors';
-import {styles} from '../styles/globals';
+import {styles} from '../styles/Globals';
 import {formatPhoneNumber} from '../utils/Utils';
 
 library.add(

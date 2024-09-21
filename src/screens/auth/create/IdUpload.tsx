@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import {launchCamera} from 'react-native-image-picker';
 import Colors from '../../../styles/Colors';
-import {styles} from '../../../styles/globals';
+import {styles} from '../../../styles/Globals';
 import Background from '../../../components/Background';
 import DynamicButton from '../../../components/DynamicButton';
 import {firebase} from '@react-native-firebase/firestore';
