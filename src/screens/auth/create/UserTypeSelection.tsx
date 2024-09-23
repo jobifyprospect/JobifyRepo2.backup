@@ -1,7 +1,7 @@
 import {View, Text} from 'react-native';
 import React, {useState} from 'react';
 import {styles} from '../../../styles/globals';
-import {RootStackParamList} from '../../interfaces/CreateInterfaceParams';
+import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import DynamicButton from '../../../components/DynamicButton';
 import RadialSelection from '../../../components/RadialSelection';
