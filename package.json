@@ -7,6 +7,7 @@
     "ios": "react-native run-ios",
     "rebuild-ios": "cd ios && pod install && cd .. && react-native run-ios",
     "rebuild-android": "cd android && ./gradlew clean && cd .. && react-native run-android",
+    "rebuild-packages": "rm -rf node_modules package-lock.json && npm i",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"

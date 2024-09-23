@@ -2,7 +2,7 @@ import {View, Text, Keyboard, TouchableWithoutFeedback} from 'react-native';
 import React, {useState} from 'react';
 import {styles} from '../../../styles/globals';
 import DynamicTextInput from '../../../components/DynamicTextInput';
-import {RootStackParamList} from '../../interfaces/CreateInterfaceParams';
+import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import DynamicButton from '../../../components/DynamicButton';
 import {isEmailValid} from '../../../utils/Utils';
