@@ -8,7 +8,7 @@ import {
 import React, {useState, useCallback, useRef} from 'react';
 import {styles} from '../../../styles/Globals';
 import DynamicTextInput from '../../../components/DynamicTextInput';
-import {RootStackParamList} from '../../interfaces/CreateInterfaceParams';
+import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {validatePassword} from '../../../utils/Utils';
 import DynamicButton from '../../../components/DynamicButton';

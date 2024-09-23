@@ -22,7 +22,7 @@ import ForgotPassword from './src/screens/auth/forgot/ForgotPassword';
 import {Platform} from 'react-native';
 import UserTypeSelection from './src/screens/auth/create/UserTypeSelection';
 import PersonalDetails from './src/screens/auth/create/PersonalDetails';
-import {RootStackParamList} from './src/screens/interfaces/CreateInterfaceParams';
+import {RootStackParamList} from './src/screens/interfaces/RouterStackInterfaceParams';
 import AddressDetails from './src/screens/auth/create/AddressDetails';
 import LoginInfo from './src/screens/auth/create/LoginInfo';
 import PasswordCreation from './src/screens/auth/create/PasswordCreation';
@@ -30,6 +30,7 @@ import IDUpload from './src/screens/auth/create/IdUpload';
 import Success from './src/screens/utils/Success';
 import {getRole} from './src/services/firestore/roles';
 import {showAlert} from './src/components/AlertDialog';
+import Notification from './src/screens/Notification';
 
 library.add(faHouse, faFile, faUser, faBell);
 
@@ -48,10 +49,27 @@ export const ProfileIcon = ({color}: {color: string}) => (
   <FontAwesomeIcon icon={faUser} size={16} color={color} />
 );
 
-const TabLayout = ({role}: {role: string | null}) => {
+const DashboardStack = ({role}: {role: string | null}) => {
   const DashboardComponent =
     role === 'worker' ? WorkerDashboard : ClientDashboard;
 
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="ClientDashboardScreen"
+        component={DashboardComponent}
+        options={{headerShown: false}} // Dashboard Screen
+      />
+      <Stack.Screen
+        name="Notification"
+        component={Notification}
+        options={{title: 'Notifications'}} // Notification Screen
+      />
+    </Stack.Navigator>
+  );
+};
+
+const TabLayout = ({role}: {role: string | null}) => {
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
@@ -88,7 +106,11 @@ const TabLayout = ({role}: {role: string | null}) => {
           }
         },
       })}>
-      <Tab.Screen name="Home" component={DashboardComponent} />
+      <Tab.Screen
+        name="Home"
+        children={() => <DashboardStack role={role} />} // Stack for Dashboard
+        options={{headerShown: false}}
+      />
       <Tab.Screen name="Transaction" component={Transaction} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>

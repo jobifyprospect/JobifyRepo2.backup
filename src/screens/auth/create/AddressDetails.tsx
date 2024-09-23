@@ -1,8 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, Keyboard, TouchableWithoutFeedback} from 'react-native';
 import DynamicTextInput from '../../../components/DynamicTextInput';
-import {styles} from '../../../styles/Globals';
-import {RootStackParamList} from '../../interfaces/CreateInterfaceParams';
+import {styles} from '../../../styles/globals';
+import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import DynamicDropdown from '../../../components/DropDown';
 import countryData from '../../../utils/CountryData';

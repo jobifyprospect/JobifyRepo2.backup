@@ -9,7 +9,7 @@ import React, {useRef, useState} from 'react';
 import {styles} from '../../../styles/Globals';
 
 import DynamicTextInput from '../../../components/DynamicTextInput';
-import {RootStackParamList} from '../../interfaces/CreateInterfaceParams';
+import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import Background from '../../../components/Background';
 import DynamicButton from '../../../components/DynamicButton';

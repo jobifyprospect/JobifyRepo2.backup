@@ -25,7 +25,7 @@ import {Address} from '../../../services/interfaces/address';
 import {Client} from '../../../services/interfaces/client';
 import {Worker} from '../../../services/interfaces/worker';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../../interfaces/CreateInterfaceParams';
+import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
 import {User} from '../../../services/interfaces/user';
 import {Role} from '../../../services/interfaces/role';
 import {showAlert} from '../../../components/AlertDialog';
