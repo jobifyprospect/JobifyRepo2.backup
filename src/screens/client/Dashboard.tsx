@@ -33,7 +33,7 @@ const Dashboard = ({ navigation }: RouterProps) => {
         </View>
 
         <View style={localStyles.btnContainerEnd}>
-          <AddJobButton type="primary" onPress={async () => navigation.navigate('Notification')} />
+          <AddJobButton type="primary" onPress={async () => navigation.navigate('Post')} />
         </View>
       </View>
     </View>
@@ -42,12 +42,13 @@ const Dashboard = ({ navigation }: RouterProps) => {
 
 const localStyles = StyleSheet.create({
   container: {
-    paddingHorizontal: 40,
+    paddingHorizontal: 30,
     flex: 1
   },
   screen: {
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     flex: 1,
+    paddingTop: 50,
     paddingBottom: 100
   },
   btnContainerEnd: {
