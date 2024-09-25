@@ -1,15 +1,16 @@
-import { View, Text, StyleSheet, Keyboard, TouchableWithoutFeedback, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import React, { useState } from 'react';
 import { styles } from '../../styles/Globals';
 import { NavigationProp } from '@react-navigation/native';
 import BackButton from '../../components/BackButton';
 import DynamicButton from '../../components/DynamicButton';
 import Colors from '../../styles/Colors';
-import { JOBS } from '../../config/firebase';
+import { JOBS, USERS, FIREBASE_AUTH } from '../../config/firebase';
 import { showAlert } from '../../components/AlertDialog';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import { isNotEmpty } from '../../utils/Utils';
-
+import uuid from 'react-native-uuid';
+import { firebase } from '@react-native-firebase/firestore';
 interface RouterProps {
     navigation: NavigationProp<any, any>;
 }
@@ -28,7 +29,7 @@ export default function PostJob({ navigation }: RouterProps) {
 
     function resetForm() {
         setCategory('');
-        setRate(0);
+        setRate('');
         setSchedule('');
         setAddress('');
         setDescription('');
@@ -46,7 +47,9 @@ export default function PostJob({ navigation }: RouterProps) {
         }
 
         try {
-            const response = await JOBS.add({
+            await JOBS.add({
+                job_id: uuid.v4().toString(),
+                client_id: FIREBASE_AUTH.currentUser?.uid,
                 category,
                 rate,
                 schedule,
@@ -84,7 +87,7 @@ export default function PostJob({ navigation }: RouterProps) {
                         isValid={isNotEmpty(category)}
                         suffixIcon="list"
                         keyboardType="default"
-                        placeholder="Select Job Type"
+                        placeholder="Labor, digital, marketing.."
                         isRequired
                     />
 
@@ -95,7 +98,7 @@ export default function PostJob({ navigation }: RouterProps) {
                         isValid={isNotEmpty(rate)}
                         suffixIcon="peso-sign"
                         label="Rate"
-                        placeholder="Select Job Type"
+                        placeholder="Rate/hr"
                         isRequired
                     />
 
@@ -105,7 +108,7 @@ export default function PostJob({ navigation }: RouterProps) {
                         isValid={isNotEmpty(schedule)}
                         suffixIcon="clock"
                         label="Schedule"
-                        placeholder="Select Job Type"
+                        placeholder="Day, hours"
                         isRequired
                     />
 
@@ -115,7 +118,7 @@ export default function PostJob({ navigation }: RouterProps) {
                         isValid={isNotEmpty(address)}
                         suffixIcon="location-dot"
                         label="Address"
-                        placeholder="Select Job Type"
+                        placeholder="Job Location"
                         isRequired
                     />
 
