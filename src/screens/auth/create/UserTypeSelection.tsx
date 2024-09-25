@@ -1,6 +1,6 @@
 import {View, Text} from 'react-native';
 import React, {useState} from 'react';
-import {styles} from '../../../styles/globals';
+import {styles} from '../../../styles/Globals';
 import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import DynamicButton from '../../../components/DynamicButton';

@@ -1,6 +1,7 @@
 export type RootStackParamList = {
   UserTypeSelection: undefined;
   Notification: undefined;
+  Post: undefined;
   ClientDashboardScreen: undefined;
   PersonalDetails: {userType: 'client' | 'worker'};
   AddressDetails: {

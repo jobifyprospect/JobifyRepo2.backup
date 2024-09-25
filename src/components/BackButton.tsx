@@ -9,20 +9,21 @@ import {
 } from 'react-native';
 import {styles} from '../styles/Globals';
 import Colors from '../styles/Colors';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 
-interface DynamicButtonProps {
-  title: string;
-  onPress: () => void | Promise<void>;
+interface BackButtonProps {
+  onPress: () => Promise<void>;
   type?: 'primary' | 'secondary';
   disabled?: boolean;
 }
 
-const DynamicButton = forwardRef<
+const BackButton = forwardRef<
   {
     triggerPress: () => void;
   },
-  DynamicButtonProps
->(({title, onPress, type = 'primary', disabled = false}, ref) => {
+  BackButtonProps
+>(({onPress, type = 'primary', disabled = false}, ref) => {
   const [loading, setLoading] = useState(false);
 
   const handlePress = async () => {
@@ -66,7 +67,7 @@ const DynamicButton = forwardRef<
           color={type === 'primary' ? Colors.white : Colors.primary}
         />
       ) : (
-        <Text style={[styles.boldText, textStyle]}>{title}</Text>
+        <FontAwesomeIcon icon={faChevronLeft} color="#525A6A" />
       )}
     </TouchableOpacity>
   );
@@ -75,6 +76,7 @@ const DynamicButton = forwardRef<
 const dynamicButtonStyles = StyleSheet.create({
   button: {
     height: 46,
+    width: 46,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
@@ -82,7 +84,9 @@ const dynamicButtonStyles = StyleSheet.create({
     marginVertical: 8,
   },
   primary: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.placeholder
   },
   secondary: {
     backgroundColor: 'transparent',
@@ -95,4 +99,4 @@ const dynamicButtonStyles = StyleSheet.create({
   },
 });
 
-export default DynamicButton;
+export default BackButton;

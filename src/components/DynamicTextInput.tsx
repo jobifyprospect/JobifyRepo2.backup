@@ -16,11 +16,16 @@ import {
   faEye,
   faEyeSlash,
   faMobile,
+  faLocationDot,
+  faPesoSign,
+  faClock,
+  faList,
+  faPencil
 } from '@fortawesome/free-solid-svg-icons';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {dynamicTextInputStyles} from '../styles/DynamicTextInput';
 import Colors from '../styles/Colors';
-import {styles} from '../styles/globals';
+import {styles} from '../styles/Globals';
 import {formatPhoneNumber} from '../utils/Utils';
 
 library.add(
@@ -32,6 +37,11 @@ library.add(
   faEye,
   faEyeSlash,
   faMobile,
+  faLocationDot,
+  faPesoSign,
+  faClock,
+  faList,
+  faPencil
 );
 
 type InputProps = {

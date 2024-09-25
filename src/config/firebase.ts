@@ -8,3 +8,5 @@ export const FIREBASE_APP = firebase.app();
 export const FIREBASE_AUTH = auth();
 export const FIRESTORE_DB = firestore();
 export const FIRESTORE_STORAGE = storage();
+
+export const JOBS = FIRESTORE_DB.collection('jobs');
