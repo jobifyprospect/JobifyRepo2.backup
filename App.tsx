@@ -28,10 +28,12 @@ import LoginInfo from './src/screens/auth/create/LoginInfo';
 import PasswordCreation from './src/screens/auth/create/PasswordCreation';
 import IDUpload from './src/screens/auth/create/IdUpload';
 import Success from './src/screens/utils/Success';
+
 import { getRole } from './src/services/firestore/roles';
 import { showAlert } from './src/components/AlertDialog';
 import Notification from './src/screens/Notification';
 import PostJob from './src/screens/client/PostJob';
+
 
 library.add(faHouse, faFile, faUser, faBell);
 
@@ -50,7 +52,9 @@ export const ProfileIcon = ({ color }: { color: string }) => (
   <FontAwesomeIcon icon={faUser} size={16} color={color} />
 );
 
+
 const DashboardStack = ({ role }: { role: string | null }) => {
+
   const DashboardComponent =
     role === 'worker' ? WorkerDashboard : ClientDashboard;
 
@@ -61,11 +65,17 @@ const DashboardStack = ({ role }: { role: string | null }) => {
         component={DashboardComponent}
         options={{ headerShown: false }} // Dashboard Screen
       />
+      <Stack.Screen
+        name="Notification"
+        component={Notification}
+        options={{title: 'Notifications'}} // Notification Screen
+      />
     </Stack.Navigator>
   );
 };
 
-const TabLayout = ({ role }: { role: string | null }) => {
+
+const TabLayout = ({role}: {role: string | null}) => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
