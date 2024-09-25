@@ -1,11 +1,14 @@
-import { View, Text, StyleSheet, TextInput } from 'react-native';
-import React from 'react';
+import { View, Text, StyleSheet, Keyboard, TouchableWithoutFeedback, TextInput } from 'react-native';
+import React, { useState } from 'react';
 import { styles } from '../../styles/Globals';
 import { NavigationProp } from '@react-navigation/native';
 import BackButton from '../../components/BackButton';
-import AddJobButton from '../../components/AddJobButton';
 import DynamicButton from '../../components/DynamicButton';
 import Colors from '../../styles/Colors';
+import { JOBS } from '../../config/firebase';
+import { showAlert } from '../../components/AlertDialog';
+import DynamicTextInput from '../../components/DynamicTextInput';
+import { isNotEmpty } from '../../utils/Utils';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -13,79 +16,159 @@ interface RouterProps {
 
 
 export default function PostJob({ navigation }: RouterProps) {
+
+    const [category, setCategory] = useState('');
+    const [rate, setRate] = useState('');
+    const [schedule, setSchedule] = useState('');
+    const [address, setAddress] = useState('');
+    const [description, setDescription] = useState('');
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+
+    function resetForm() {
+        setCategory('');
+        setRate(0);
+        setSchedule('');
+        setAddress('');
+        setDescription('');
+    }
+
+    async function post() {
+        Keyboard.dismiss();
+
+        setIsSubmitting(true);
+
+        if (!category || !rate || !schedule || !address || !description) {
+            setIsSubmitting(false);
+            showAlert('Missing fields.', 'Please fill out all required fields.')
+            return;
+        }
+
+        try {
+            const response = await JOBS.add({
+                category,
+                rate,
+                schedule,
+                address,
+                description,
+            });
+
+            showAlert('Success', 'Job posted.');
+            setIsSubmitting(false);
+            resetForm();
+
+        } catch (error: unknown) {
+            showAlert('An error occurred while posting the job, ', error as string || 'An error occurred');
+        }
+    }
+
     return (
-        <View style={localStyles.container}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={localStyles.screen}>
                 <View style={localStyles.btnContainerBetween}>
                     <BackButton onPress={async () => navigation.goBack()} />
-                    <DynamicButton title='Post' type='primary' onPress={async () => navigation.navigate('Notification')} />
+
+                    <DynamicButton disabled={isSubmitting} title="Post" type="primary" onPress={() => post()} />
                 </View>
 
                 <View style={localStyles.headerContainer}>
                     <Text style={styles.xlargeHeading}> Post a Job </Text>
                 </View>
 
-                <View style={{ flex: 1, gap: 15, paddingHorizontal: 16, paddingTop: 40 }}>
-                    <View style={{ gap: 5 }}>
-                        <Text> Job Category </Text>
-                        <TextInput style={localStyles.textInput} placeholder='Select Job Type' />
-                    </View>
+                <View style={localStyles.content}>
+                    <DynamicTextInput
+                        label="Category"
+                        value={category}
+                        onChangeText={setCategory}
+                        isValid={isNotEmpty(category)}
+                        suffixIcon="list"
+                        keyboardType="default"
+                        placeholder="Select Job Type"
+                        isRequired
+                    />
 
-                    <View style={{ gap: 5 }}>
-                        <Text> Pay Rate </Text>
-                        <TextInput style={localStyles.textInput} placeholder='Select Job Type' />
-                    </View>
+                    <DynamicTextInput
+                        keyboardType="decimal-pad"
+                        value={rate}
+                        onChangeText={setRate}
+                        isValid={isNotEmpty(rate)}
+                        suffixIcon="peso-sign"
+                        label="Rate"
+                        placeholder="Select Job Type"
+                        isRequired
+                    />
 
-                    <View style={{ gap: 5 }}>
-                        <Text> Schedule </Text>
-                        <TextInput style={localStyles.textInput} placeholder='Select Job Type' />
-                    </View>
+                    <DynamicTextInput
+                        value={schedule}
+                        onChangeText={setSchedule}
+                        isValid={isNotEmpty(schedule)}
+                        suffixIcon="clock"
+                        label="Schedule"
+                        placeholder="Select Job Type"
+                        isRequired
+                    />
 
-                    <View style={{ gap: 5 }}>
-                        <Text> Address </Text>
-                        <TextInput style={localStyles.textInput} placeholder='Select Job Type' />
-                    </View>
+                    <DynamicTextInput
+                        value={address}
+                        onChangeText={setAddress}
+                        isValid={isNotEmpty(address)}
+                        suffixIcon="location-dot"
+                        label="Address"
+                        placeholder="Select Job Type"
+                        isRequired
+                    />
 
-                    <View style={{ gap: 5 }}>
-                        <Text> Job Description </Text>
-                        <TextInput
-                            editable
-                            multiline
-                            numberOfLines={4}
-                            maxLength={40}
-                            style={{ padding: 10, borderRadius: 8, borderColor: Colors.placeholder, backgroundColor: Colors.white, height: 150, paddingHorizontal: 6 }}
-                        />
-                    </View>
+                    <DynamicTextInput
+                        label="Description"
+                        value={description}
+                        onChangeText={setDescription}
+                        isValid={isNotEmpty(description)}
+                        suffixIcon="pencil"
+                        isRequired
+                    />
                 </View>
 
             </View>
-        </View>
+        </TouchableWithoutFeedback>
     );
-};
+}
 
 const localStyles = StyleSheet.create({
-    container: {
-        paddingHorizontal: 40,
-        flex: 1,
-    },
     screen: {
         justifyContent: 'center',
         flex: 1,
         paddingVertical: 50,
+        paddingHorizontal: 30,
     },
     btnContainerBetween: {
-        flexDirection: "row",
-        justifyContent: 'space-between'
+        flexDirection: 'row',
+        justifyContent: 'space-between',
     },
     headerContainer: {
         paddingTop: 40,
         gap: 50,
     },
-    textInput: {
+    content: {
+        flex: 1,
+        gap: 15,
+        paddingHorizontal: 16,
+        paddingTop: 40,
+        rowGap: 0,
+    },
+    input: {
         borderWidth: 1,
         borderRadius: 5,
         borderColor: Colors.placeholder,
         backgroundColor: Colors.white,
-        paddingHorizontal: 6
-    }
-})
+        paddingHorizontal: 6,
+    },
+    multiLineInput: {
+        padding: 10,
+        borderRadius: 8,
+        borderColor: Colors.placeholder,
+        backgroundColor: Colors.white,
+        height: 150,
+        paddingHorizontal: 6,
+    },
+});
