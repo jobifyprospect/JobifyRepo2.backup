@@ -8,9 +8,8 @@ import {
 import React, {useState} from 'react';
 import {styles} from '../../styles/Globals';
 import {NavigationProp} from '@react-navigation/native';
-import BackButton from '../../components/BackButton';
+// import BackButton from '../../components/BackButton';
 import DynamicButton from '../../components/DynamicButton';
-import Colors from '../../styles/Colors';
 import {createJob} from '../../services/firestore/jobs';
 import {showAlert} from '../../components/AlertDialog';
 import DynamicTextInput from '../../components/DynamicTextInput';
@@ -18,6 +17,7 @@ import {FIREBASE_AUTH, FIRESTORE_TIMESTAMP} from '../../config/firebase';
 import {isNotEmpty} from '../../utils/Utils';
 import uuid from 'react-native-uuid';
 import {Job} from '../../services/interfaces/job';
+import BackButton from '../../components/BackButton';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -45,7 +45,6 @@ export default function PostJob({navigation}: RouterProps) {
 
   async function post() {
     Keyboard.dismiss();
-
     setIsSubmitting(true);
 
     if (!title || !pay || !schedule || !location || !description) {
@@ -71,13 +70,14 @@ export default function PostJob({navigation}: RouterProps) {
       await createJob(newJob);
 
       showAlert('Success', 'Job posted.');
-      setIsSubmitting(false);
       resetForm();
     } catch (error: unknown) {
       showAlert(
         'An error occurred while posting the job, ',
         (error as string) || 'An error occurred',
       );
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -86,12 +86,11 @@ export default function PostJob({navigation}: RouterProps) {
       <View style={localStyles.screen}>
         <View style={localStyles.btnContainerBetween}>
           <BackButton onPress={async () => navigation.goBack()} />
-
           <DynamicButton
             disabled={isSubmitting}
             title="Post"
             type="primary"
-            onPress={() => post()}
+            onPress={post}
           />
         </View>
 
@@ -177,20 +176,5 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 40,
     rowGap: 0,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 5,
-    borderColor: Colors.placeholder,
-    backgroundColor: Colors.white,
-    paddingHorizontal: 6,
-  },
-  multiLineInput: {
-    padding: 10,
-    borderRadius: 8,
-    borderColor: Colors.placeholder,
-    backgroundColor: Colors.white,
-    height: 150,
-    paddingHorizontal: 6,
   },
 });

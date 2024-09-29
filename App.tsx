@@ -64,6 +64,7 @@ const DashboardStack = ({role}: {role: string | null}) => {
         component={DashboardComponent}
         options={{headerShown: false}} // Dashboard Screen
       />
+
       <Stack.Screen
         name="Notification"
         component={Notification}
@@ -185,12 +186,7 @@ export default function App() {
             <Stack.Screen
               name="Post"
               component={PostJob}
-              options={{title: 'Post', headerShown: false}} // Notification Screen
-            />
-            <Stack.Screen
-              name="Notification"
-              component={Notification}
-              options={{title: 'Notifications', headerShown: false}} // Notification Screen
+              options={{title: 'Post', headerShown: false}} // Make sure this exists
             />
           </>
         ) : (

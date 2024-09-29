@@ -3,13 +3,13 @@ import React, {useEffect, useState} from 'react';
 import {styles} from '../../styles/Globals';
 import {NavigationProp} from '@react-navigation/native';
 import NotificationsButton from '../../components/NotificationsButton';
-import {faPlusSquare} from '@fortawesome/free-regular-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import AddJobButton from '../../components/AddJobButton';
 import {FIREBASE_AUTH} from '../../config/firebase';
 import {getJobsByClient} from '../../services/firestore/jobs';
 import {Job} from '../../services/interfaces/job';
 import Colors from '../../styles/Colors';
+import {faPlusSquare} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 // import {formatDate} from '../../utils/Utils';
 
 interface RouterProps {
@@ -42,7 +42,6 @@ const Dashboard = ({navigation}: RouterProps) => {
 
         <View style={localStyles.headerContainer}>
           <Text style={styles.xlargeHeading}> Welcome to Jobify! </Text>
-
           <View>
             {myListings ? (
               <FlatList
@@ -56,14 +55,12 @@ const Dashboard = ({navigation}: RouterProps) => {
                     <View key={item.jobId} style={localStyles.jobCard}>
                       <View style={localStyles.containCard}>
                         <Text style={[styles.regularText, styles.w100]}>
-                          {' '}
-                          {item.title}{' '}
+                          {item.title}
                         </Text>
                         <Text
                           style={[styles.regularText, localStyles.containText]}>
                           {/* {formatDate(item.createdAt)} */}
                         </Text>
-                        {/* <Text style={[styles.regularText, {maxWidth: 100, width: 100}]}> {new Date(item.createdAt.toString()).toISOString()} </Text> */}
                       </View>
                     </View>
                   );

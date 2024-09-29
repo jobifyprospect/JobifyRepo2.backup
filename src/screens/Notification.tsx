@@ -1,9 +1,8 @@
 import {View, Text, StyleSheet} from 'react-native';
 import React from 'react';
+import BackButton from '../components/BackButton';
 import {NavigationProp} from '@react-navigation/native';
 import {styles} from '../styles/Globals';
-import BackButton from '../components/BackButton';
-import DynamicButton from '../components/DynamicButton';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -22,6 +21,7 @@ const Notification = ({navigation}: RouterProps) => {
           <Text style={styles.xlargeHeading}> Notifications </Text>
         </View>
 
+        <View style={localStyles.mainContent} />
         <View style={localStyles.mainContent} />
       </View>
     </View>
