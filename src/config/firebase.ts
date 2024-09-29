@@ -8,5 +8,6 @@ export const FIREBASE_APP = firebase.app();
 export const FIREBASE_AUTH = auth();
 export const FIRESTORE_DB = firestore();
 export const FIRESTORE_STORAGE = storage();
-
+export const FIRESTORE_TIMESTAMP =
+  firebase.firestore.FieldValue.serverTimestamp();
 export const JOBS = FIRESTORE_DB.collection('jobs');

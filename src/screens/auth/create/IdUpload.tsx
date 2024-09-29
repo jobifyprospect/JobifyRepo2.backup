@@ -32,7 +32,7 @@ import {showAlert} from '../../../components/AlertDialog';
 import uuid from 'react-native-uuid';
 import {deleteUploadedImage} from '../../../services/storage/id-delete';
 import {convertImageToBase64} from '../../../utils/Utils';
-import {FIREBASE_AUTH} from '../../../config/firebase';
+import {FIREBASE_AUTH, FIRESTORE_TIMESTAMP} from '../../../config/firebase';
 
 type IDUploadProps = NativeStackScreenProps<RootStackParamList, 'IDUpload'>;
 
@@ -113,23 +113,23 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
       const newAddress: Address = {
         addressId,
         ...address,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt: FIRESTORE_TIMESTAMP,
+        updatedAt: FIRESTORE_TIMESTAMP,
       };
       await createAddress(newAddress);
 
       const newUser: User = {
         userId,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt: FIRESTORE_TIMESTAMP,
+        updatedAt: FIRESTORE_TIMESTAMP,
         roleId,
       };
       await createUser(newUser);
 
       const newRole: Role = {
         roleId,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt: FIRESTORE_TIMESTAMP,
+        updatedAt: FIRESTORE_TIMESTAMP,
       };
 
       if (userType === 'client') {
@@ -141,8 +141,8 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
           validationId,
           addressId,
           phoneNumber,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: FIRESTORE_TIMESTAMP,
+          updatedAt: FIRESTORE_TIMESTAMP,
         };
         await createClient(newClient);
         newRole.clientId = newClient.clientId;
@@ -155,8 +155,8 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
           validationId,
           addressId,
           phoneNumber,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: FIRESTORE_TIMESTAMP,
+          updatedAt: FIRESTORE_TIMESTAMP,
         };
         await createWorker(newWorker);
         newRole.workerId = newWorker.workerId;

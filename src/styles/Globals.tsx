@@ -12,6 +12,7 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     overflow: 'hidden',
   },
+  w100: {maxWidth: 100, width: 100},
   headerContainer: {
     gap: 10,
     paddingBottom: 10,
@@ -50,6 +51,11 @@ export const styles = StyleSheet.create({
   boldText: {
     fontSize: Fonts.sizes.regular,
     fontWeight: Fonts.weights.bold,
+    color: Colors.labelText,
+  },
+  mediumRegularText: {
+    fontSize: Fonts.sizes.medium,
+    fontWeight: Fonts.weights.regular,
     color: Colors.labelText,
   },
   mediumText: {

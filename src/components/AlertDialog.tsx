@@ -1,4 +1,4 @@
-import { Alert } from 'react-native';
+import {Alert} from 'react-native';
 
 export const showAlert = (title: string, message: string) => {
   Alert.alert(
@@ -10,6 +10,6 @@ export const showAlert = (title: string, message: string) => {
         onPress: () => console.log('OK Pressed'),
       },
     ],
-    { cancelable: true }
+    {cancelable: true},
   );
 };

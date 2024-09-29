@@ -20,7 +20,7 @@ import {
   faPesoSign,
   faClock,
   faList,
-  faPencil
+  faPencil,
 } from '@fortawesome/free-solid-svg-icons';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {dynamicTextInputStyles} from '../styles/DynamicTextInput';
@@ -41,7 +41,7 @@ library.add(
   faPesoSign,
   faClock,
   faList,
-  faPencil
+  faPencil,
 );
 
 type InputProps = {

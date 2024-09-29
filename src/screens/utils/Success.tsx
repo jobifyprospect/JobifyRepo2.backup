@@ -5,7 +5,7 @@ import {RootStackParamList} from '../interfaces/RouterStackInterfaceParams';
 
 type SuccessProps = NativeStackScreenProps<RootStackParamList, 'Success'>;
 
-const Success = ({navigation, route}: SuccessProps) => {
+const Success = ({navigation}: SuccessProps) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Account Created Successfully!</Text>

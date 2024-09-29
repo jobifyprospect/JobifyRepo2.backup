@@ -1,25 +1,23 @@
-import { View, Text, StyleSheet, FlatList } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { styles } from '../../styles/Globals';
-import { NavigationProp } from '@react-navigation/native';
+import {View, Text, StyleSheet, FlatList} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {styles} from '../../styles/Globals';
+import {NavigationProp} from '@react-navigation/native';
 import NotificationsButton from '../../components/NotificationsButton';
-import { faPlusSquare } from '@fortawesome/free-regular-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import {faPlusSquare} from '@fortawesome/free-regular-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import AddJobButton from '../../components/AddJobButton';
-import { FIREBASE_AUTH } from '../../config/firebase';
-import { getJobsByClient } from '../../services/firestore/jobs';
-import { Job } from '../../services/interfaces/job';
+import {FIREBASE_AUTH} from '../../config/firebase';
+import {getJobsByClient} from '../../services/firestore/jobs';
+import {Job} from '../../services/interfaces/job';
 import Colors from '../../styles/Colors';
-import { formatDate } from '../../utils/Utils';
+// import {formatDate} from '../../utils/Utils';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Dashboard = ({ navigation }: RouterProps) => {
-
+const Dashboard = ({navigation}: RouterProps) => {
   const [myListings, setMyListings] = useState<Job[]>([]);
-
 
   useEffect(() => {
     const currentUserId = FIREBASE_AUTH.currentUser?.uid;
@@ -36,46 +34,57 @@ const Dashboard = ({ navigation }: RouterProps) => {
     <View style={localStyles.container}>
       <View style={localStyles.screen}>
         <View style={localStyles.btnContainerEnd}>
-          <NotificationsButton type="primary" onPress={async () => navigation.navigate('Notification')} />
+          <NotificationsButton
+            type="primary"
+            onPress={async () => navigation.navigate('Notification')}
+          />
         </View>
 
         <View style={localStyles.headerContainer}>
           <Text style={styles.xlargeHeading}> Welcome to Jobify! </Text>
 
           <View>
-            {
-              myListings ?
-                <FlatList
-                  ListHeaderComponent={<Text style={styles.mediumText}> Recent Posts </Text>}
-                  ListEmptyComponent={<Text> No data.. </Text>}
-                  data={myListings}
-                  renderItem={({ item }) => {
-                    return (
-                      <View key={item.jobId} style={localStyles.jobCard}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Text style={[styles.regularText, { maxWidth: 100, width: 100 }]}> {item.title} </Text>
-                          <Text style={[styles.regularText, { flexDirection: 'row', maxWidth: 130, width: 130, textAlign: 'center' }]}>
-                            {formatDate(item.createdAt)}
-                          </Text>
-                          {/* <Text style={[styles.regularText, {maxWidth: 100, width: 100}]}> {new Date(item.createdAt.toString()).toISOString()} </Text> */}
-                        </View>
+            {myListings ? (
+              <FlatList
+                ListHeaderComponent={
+                  <Text style={styles.mediumText}> Recent Posts </Text>
+                }
+                ListEmptyComponent={<Text> No data.. </Text>}
+                data={myListings}
+                renderItem={({item}) => {
+                  return (
+                    <View key={item.jobId} style={localStyles.jobCard}>
+                      <View style={localStyles.containCard}>
+                        <Text style={[styles.regularText, styles.w100]}>
+                          {' '}
+                          {item.title}{' '}
+                        </Text>
+                        <Text
+                          style={[styles.regularText, localStyles.containText]}>
+                          {/* {formatDate(item.createdAt)} */}
+                        </Text>
+                        {/* <Text style={[styles.regularText, {maxWidth: 100, width: 100}]}> {new Date(item.createdAt.toString()).toISOString()} </Text> */}
                       </View>
-                    )
-                  }
-                  }
-                />
-                :
-                <Text style={[styles.mediumText, { fontWeight: '400' }]}>
-                  Ready to find the worker for you?
-                  {'\n'}
-                  Press the <FontAwesomeIcon icon={faPlusSquare} />  button to get started
-                </Text>
-            }
+                    </View>
+                  );
+                }}
+              />
+            ) : (
+              <Text style={[styles.mediumRegularText]}>
+                Ready to find the worker for you?
+                {'\n'}
+                Press the <FontAwesomeIcon icon={faPlusSquare} /> button to get
+                started
+              </Text>
+            )}
           </View>
         </View>
 
         <View style={localStyles.btnContainerEnd}>
-          <AddJobButton type="primary" onPress={async () => navigation.navigate('Post')} />
+          <AddJobButton
+            type="primary"
+            onPress={async () => navigation.navigate('Post')}
+          />
         </View>
       </View>
     </View>
@@ -86,6 +95,17 @@ const localStyles = StyleSheet.create({
   container: {
     paddingHorizontal: 30,
     flex: 1,
+  },
+  containCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  containText: {
+    flexDirection: 'row',
+    maxWidth: 130,
+    width: 130,
+    textAlign: 'center',
   },
   screen: {
     justifyContent: 'center',
