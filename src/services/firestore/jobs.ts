@@ -13,6 +13,30 @@ export const createJob = async (job: Job): Promise<void> => {
   }
 };
 
+export const queryJob = async (query: any): Promise<Job | any> => {
+  // Query Firestore for matching jobs
+  try {
+    const snapshot = await jobsRef
+      .where('title', '>=', query)
+      .where('title', '<=', query + '\uf8ff') // Range query for title
+      .get();
+
+    if (!snapshot.empty) {
+      const firestoreJobs: Job[] = [];
+      snapshot.forEach(doc => {
+        firestoreJobs.push(doc.data() as Job);
+      });
+      return firestoreJobs;
+    } else {
+      // No jobs found in Firestore
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching jobs from Firestore:', error);
+    showAlert('Error', 'Failed to retrieve jobs from Firestore.');
+  }
+};
+
 //for search only
 export const getJob = async (jobId: string): Promise<Job | undefined> => {
   try {
@@ -46,25 +70,27 @@ export const deleteJob = async (jobId: string): Promise<void> => {
   }
 };
 
-export function getJobsByClient(
-  clientId: string,
-  callback: (jobs: Job[]) => void,
-) {
-  const unsubscribe = jobsRef
-    .where('clientId', '==', clientId)
-    .orderBy('createdAt', 'asc')
-    .onSnapshot(
-      snapshot => {
-        const jobs: Job[] = [];
-        snapshot.forEach(doc => {
-          jobs.push(doc.data() as Job);
-        });
-        callback(jobs);
-      },
-      error => {
-        console.error('Error getting documents:', error);
-      },
-    );
+// Update this to return the unsubscribe function and allow fetching jobs
+export function getJobsByClient(clientId: string): Promise<Job[]> {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = jobsRef
+      .where('clientId', '==', clientId)
+      .orderBy('createdAt', 'asc')
+      .onSnapshot(
+        snapshot => {
+          const jobs: Job[] = [];
+          snapshot.forEach(doc => {
+            jobs.push(doc.data() as Job);
+          });
+          resolve(jobs); // Resolve with the fetched jobs
+        },
+        error => {
+          console.error('Error getting documents:', error);
+          reject(error); // Reject on error
+        },
+      );
 
-  return unsubscribe;
+    // Return the unsubscribe function to be used in the cleanup
+    return () => unsubscribe();
+  });
 }

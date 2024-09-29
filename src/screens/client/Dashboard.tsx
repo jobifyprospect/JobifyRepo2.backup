@@ -1,16 +1,24 @@
-import {View, Text, StyleSheet, FlatList} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  SafeAreaView,
+  ActivityIndicator,
+} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {styles} from '../../styles/Globals';
-import {NavigationProp} from '@react-navigation/native';
 import NotificationsButton from '../../components/NotificationsButton';
 import AddJobButton from '../../components/AddJobButton';
-import {FIREBASE_AUTH} from '../../config/firebase';
-import {getJobsByClient} from '../../services/firestore/jobs';
+import {CURRENT_USER_UID} from '../../config/firebase';
+import {getJobsByClient, queryJob} from '../../services/firestore/jobs';
 import {Job} from '../../services/interfaces/job';
 import Colors from '../../styles/Colors';
 import {faPlusSquare} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-// import {formatDate} from '../../utils/Utils';
+import DynamicTextInput from '../../components/DynamicTextInput';
+import {NavigationProp} from '@react-navigation/native';
+import {formatDateToReadable} from '../../utils/Utils';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -18,71 +26,180 @@ interface RouterProps {
 
 const Dashboard = ({navigation}: RouterProps) => {
   const [myListings, setMyListings] = useState<Job[]>([]);
+  const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true); // Add loading state
+  // Search function to filter jobs based on any string
+  const handleSearch = async (searchTerm: string) => {
+    setSearch(searchTerm);
 
+    if (searchTerm.trim() === '') {
+      setSearchResults(myListings); // Show all listings if search term is empty
+    } else {
+      // Filter jobs from the local myListings state
+      const filteredJobs = myListings.filter(job => {
+        return (
+          job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.pay?.toString().includes(searchTerm) || // Assuming pay is a number
+          job.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.location?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      });
+
+      // If no local results, check Firestore
+      if (filteredJobs.length > 0) {
+        setSearchResults(filteredJobs);
+      } else {
+        // Query Firestore for matching jobs
+        const firestoreJobs = await queryJob(searchTerm);
+        setSearchResults(firestoreJobs);
+      }
+    }
+  };
   useEffect(() => {
-    const currentUserId = FIREBASE_AUTH.currentUser?.uid;
+    const currentUserId = CURRENT_USER_UID;
 
     if (currentUserId) {
-      const unsubscribe = getJobsByClient(currentUserId, setMyListings);
-
-      // Cleanup
-      return () => unsubscribe();
+      setLoading(true); // Start loading
+      getJobsByClient(currentUserId)
+        .then(jobs => {
+          setMyListings(jobs);
+          setSearchResults(jobs); // Initialize search results with fetched jobs
+        })
+        .catch(error => {
+          console.error('Failed to fetch jobs:', error);
+          setLoading(false); // Stop loading on error
+        })
+        .finally(() => {
+          setLoading(false); // Stop loading on error
+        });
     }
   }, []);
 
   return (
     <View style={localStyles.container}>
       <View style={localStyles.screen}>
-        <View style={localStyles.btnContainerEnd}>
+        <SafeAreaView style={localStyles.btnContainerEnd}>
           <NotificationsButton
             type="primary"
             onPress={async () => navigation.navigate('Notification')}
           />
-        </View>
+        </SafeAreaView>
 
         <View style={localStyles.headerContainer}>
-          <Text style={styles.xlargeHeading}> Welcome to Jobify! </Text>
-          <View>
-            {myListings ? (
+          {loading ? ( // Render loading indicator when loading
+            <ActivityIndicator size="large" color={Colors.primary} />
+          ) : myListings.length > 0 ? (
+            <>
+              <Text style={styles.largeHeading}>Jobs Listed</Text>
+              <DynamicTextInput
+                value={search}
+                onChangeText={handleSearch}
+                prefixIcon="magnifying-glass"
+                placeholder="Search"
+                isRequired
+              />
               <FlatList
-                ListHeaderComponent={
-                  <Text style={styles.mediumText}> Recent Posts </Text>
+                data={searchResults}
+                ListEmptyComponent={
+                  <Text style={[styles.regularText, styles.w100]}>
+                    Not Existing
+                  </Text>
                 }
-                ListEmptyComponent={<Text> No data.. </Text>}
-                data={myListings}
-                renderItem={({item}) => {
+                keyExtractor={item => item?.jobId?.toString()}
+                renderItem={({item, index}) => {
+                  const currentItemDate = formatDateToReadable(item.createdAt);
+                  const previousItemDate =
+                    index > 0
+                      ? formatDateToReadable(myListings[index - 1].createdAt)
+                      : null;
+                  const nextItemDate =
+                    index < myListings.length - 1
+                      ? formatDateToReadable(myListings[index + 1].createdAt)
+                      : null;
+
+                  const isGroupStart = currentItemDate !== previousItemDate;
+                  const isGroupEnd = currentItemDate !== nextItemDate;
+
+                  const getCardStyle = () => {
+                    if (isGroupStart && isGroupEnd) {
+                      return {
+                        borderRadius: 8,
+                        borderWidth: 0,
+                      };
+                    } else if (isGroupStart) {
+                      return {
+                        borderTopLeftRadius: 8,
+                        borderTopRightRadius: 8,
+                        borderBottomLeftRadius: 0,
+                        borderBottomRightRadius: 0,
+                        borderBottomWidth: 1,
+                      };
+                    } else if (isGroupEnd) {
+                      return {
+                        borderTopLeftRadius: 0,
+                        borderTopRightRadius: 0,
+                        borderBottomLeftRadius: 8,
+                        borderBottomRightRadius: 8,
+                        borderBottomWidth: 0,
+                      };
+                    } else {
+                      return {
+                        borderRadius: 0,
+                        borderBottomWidth: 1,
+                      };
+                    }
+                  };
+
                   return (
-                    <View key={item.jobId} style={localStyles.jobCard}>
-                      <View style={localStyles.containCard}>
-                        <Text style={[styles.regularText, styles.w100]}>
-                          {item.title}
-                        </Text>
-                        <Text
-                          style={[styles.regularText, localStyles.containText]}>
-                          {/* {formatDate(item.createdAt)} */}
-                        </Text>
+                    <>
+                      {isGroupStart && (
+                        <View style={localStyles.containHeader}>
+                          <Text style={styles.smallSemiBoldText}>
+                            {currentItemDate}
+                          </Text>
+                        </View>
+                      )}
+                      <View
+                        key={item.jobId}
+                        style={[localStyles.jobCard, getCardStyle()]}>
+                        <View style={localStyles.containCard}>
+                          <Text style={[styles.regularText, styles.bold]}>
+                            {item.title}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.regularText,
+                              localStyles.containText,
+                            ]}>
+                            Php {item.pay}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
+                    </>
                   );
                 }}
               />
-            ) : (
+            </>
+          ) : (
+            <>
+              <Text style={styles.xlargeHeading}> Welcome to Jobify! </Text>
               <Text style={[styles.mediumRegularText]}>
                 Ready to find the worker for you?
                 {'\n'}
                 Press the <FontAwesomeIcon icon={faPlusSquare} /> button to get
                 started
               </Text>
-            )}
-          </View>
+            </>
+          )}
         </View>
 
-        <View style={localStyles.btnContainerEnd}>
+        <SafeAreaView style={localStyles.btnContainerEnd}>
           <AddJobButton
             type="primary"
             onPress={async () => navigation.navigate('Post')}
           />
-        </View>
+        </SafeAreaView>
       </View>
     </View>
   );
@@ -100,14 +217,16 @@ const localStyles = StyleSheet.create({
   },
   containText: {
     flexDirection: 'row',
-    maxWidth: 130,
-    width: 130,
     textAlign: 'center',
+  },
+  containHeader: {
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   screen: {
     justifyContent: 'center',
     flex: 1,
-    paddingTop: 50,
+    paddingTop: 25,
     paddingBottom: 100,
   },
   btnContainerEnd: {
@@ -122,14 +241,9 @@ const localStyles = StyleSheet.create({
   },
   headerContainer: {
     flex: 1,
-    paddingTop: 100,
-    gap: 50,
   },
   jobCard: {
-    borderWidth: 1,
-    shadowOpacity: 1,
-    borderColor: Colors.primaryWithOpacity10,
-    shadowColor: Colors.primaryWithOpacity10,
+    borderColor: Colors.placeholder,
     backgroundColor: Colors.white,
     paddingVertical: 10,
     borderRadius: 5,

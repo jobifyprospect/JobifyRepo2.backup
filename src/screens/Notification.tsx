@@ -3,6 +3,7 @@ import React from 'react';
 import BackButton from '../components/BackButton';
 import {NavigationProp} from '@react-navigation/native';
 import {styles} from '../styles/Globals';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -12,10 +13,10 @@ const Notification = ({navigation}: RouterProps) => {
   return (
     <View style={localStyles.container}>
       <View style={localStyles.screen}>
-        <View style={localStyles.btnContainerBetween}>
+        <SafeAreaView style={localStyles.btnContainerBetween}>
           <BackButton onPress={async () => navigation.goBack()} />
           {/* <DynamicButton title='' type='primary' onPress={async () => navigation.navigate('Notification')} /> */}
-        </View>
+        </SafeAreaView>
 
         <View style={localStyles.headerContainer}>
           <Text style={styles.xlargeHeading}> Notifications </Text>
@@ -38,7 +39,7 @@ const localStyles = StyleSheet.create({
   screen: {
     justifyContent: 'center',
     flex: 1,
-    paddingVertical: 50,
+    paddingVertical: 25,
   },
   btnContainerEnd: {
     alignItems: 'flex-end',
