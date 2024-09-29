@@ -1,4 +1,5 @@
 // TODO VALIDATORS
+import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import RNFS from 'react-native-fs'; // Required for converting to base64
 
 export const isNotEmpty = (input: string): boolean => {
@@ -74,3 +75,22 @@ export const convertImageToBase64 = async (
     return null;
   }
 };
+
+interface FirebaseTimeStampT extends FirebaseFirestoreTypes.Timestamp {
+  seconds: number,
+  nanoseconds: number
+}
+
+export function formatDate(date: FirebaseTimeStampT) {
+  const newDate = new Date(date.seconds * 1000 + date.nanoseconds / 1000000);
+
+  const formattedDate = newDate.toLocaleString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    month: '2-digit',
+    day: '2-digit',
+    year: '2-digit',
+  });
+
+  return formattedDate;
+}

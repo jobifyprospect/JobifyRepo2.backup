@@ -5,34 +5,38 @@ import { NavigationProp } from '@react-navigation/native';
 import BackButton from '../../components/BackButton';
 import DynamicButton from '../../components/DynamicButton';
 import Colors from '../../styles/Colors';
-import { JOBS, USERS, FIREBASE_AUTH } from '../../config/firebase';
+import { createJob } from '../../services/firestore/jobs';
 import { showAlert } from '../../components/AlertDialog';
 import DynamicTextInput from '../../components/DynamicTextInput';
+import { FIREBASE_AUTH } from '../../config/firebase';
+import { firebase } from '@react-native-firebase/firestore';
 import { isNotEmpty } from '../../utils/Utils';
 import uuid from 'react-native-uuid';
-import { firebase } from '@react-native-firebase/firestore';
+import { Job } from '../../services/interfaces/job';
+
+
 interface RouterProps {
     navigation: NavigationProp<any, any>;
 }
 
-
 export default function PostJob({ navigation }: RouterProps) {
 
-    const [category, setCategory] = useState('');
-    const [rate, setRate] = useState('');
+    const [title, setTitle] = useState('');
+    const [pay, setPay] = useState('');
     const [schedule, setSchedule] = useState('');
-    const [address, setAddress] = useState('');
+    const [location, setLocation] = useState('');
     const [description, setDescription] = useState('');
-
+    const [status, setStatus] = useState<'open' | 'closed' | 'pending' | undefined>(undefined);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
 
     function resetForm() {
-        setCategory('');
-        setRate('');
+        setTitle('');
+        setPay('');
         setSchedule('');
-        setAddress('');
+        setLocation('');
         setDescription('');
+        setStatus(undefined);
     }
 
     async function post() {
@@ -40,27 +44,31 @@ export default function PostJob({ navigation }: RouterProps) {
 
         setIsSubmitting(true);
 
-        if (!category || !rate || !schedule || !address || !description) {
+        if (!title || !pay || !schedule || !location || !description) {
             setIsSubmitting(false);
-            showAlert('Missing fields.', 'Please fill out all required fields.')
+            showAlert('Missing fields.', 'Please fill out all required fields.');
             return;
         }
 
         try {
-            await JOBS.add({
-                job_id: uuid.v4().toString(),
-                client_id: FIREBASE_AUTH.currentUser?.uid,
-                category,
-                rate,
-                schedule,
-                address,
+            const newJob: Job = {
+                location,
+                title,
                 description,
-            });
+                schedule,
+                pay: parseInt(pay, 10),
+                status: status ? status : 'pending',
+                jobId: uuid.v4().toString(),
+                clientId: FIREBASE_AUTH.currentUser?.uid as string,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            };
+
+            await createJob(newJob);
 
             showAlert('Success', 'Job posted.');
             setIsSubmitting(false);
             resetForm();
-
         } catch (error: unknown) {
             showAlert('An error occurred while posting the job, ', error as string || 'An error occurred');
         }
@@ -81,21 +89,21 @@ export default function PostJob({ navigation }: RouterProps) {
 
                 <View style={localStyles.content}>
                     <DynamicTextInput
-                        label="Category"
-                        value={category}
-                        onChangeText={setCategory}
-                        isValid={isNotEmpty(category)}
+                        label="Job Title"
+                        value={title}
+                        onChangeText={setTitle}
+                        isValid={isNotEmpty(title)}
                         suffixIcon="list"
                         keyboardType="default"
-                        placeholder="Labor, digital, marketing.."
+                        placeholder="Helper, Painting, Cleaning..."
                         isRequired
                     />
 
                     <DynamicTextInput
                         keyboardType="decimal-pad"
-                        value={rate}
-                        onChangeText={setRate}
-                        isValid={isNotEmpty(rate)}
+                        value={pay}
+                        onChangeText={setPay}
+                        isValid={isNotEmpty(pay)}
                         suffixIcon="peso-sign"
                         label="Rate"
                         placeholder="Rate/hr"
@@ -113,9 +121,9 @@ export default function PostJob({ navigation }: RouterProps) {
                     />
 
                     <DynamicTextInput
-                        value={address}
-                        onChangeText={setAddress}
-                        isValid={isNotEmpty(address)}
+                        value={location}
+                        onChangeText={setLocation}
+                        isValid={isNotEmpty(location)}
                         suffixIcon="location-dot"
                         label="Address"
                         placeholder="Job Location"

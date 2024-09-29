@@ -65,11 +65,6 @@ const DashboardStack = ({ role }: { role: string | null }) => {
         component={DashboardComponent}
         options={{ headerShown: false }} // Dashboard Screen
       />
-      <Stack.Screen
-        name="Notification"
-        component={Notification}
-        options={{title: 'Notifications'}} // Notification Screen
-      />
     </Stack.Navigator>
   );
 };

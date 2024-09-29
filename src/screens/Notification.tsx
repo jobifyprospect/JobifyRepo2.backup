@@ -15,7 +15,7 @@ const Notification = ({ navigation }: RouterProps) => {
       <View style={localStyles.screen}>
         <View style={localStyles.btnContainerBetween}>
           <BackButton onPress={async () => navigation.goBack()} />
-          <DynamicButton title='Post' type='primary' onPress={async () => navigation.navigate('Notification')} />
+          {/* <DynamicButton title='' type='primary' onPress={async () => navigation.navigate('Notification')} /> */}
         </View>
 
         <View style={localStyles.headerContainer}>
@@ -35,7 +35,7 @@ export default Notification;
 const localStyles = StyleSheet.create({
   container: {
     paddingHorizontal: 30,
-    flex: 1
+    flex: 1,
   },
   screen: {
     justifyContent: 'center',
