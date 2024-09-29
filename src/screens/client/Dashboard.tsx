@@ -26,7 +26,7 @@ const Dashboard = ({navigation}: RouterProps) => {
           <Text style={styles.xlargeHeading}> Welcome to Jobify! </Text>
 
           <View>
-            <Text style={[styles.mediumText, {fontWeight: '400'}]}>
+            <Text style={[styles.mediumRegularText]}>
               Ready to find the worker for you?
               {'\n'}
               Press the <FontAwesomeIcon icon={faPlusSquare} /> button to get

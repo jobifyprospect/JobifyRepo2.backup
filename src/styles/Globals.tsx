@@ -52,6 +52,11 @@ export const styles = StyleSheet.create({
     fontWeight: Fonts.weights.bold,
     color: Colors.labelText,
   },
+  mediumRegularText: {
+    fontSize: Fonts.sizes.medium,
+    fontWeight: Fonts.weights.regular,
+    color: Colors.labelText,
+  },
   mediumText: {
     fontSize: Fonts.sizes.medium,
     fontWeight: Fonts.weights.semiBold,
