@@ -1,16 +1,13 @@
 import React, {useState, forwardRef, useImperativeHandle} from 'react';
 import {
   TouchableOpacity,
-  Text,
   StyleSheet,
   ViewStyle,
-  TextStyle,
   ActivityIndicator,
 } from 'react-native';
-import {styles} from '../styles/Globals';
 import Colors from '../styles/Colors';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faBell } from '@fortawesome/free-regular-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faBell} from '@fortawesome/free-regular-svg-icons';
 
 interface NotificationsButtonProps {
   onPress: () => Promise<void>;
@@ -51,10 +48,6 @@ const NotificationsButton = forwardRef<
     disabled ? dynamicButtonStyles.disabled : {},
   ];
 
-  const textStyle: TextStyle = {
-    color: type === 'primary' ? Colors.white : Colors.primary,
-  };
-
   return (
     <TouchableOpacity
       style={containerStyle}
@@ -86,7 +79,7 @@ const dynamicButtonStyles = StyleSheet.create({
   primary: {
     backgroundColor: Colors.white,
     borderWidth: 1,
-    borderColor: Colors.placeholder
+    borderColor: Colors.placeholder,
   },
   secondary: {
     backgroundColor: 'transparent',

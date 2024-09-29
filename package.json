@@ -10,7 +10,8 @@
     "rebuild-packages": "rm -rf node_modules package-lock.json && npm i",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "reset-cache": "rm -rf node_modules/ && npm cache clean --force && watchman watch-del-all && rm -rf ios/build/ && cd android && ./gradlew clean && cd .."
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",

@@ -1,15 +1,14 @@
-import { View, Text, Button, StyleSheet } from 'react-native';
+import {View, Text, StyleSheet} from 'react-native';
 import React from 'react';
-import { NavigationProp } from '@react-navigation/native';
-import { styles } from '../styles/Globals';
 import BackButton from '../components/BackButton';
-import DynamicButton from '../components/DynamicButton';
+import {NavigationProp} from '@react-navigation/native';
+import {styles} from '../styles/Globals';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Notification = ({ navigation }: RouterProps) => {
+const Notification = ({navigation}: RouterProps) => {
   return (
     <View style={localStyles.container}>
       <View style={localStyles.screen}>
@@ -22,9 +21,8 @@ const Notification = ({ navigation }: RouterProps) => {
           <Text style={styles.xlargeHeading}> Notifications </Text>
         </View>
 
-        <View style={localStyles.mainContent}>
-
-        </View>
+        <View style={localStyles.mainContent} />
+        <View style={localStyles.mainContent} />
       </View>
     </View>
   );
@@ -46,8 +44,8 @@ const localStyles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   btnContainerBetween: {
-    flexDirection: "row",
-    justifyContent: 'space-between'
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   headerContainer: {
     paddingTop: 40,
@@ -57,6 +55,6 @@ const localStyles = StyleSheet.create({
     flex: 1,
     gap: 15,
     paddingHorizontal: 16,
-    paddingTop: 40
-  }
-})
+    paddingTop: 40,
+  },
+});
