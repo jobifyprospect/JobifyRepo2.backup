@@ -13,6 +13,7 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   w100: {maxWidth: 100, width: 100},
+  bold: {fontWeight: Fonts.weights.bold},
   headerContainer: {
     gap: 10,
     paddingBottom: 10,

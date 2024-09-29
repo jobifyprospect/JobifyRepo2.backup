@@ -91,7 +91,7 @@ const Dashboard = ({navigation}: RouterProps) => {
             <ActivityIndicator size="large" color={Colors.primary} />
           ) : myListings.length > 0 ? (
             <>
-              <Text style={styles.mediumTextBlue}>Jobs Listed</Text>
+              <Text style={styles.largeHeading}>Jobs Listed</Text>
               <DynamicTextInput
                 value={search}
                 onChangeText={handleSearch}
@@ -164,7 +164,7 @@ const Dashboard = ({navigation}: RouterProps) => {
                         key={item.jobId}
                         style={[localStyles.jobCard, getCardStyle()]}>
                         <View style={localStyles.containCard}>
-                          <Text style={[styles.regularText, styles.w100]}>
+                          <Text style={[styles.regularText, styles.bold]}>
                             {item.title}
                           </Text>
                           <Text
