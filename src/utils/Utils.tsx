@@ -1,5 +1,5 @@
 // TODO VALIDATORS
-import {FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
+import {FieldValue, FirebaseFirestoreTypes, Timestamp} from '@react-native-firebase/firestore';
 import RNFS from 'react-native-fs'; // Required for converting to base64
 
 export const isNotEmpty = (input: string): boolean => {
@@ -94,3 +94,15 @@ export function formatDate(date: FirebaseTimeStampT) {
 
   return formattedDate;
 }
+
+// Helper function to format the date
+export const formatDateToReadable = (date: Timestamp | FieldValue) => {
+  const dateStr = date?.toString();
+  const dateObj = date instanceof Timestamp ? date.toDate() : new Date(dateStr);
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(dateObj);
+};

@@ -21,6 +21,7 @@ import {
   faClock,
   faList,
   faPencil,
+  faMagnifyingGlass,
 } from '@fortawesome/free-solid-svg-icons';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {dynamicTextInputStyles} from '../styles/DynamicTextInput';
@@ -42,10 +43,11 @@ library.add(
   faClock,
   faList,
   faPencil,
+  faMagnifyingGlass,
 );
 
 type InputProps = {
-  label: string;
+  label?: string;
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
@@ -117,14 +119,16 @@ const DynamicTextInput = forwardRef<TextInput, InputProps>(
     return (
       <View style={dynamicTextInputStyles.container}>
         {/* Label */}
-        <View style={dynamicTextInputStyles.labelContainer}>
-          <Text style={styles.smallSemiBoldText}>
-            {label}{' '}
-            {isRequired && (
-              <Text style={dynamicTextInputStyles.required}>*</Text>
-            )}
-          </Text>
-        </View>
+        {label && (
+          <View style={dynamicTextInputStyles.labelContainer}>
+            <Text style={styles.smallSemiBoldText}>
+              {label}{' '}
+              {isRequired && (
+                <Text style={dynamicTextInputStyles.required}>*</Text>
+              )}
+            </Text>
+          </View>
+        )}
 
         <View
           style={[

@@ -3,7 +3,7 @@ import Colors from './Colors';
 //TODO ALIGN TO FIGMA DESIGN
 export const dynamicTextInputStyles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    paddingVertical: 10,
   },
   labelContainer: {
     marginBottom: 6,

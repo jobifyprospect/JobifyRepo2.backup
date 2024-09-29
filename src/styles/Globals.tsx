@@ -63,6 +63,11 @@ export const styles = StyleSheet.create({
     fontWeight: Fonts.weights.semiBold,
     color: Colors.labelText,
   },
+  mediumTextBlue: {
+    fontSize: Fonts.sizes.medium,
+    fontWeight: Fonts.weights.semiBold,
+    color: Colors.primary,
+  },
   largeHeading: {
     fontSize: Fonts.sizes.large,
     fontWeight: Fonts.weights.bold,
