@@ -1,16 +1,13 @@
 import React, {useState, forwardRef, useImperativeHandle} from 'react';
 import {
   TouchableOpacity,
-  Text,
   StyleSheet,
   ViewStyle,
-  TextStyle,
   ActivityIndicator,
 } from 'react-native';
-import {styles} from '../styles/Globals';
 import Colors from '../styles/Colors';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faPlus} from '@fortawesome/free-solid-svg-icons';
 
 interface AddJobButtonProps {
   onPress: () => Promise<void>;
@@ -50,10 +47,6 @@ const AddJobButton = forwardRef<
       : dynamicButtonStyles.secondary,
     disabled ? dynamicButtonStyles.disabled : {},
   ];
-
-  const textStyle: TextStyle = {
-    color: type === 'primary' ? Colors.white : Colors.primary,
-  };
 
   return (
     <TouchableOpacity

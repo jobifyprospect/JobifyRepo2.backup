@@ -7,6 +7,10 @@ export interface Address {
   region: string;
   postalCode: string;
   country: string;
-  createdAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
-  updatedAt: FirebaseFirestoreTypes.Timestamp | FirebaseFirestoreTypes.FieldValue;
+  createdAt:
+    | FirebaseFirestoreTypes.Timestamp
+    | FirebaseFirestoreTypes.FieldValue;
+  updatedAt:
+    | FirebaseFirestoreTypes.Timestamp
+    | FirebaseFirestoreTypes.FieldValue;
 }
