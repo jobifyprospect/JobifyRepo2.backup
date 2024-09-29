@@ -13,7 +13,7 @@ import DynamicButton from '../../components/DynamicButton';
 import {createJob} from '../../services/firestore/jobs';
 import {showAlert} from '../../components/AlertDialog';
 import DynamicTextInput from '../../components/DynamicTextInput';
-import {FIREBASE_AUTH, FIRESTORE_TIMESTAMP} from '../../config/firebase';
+import {CURRENT_USER_UID, FIRESTORE_TIMESTAMP} from '../../config/firebase';
 import {isNotEmpty} from '../../utils/Utils';
 import uuid from 'react-native-uuid';
 import {Job} from '../../services/interfaces/job';
@@ -62,7 +62,7 @@ export default function PostJob({navigation}: RouterProps) {
         pay: parseInt(pay, 10),
         status: status ? status : 'pending',
         jobId: uuid.v4().toString(),
-        clientId: FIREBASE_AUTH.currentUser?.uid as string,
+        clientId: CURRENT_USER_UID as string,
         createdAt: FIRESTORE_TIMESTAMP,
         updatedAt: FIRESTORE_TIMESTAMP,
       };

@@ -10,4 +10,6 @@ export const FIRESTORE_DB = firestore();
 export const FIRESTORE_STORAGE = storage();
 export const FIRESTORE_TIMESTAMP =
   firebase.firestore.FieldValue.serverTimestamp();
+export const CURRENT_USER_UID = FIREBASE_AUTH.currentUser?.uid;
+
 export const JOBS = FIRESTORE_DB.collection('jobs');

@@ -3,7 +3,7 @@ import React, {useEffect, useState} from 'react';
 import {styles} from '../styles/Globals';
 import Colors from '../styles/Colors';
 import {getJobsByClient} from '../services/firestore/jobs';
-import {FIREBASE_AUTH} from '../config/firebase';
+import {CURRENT_USER_UID} from '../config/firebase';
 import {Job} from '../services/interfaces/job';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faPlusSquare} from '@fortawesome/free-regular-svg-icons/faPlusSquare';
@@ -21,13 +21,22 @@ export default function Transaction() {
   }
 
   useEffect(() => {
-    const currentUserId = FIREBASE_AUTH.currentUser?.uid;
+    const currentUserId = CURRENT_USER_UID;
 
     if (currentUserId) {
-      const unsubscribe = getJobsByClient(currentUserId, setMyListings);
-
-      // Cleanup
-      return () => unsubscribe();
+      // setLoading(true); // Start loading
+      getJobsByClient(currentUserId)
+        .then(jobs => {
+          setMyListings(jobs);
+          // setSearchResults(jobs); // Initialize search results with fetched jobs
+        })
+        .catch(error => {
+          console.error('Failed to fetch jobs:', error);
+          // setLoading(false); // Stop loading on error
+        })
+        .finally(() => {
+          // setLoading(false); // Stop loading on error
+        });
     }
   }, []);
 

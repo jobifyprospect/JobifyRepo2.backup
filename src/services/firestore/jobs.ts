@@ -70,7 +70,8 @@ export const deleteJob = async (jobId: string): Promise<void> => {
   }
 };
 
-export async function getJobsByClient(clientId: string): Promise<Job[]> {
+// Update this to return the unsubscribe function and allow fetching jobs
+export function getJobsByClient(clientId: string): Promise<Job[]> {
   return new Promise((resolve, reject) => {
     const unsubscribe = jobsRef
       .where('clientId', '==', clientId)
@@ -81,15 +82,15 @@ export async function getJobsByClient(clientId: string): Promise<Job[]> {
           snapshot.forEach(doc => {
             jobs.push(doc.data() as Job);
           });
-          resolve(jobs); // Resolve the promise with the jobs array
+          resolve(jobs); // Resolve with the fetched jobs
         },
         error => {
           console.error('Error getting documents:', error);
-          reject(error); // Reject the promise on error
+          reject(error); // Reject on error
         },
       );
 
-    // Optional: Return an unsubscribe function if needed later
-    return unsubscribe;
+    // Return the unsubscribe function to be used in the cleanup
+    return () => unsubscribe();
   });
 }

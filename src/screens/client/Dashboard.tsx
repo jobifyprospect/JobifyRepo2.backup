@@ -10,7 +10,7 @@ import React, {useEffect, useState} from 'react';
 import {styles} from '../../styles/Globals';
 import NotificationsButton from '../../components/NotificationsButton';
 import AddJobButton from '../../components/AddJobButton';
-import {FIREBASE_AUTH} from '../../config/firebase';
+import {CURRENT_USER_UID} from '../../config/firebase';
 import {getJobsByClient, queryJob} from '../../services/firestore/jobs';
 import {Job} from '../../services/interfaces/job';
 import Colors from '../../styles/Colors';
@@ -57,7 +57,7 @@ const Dashboard = ({navigation}: RouterProps) => {
     }
   };
   useEffect(() => {
-    const currentUserId = FIREBASE_AUTH.currentUser?.uid;
+    const currentUserId = CURRENT_USER_UID;
 
     if (currentUserId) {
       setLoading(true); // Start loading
@@ -65,10 +65,12 @@ const Dashboard = ({navigation}: RouterProps) => {
         .then(jobs => {
           setMyListings(jobs);
           setSearchResults(jobs); // Initialize search results with fetched jobs
-          setLoading(false); // Stop loading
         })
         .catch(error => {
           console.error('Failed to fetch jobs:', error);
+          setLoading(false); // Stop loading on error
+        })
+        .finally(() => {
           setLoading(false); // Stop loading on error
         });
     }
