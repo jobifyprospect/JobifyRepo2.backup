@@ -107,6 +107,7 @@ const DynamicDropdown = forwardRef(
                 data={options}
                 keyExtractor={item => item.id}
                 renderItem={renderOption}
+                removeClippedSubviews={false}
               />
             </View>
           </TouchableOpacity>

@@ -16,14 +16,10 @@ import Background from '../../../components/Background';
 import DynamicButton from '../../../components/DynamicButton';
 import {firebase} from '@react-native-firebase/firestore';
 import {createAddress} from '../../../services/firestore/addresses';
-import {createClient} from '../../../services/firestore/clients';
 import {createRole} from '../../../services/firestore/roles';
 import {createUser} from '../../../services/firestore/users';
-import {createWorker} from '../../../services/firestore/workers';
 import {uploadImage} from '../../../services/storage/id-upload';
 import {Address} from '../../../services/interfaces/address';
-import {Client} from '../../../services/interfaces/client';
-import {Worker} from '../../../services/interfaces/worker';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
 import {User} from '../../../services/interfaces/user';
@@ -32,7 +28,7 @@ import {showAlert} from '../../../components/AlertDialog';
 import uuid from 'react-native-uuid';
 import {deleteUploadedImage} from '../../../services/storage/id-delete';
 import {convertImageToBase64} from '../../../utils/Utils';
-import {FIREBASE_AUTH, FIRESTORE_TIMESTAMP} from '../../../config/firebase';
+import {FIRESTORE_TIMESTAMP} from '../../../config/firebase';
 
 type IDUploadProps = NativeStackScreenProps<RootStackParamList, 'IDUpload'>;
 
@@ -82,9 +78,9 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
         .auth()
         .createUserWithEmailAndPassword(email, password);
       userId = authUser.user.uid;
-      const roleId = uuid.v4().toString();
-      const addressId = uuid.v4().toString();
-      const validationId = uuid.v4().toString();
+
+      const addressId = uuid.v4().toString(); // Unique address ID
+      const validationId = uuid.v4().toString(); // Unique validation ID
 
       const frontImageBase64 = await convertImageToBase64(idImageFront);
       const backImageBase64 = await convertImageToBase64(idImageBack);
@@ -118,51 +114,42 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
       };
       await createAddress(newAddress);
 
+      // Create roles
+      const clientRoleId = uuid.v4().toString(); // Unique client role ID
+      const workerRoleId = uuid.v4().toString(); // Unique worker role ID
+
       const newUser: User = {
         userId,
         createdAt: FIRESTORE_TIMESTAMP,
         updatedAt: FIRESTORE_TIMESTAMP,
-        roleId,
+        roleId: [clientRoleId, workerRoleId], // Store both role IDs
+        firstName,
+        lastName,
+        defaultRole: userType == 'client' ? clientRoleId : workerRoleId,
+        profilePicture: selfieImageUrl,
+        validationId,
+        addressId,
+        phoneNumber,
       };
       await createUser(newUser);
 
-      const newRole: Role = {
-        roleId,
+      // Create roles for client and worker
+      const clientRole: Role = {
+        roleId: clientRoleId,
         createdAt: FIRESTORE_TIMESTAMP,
         updatedAt: FIRESTORE_TIMESTAMP,
+        clientId: uuid.v4().toString(), // Create a unique client ID
       };
 
-      if (userType === 'client') {
-        const newClient: Client = {
-          clientId: uuid.v4().toString(),
-          firstName,
-          lastName,
-          profilePicture: selfieImageUrl,
-          validationId,
-          addressId,
-          phoneNumber,
-          createdAt: FIRESTORE_TIMESTAMP,
-          updatedAt: FIRESTORE_TIMESTAMP,
-        };
-        await createClient(newClient);
-        newRole.clientId = newClient.clientId;
-      } else if (userType === 'worker') {
-        const newWorker: Worker = {
-          workerId: uuid.v4().toString(),
-          firstName,
-          lastName,
-          profilePicture: selfieImageUrl,
-          validationId,
-          addressId,
-          phoneNumber,
-          createdAt: FIRESTORE_TIMESTAMP,
-          updatedAt: FIRESTORE_TIMESTAMP,
-        };
-        await createWorker(newWorker);
-        newRole.workerId = newWorker.workerId;
-      }
+      const workerRole: Role = {
+        roleId: workerRoleId,
+        createdAt: FIRESTORE_TIMESTAMP,
+        updatedAt: FIRESTORE_TIMESTAMP,
+        workerId: uuid.v4().toString(), // Create a unique worker ID
+      };
 
-      await createRole(newRole);
+      await createRole(clientRole);
+      await createRole(workerRole);
 
       showAlert('Success', 'Account created successfully!');
     } catch (error) {
@@ -170,7 +157,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
 
       // Rollback logic
       if (userId) {
-        await FIREBASE_AUTH.currentUser?.delete();
+        await firebase.auth().currentUser?.delete();
       }
       if (frontImageUrl) {
         await deleteUploadedImage(frontImageUrl);

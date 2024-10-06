@@ -5,7 +5,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {styles} from '../../styles/Globals';
 import {NavigationProp} from '@react-navigation/native';
 import DynamicButton from '../../components/DynamicButton';
@@ -17,6 +17,7 @@ import {isNotEmpty} from '../../utils/Utils';
 import uuid from 'react-native-uuid';
 import {Job} from '../../services/interfaces/job';
 import BackButton from '../../components/BackButton';
+import {getUser} from '../../services/firestore/users';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -32,17 +33,27 @@ export default function PostJob({navigation}: RouterProps) {
     'open' | 'closed' | 'pending' | undefined
   >(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<any>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Fetch the current user UID when the component mounts
+  // Fetch the current user UID only once when the component mounts
   useEffect(() => {
     const fetchCurrentUserId = async () => {
-      const uid = await getCurrentUserUID();
-      setCurrentUserId(uid);
+      try {
+        const uid: string | null = await getCurrentUserUID();
+        if (uid) {
+          const currentRole = await getUser(uid);
+          if (currentRole && currentRole.defaultRole) {
+            setCurrentUserId(currentRole.defaultRole);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user ID:', error);
+        showAlert('Error', 'Failed to fetch user ID.');
+      }
     };
 
     fetchCurrentUserId();
-  }, []);
+  }, [currentUserId]);
 
   function resetForm() {
     setTitle('');
@@ -53,7 +64,10 @@ export default function PostJob({navigation}: RouterProps) {
     setStatus(undefined);
   }
 
-  async function post() {
+  const post = useCallback(async () => {
+    if (isSubmitting) {
+      return;
+    } // Prevent double submission
     Keyboard.dismiss();
     setIsSubmitting(true);
 
@@ -63,11 +77,8 @@ export default function PostJob({navigation}: RouterProps) {
       showAlert('Missing fields.', 'Please fill out all required fields.');
       return;
     }
-
     if (!currentUserId) {
-      setIsSubmitting(false);
-      showAlert('User not found', 'Unable to retrieve user information.');
-      return;
+      return; // If currentUserId is not available, don't proceed
     }
 
     try {
@@ -86,8 +97,8 @@ export default function PostJob({navigation}: RouterProps) {
 
       await createJob(newJob);
       showAlert('Success', 'Job posted.');
-      navigation.goBack();
       resetForm();
+      navigation.navigate('ClientDashboardScreen', {updateList: true});
     } catch (error) {
       showAlert(
         'An error occurred while posting the job.',
@@ -96,7 +107,17 @@ export default function PostJob({navigation}: RouterProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }
+  }, [
+    currentUserId,
+    title,
+    pay,
+    schedule,
+    location,
+    description,
+    status,
+    navigation,
+    isSubmitting,
+  ]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -107,12 +128,12 @@ export default function PostJob({navigation}: RouterProps) {
             disabled={isSubmitting}
             title="Post"
             type="primary"
-            onPress={post}
+            onPress={post} // Only call post on button press
           />
         </View>
 
         <View style={localStyles.headerContainer}>
-          <Text style={styles.xlargeHeading}> Post a Job </Text>
+          <Text style={styles.largeHeading}>Post a Job</Text>
         </View>
 
         <View style={localStyles.content}>
@@ -175,23 +196,18 @@ export default function PostJob({navigation}: RouterProps) {
 const localStyles = StyleSheet.create({
   screen: {
     justifyContent: 'center',
-    flex: 1,
-    paddingVertical: 50,
     paddingHorizontal: 30,
+    flex: 1,
+    paddingTop: 25,
   },
   btnContainerBetween: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   headerContainer: {
-    paddingTop: 40,
-    gap: 50,
+    paddingBottom: 36,
   },
   content: {
     flex: 1,
-    gap: 15,
-    paddingHorizontal: 16,
-    paddingTop: 40,
-    rowGap: 0,
   },
 });
