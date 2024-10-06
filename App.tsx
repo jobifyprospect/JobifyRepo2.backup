@@ -34,6 +34,8 @@ import {showAlert} from './src/components/AlertDialog';
 import Notification from './src/screens/Notification';
 import PostJob from './src/screens/client/PostJob';
 import {enableScreens} from 'react-native-screens';
+import SplashScreen from './src/screens/Splashscreen';
+import LoadingScreen from './src/screens/utils/LoadingScreen';
 
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
@@ -56,20 +58,38 @@ export const ProfileIcon = ({color}: {color: string}) => (
 const DashboardStack = ({role}: {role: string | null}) => {
   const DashboardComponent =
     role === 'worker' ? WorkerDashboard : ClientDashboard;
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false); // Simulate loading time, replace with your logic
+    }, 2000); // Set your desired loading time
+
+    return () => clearTimeout(timer); // Cleanup on unmount
+  }, []);
 
   return (
     <Stack.Navigator>
-      <Stack.Screen
-        name="ClientDashboardScreen"
-        component={DashboardComponent}
-        options={{headerShown: false}} // Dashboard Screen
-      />
-
-      <Stack.Screen
-        name="Notification"
-        component={Notification}
-        options={{title: 'Notifications', headerShown: false}} // Notification Screen
-      />
+      {isLoading ? (
+        <Stack.Screen
+          name="Loading"
+          component={LoadingScreen}
+          options={{headerShown: false}} // Hide header for Loading Screen
+        />
+      ) : (
+        <>
+          <Stack.Screen
+            name="ClientDashboardScreen"
+            component={DashboardComponent}
+            options={{headerShown: false}} // Dashboard Screen
+          />
+          <Stack.Screen
+            name="Notification"
+            component={Notification}
+            options={{title: 'Notifications', headerShown: false}} // Notification Screen
+          />
+        </>
+      )}
     </Stack.Navigator>
   );
 };
@@ -117,8 +137,16 @@ const TabLayout = ({role}: {role: string | null}) => {
         children={() => <DashboardStack role={role} />} // Stack for Dashboard
         options={{headerShown: false}}
       />
-      <Tab.Screen name="Transaction" component={Transaction} />
-      <Tab.Screen name="Profile" component={Profile} />
+      <Tab.Screen
+        name="Transaction"
+        component={Transaction}
+        options={{headerShown: false}}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+        options={{headerShown: false}}
+      />
     </Tab.Navigator>
   );
 };
@@ -126,6 +154,7 @@ const TabLayout = ({role}: {role: string | null}) => {
 export default function App() {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
@@ -139,12 +168,12 @@ export default function App() {
               .get();
             if (userDoc.exists) {
               const userData = userDoc.data();
-              if (userData && userData.roleId) {
-                const foundRole = await getRole(userData.roleId);
+              if (userData && userData.defaultRole) {
+                const foundRole = await getRole(userData.defaultRole);
                 if (foundRole) {
-                  if (foundRole.clientId) {
+                  if (userData.roleId[0] === foundRole.roleId) {
                     setRole('client');
-                  } else if (foundRole.workerId) {
+                  } else if (userData.roleId[1] === foundRole.roleId) {
                     setRole('worker');
                   } else {
                     setRole(null);
@@ -172,6 +201,16 @@ export default function App() {
 
     return unsubscribe;
   }, []);
+
+  // Handle navigation from splash screen
+  const handleNavigate = () => {
+    // Navigate to the appropriate screen based on user state
+    setLoading(false); // Stop loading on button press
+  };
+  // Show the splash screen while loading
+  if (loading) {
+    return <SplashScreen onNavigate={handleNavigate} />;
+  }
 
   return (
     <NavigationContainer>

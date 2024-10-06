@@ -19,7 +19,7 @@ const Notification = ({navigation}: RouterProps) => {
         </SafeAreaView>
 
         <View style={localStyles.headerContainer}>
-          <Text style={styles.xlargeHeading}> Notifications </Text>
+          <Text style={styles.largeHeading}>Notifications</Text>
         </View>
 
         <View style={localStyles.mainContent} />
@@ -48,10 +48,7 @@ const localStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  headerContainer: {
-    paddingTop: 40,
-    gap: 50,
-  },
+  headerContainer: {},
   mainContent: {
     flex: 1,
     gap: 15,

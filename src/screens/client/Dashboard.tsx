@@ -1,24 +1,27 @@
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   FlatList,
   SafeAreaView,
   ActivityIndicator,
+  RefreshControl,
+  StyleSheet,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {styles} from '../../styles/Globals';
-import NotificationsButton from '../../components/NotificationsButton';
-import AddJobButton from '../../components/AddJobButton';
-import {CURRENT_USER_UID} from '../../config/firebase';
+import {NavigationProp, useFocusEffect} from '@react-navigation/native';
+import {FIREBASE_AUTH} from '../../config/firebase';
 import {getJobsByClient, queryJob} from '../../services/firestore/jobs';
 import {Job} from '../../services/interfaces/job';
+import NotificationsButton from '../../components/NotificationsButton';
+import AddJobButton from '../../components/AddJobButton';
+import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
 import {faPlusSquare} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import DynamicTextInput from '../../components/DynamicTextInput';
-import {NavigationProp} from '@react-navigation/native';
 import {formatDateToReadable} from '../../utils/Utils';
+import {styles} from '../../styles/Globals';
+import {onAuthStateChanged} from '@react-native-firebase/auth';
+import {getUser} from '../../services/firestore/users';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -28,53 +31,107 @@ const Dashboard = ({navigation}: RouterProps) => {
   const [myListings, setMyListings] = useState<Job[]>([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true); // Add loading state
-  // Search function to filter jobs based on any string
-  const handleSearch = async (searchTerm: string) => {
-    setSearch(searchTerm);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [currentRoleId, setCurrentRoleId] = useState<string | undefined>(
+    undefined,
+  );
 
-    if (searchTerm.trim() === '') {
-      setSearchResults(myListings); // Show all listings if search term is empty
-    } else {
-      // Filter jobs from the local myListings state
-      const filteredJobs = myListings.filter(job => {
-        return (
-          job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.pay?.toString().includes(searchTerm) || // Assuming pay is a number
-          job.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.location?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      });
+  // Fetch jobs for the current user
+  const fetchJobs = useCallback(async (roleId: string | undefined) => {
+    if (!roleId) {
+      console.log(`${roleId} NO ID`);
+      return; // Early return if no role ID
+    }
 
-      // If no local results, check Firestore
+    setLoading(true); // Set loading to true while fetching
+    try {
+      const jobs = await getJobsByClient(roleId);
+      setMyListings(jobs);
+      setSearchResults(jobs);
+    } catch (error) {
+      console.error('Failed to fetch jobs:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false); // Stop refreshing after data fetch
+    }
+  }, []);
+
+  // Pull down to refresh
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchJobs(currentRoleId); // Pass currentRoleId to fetchJobs
+  }, [fetchJobs, currentRoleId]);
+
+  // Handle job search
+  const handleSearch = useCallback(
+    async (searchTerm: string) => {
+      setSearch(searchTerm);
+
+      if (searchTerm.trim() === '') {
+        setSearchResults(myListings); // Show all listings if search term is empty
+        return;
+      }
+
+      const filteredJobs = myListings.filter(
+        job =>
+          [job.title, job.description, job.location].some(field =>
+            field?.toLowerCase().includes(searchTerm.toLowerCase()),
+          ) || job.pay?.toString().includes(searchTerm),
+      );
+
       if (filteredJobs.length > 0) {
+        console.log('TYPED SEARCH');
+
         setSearchResults(filteredJobs);
       } else {
-        // Query Firestore for matching jobs
+        console.log('DB SEARCH');
+
         const firestoreJobs = await queryJob(searchTerm);
         setSearchResults(firestoreJobs);
       }
-    }
-  };
-  useEffect(() => {
-    const currentUserId = CURRENT_USER_UID;
+    },
+    [myListings],
+  );
 
-    if (currentUserId) {
-      setLoading(true); // Start loading
-      getJobsByClient(currentUserId)
-        .then(jobs => {
-          setMyListings(jobs);
-          setSearchResults(jobs); // Initialize search results with fetched jobs
-        })
-        .catch(error => {
-          console.error('Failed to fetch jobs:', error);
-          setLoading(false); // Stop loading on error
-        })
-        .finally(() => {
-          setLoading(false); // Stop loading on error
-        });
-    }
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(
+      FIREBASE_AUTH,
+      async (user: any) => {
+        if (user) {
+          const currentRole = await getUser(user.uid);
+          if (currentRole) {
+            setCurrentRoleId(currentRole.defaultRole);
+          }
+        } else {
+          // Reset state when user logs out or there is no user
+          setMyListings([]);
+          setSearchResults([]);
+          setSearch('');
+          setLoading(false);
+        }
+      },
+    );
+
+    // Cleanup auth listener on unmount
+    return () => unsubscribeAuth();
   }, []);
+
+  // Fetch jobs when currentRoleId changes
+  useEffect(() => {
+    if (currentRoleId) {
+      fetchJobs(currentRoleId);
+    }
+  }, [currentRoleId, fetchJobs]);
+
+  // Fetch jobs when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      if (currentRoleId) {
+        fetchJobs(currentRoleId);
+      }
+    }, [fetchJobs, currentRoleId]),
+  );
 
   return (
     <View style={localStyles.container}>
@@ -86,11 +143,15 @@ const Dashboard = ({navigation}: RouterProps) => {
           />
         </SafeAreaView>
 
-        <View style={localStyles.headerContainer}>
+        <>
           {loading ? ( // Render loading indicator when loading
-            <ActivityIndicator size="large" color={Colors.primary} />
+            <ActivityIndicator
+              size="large"
+              style={localStyles.container}
+              color={Colors.primary}
+            />
           ) : myListings.length > 0 ? (
-            <>
+            <View style={localStyles.headerContainer}>
               <Text style={styles.largeHeading}>Jobs Listed</Text>
               <DynamicTextInput
                 value={search}
@@ -101,10 +162,22 @@ const Dashboard = ({navigation}: RouterProps) => {
               />
               <FlatList
                 data={searchResults}
+                style={localStyles.flatList}
+                removeClippedSubviews={false}
                 ListEmptyComponent={
-                  <Text style={[styles.regularText, styles.w100]}>
-                    Not Existing
-                  </Text>
+                  searchResults.length === 0 && search ? (
+                    <Text style={[styles.mediumRegularText]}>
+                      Search Not found
+                    </Text>
+                  ) : (
+                    <Text style={[styles.mediumRegularText]}>No data</Text>
+                  )
+                }
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                  />
                 }
                 keyExtractor={item => item?.jobId?.toString()}
                 renderItem={({item, index}) => {
@@ -164,7 +237,9 @@ const Dashboard = ({navigation}: RouterProps) => {
                         key={item.jobId}
                         style={[localStyles.jobCard, getCardStyle()]}>
                         <View style={localStyles.containCard}>
-                          <Text style={[styles.regularText, styles.bold]}>
+                          <Text
+                            style={[styles.regularText, styles.bold]}
+                            numberOfLines={1}>
                             {item.title}
                           </Text>
                           <Text
@@ -180,11 +255,15 @@ const Dashboard = ({navigation}: RouterProps) => {
                   );
                 }}
               />
-            </>
+            </View>
           ) : (
             <>
-              <Text style={styles.xlargeHeading}> Welcome to Jobify! </Text>
+              <Text style={styles.xlargeHeading}>
+                {' '}
+                {'\n'}Welcome to Jobify!{' '}
+              </Text>
               <Text style={[styles.mediumRegularText]}>
+                {'\n'} {'\n'}
                 Ready to find the worker for you?
                 {'\n'}
                 Press the <FontAwesomeIcon icon={faPlusSquare} /> button to get
@@ -192,9 +271,9 @@ const Dashboard = ({navigation}: RouterProps) => {
               </Text>
             </>
           )}
-        </View>
+        </>
 
-        <SafeAreaView style={localStyles.btnContainerEnd}>
+        <SafeAreaView style={localStyles.bottomContainerPlus}>
           <AddJobButton
             type="primary"
             onPress={async () => navigation.navigate('Post')}
@@ -215,6 +294,9 @@ const localStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  flatList: {
+    marginBottom: 100,
+  },
   containText: {
     flexDirection: 'row',
     textAlign: 'center',
@@ -227,7 +309,6 @@ const localStyles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
     paddingTop: 25,
-    paddingBottom: 100,
   },
   btnContainerEnd: {
     alignItems: 'flex-end',
@@ -238,6 +319,12 @@ const localStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.placeholder,
     borderRadius: 8,
+  },
+  bottomContainerPlus: {
+    position: 'absolute',
+    alignItems: 'flex-end',
+    right: 0,
+    bottom: 100,
   },
   headerContainer: {
     flex: 1,
