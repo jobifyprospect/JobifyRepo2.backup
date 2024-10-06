@@ -5,15 +5,14 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {styles} from '../../styles/Globals';
 import {NavigationProp} from '@react-navigation/native';
-// import BackButton from '../../components/BackButton';
 import DynamicButton from '../../components/DynamicButton';
 import {createJob} from '../../services/firestore/jobs';
 import {showAlert} from '../../components/AlertDialog';
 import DynamicTextInput from '../../components/DynamicTextInput';
-import {CURRENT_USER_UID, FIRESTORE_TIMESTAMP} from '../../config/firebase';
+import {FIRESTORE_TIMESTAMP, getCurrentUserUID} from '../../config/firebase';
 import {isNotEmpty} from '../../utils/Utils';
 import uuid from 'react-native-uuid';
 import {Job} from '../../services/interfaces/job';
@@ -33,6 +32,17 @@ export default function PostJob({navigation}: RouterProps) {
     'open' | 'closed' | 'pending' | undefined
   >(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<any>(null);
+
+  // Fetch the current user UID when the component mounts
+  useEffect(() => {
+    const fetchCurrentUserId = async () => {
+      const uid = await getCurrentUserUID();
+      setCurrentUserId(uid);
+    };
+
+    fetchCurrentUserId();
+  }, []);
 
   function resetForm() {
     setTitle('');
@@ -47,9 +57,16 @@ export default function PostJob({navigation}: RouterProps) {
     Keyboard.dismiss();
     setIsSubmitting(true);
 
+    // Validate form fields
     if (!title || !pay || !schedule || !location || !description) {
       setIsSubmitting(false);
       showAlert('Missing fields.', 'Please fill out all required fields.');
+      return;
+    }
+
+    if (!currentUserId) {
+      setIsSubmitting(false);
+      showAlert('User not found', 'Unable to retrieve user information.');
       return;
     }
 
@@ -60,21 +77,21 @@ export default function PostJob({navigation}: RouterProps) {
         description,
         schedule,
         pay: parseInt(pay, 10),
-        status: status ? status : 'pending',
+        status: status || 'pending',
         jobId: uuid.v4().toString(),
-        clientId: CURRENT_USER_UID as string,
+        clientId: currentUserId,
         createdAt: FIRESTORE_TIMESTAMP,
         updatedAt: FIRESTORE_TIMESTAMP,
       };
 
       await createJob(newJob);
-
       showAlert('Success', 'Job posted.');
+      navigation.goBack();
       resetForm();
-    } catch (error: unknown) {
+    } catch (error) {
       showAlert(
-        'An error occurred while posting the job, ',
-        (error as string) || 'An error occurred',
+        'An error occurred while posting the job.',
+        (error as Error).message || 'An error occurred',
       );
     } finally {
       setIsSubmitting(false);

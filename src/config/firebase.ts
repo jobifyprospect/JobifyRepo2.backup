@@ -1,5 +1,8 @@
 import firebase from '@react-native-firebase/app';
-import auth from '@react-native-firebase/auth';
+import auth, {
+  FirebaseAuthTypes,
+  onAuthStateChanged,
+} from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 
@@ -10,6 +13,27 @@ export const FIRESTORE_DB = firestore();
 export const FIRESTORE_STORAGE = storage();
 export const FIRESTORE_TIMESTAMP =
   firebase.firestore.FieldValue.serverTimestamp();
-export const CURRENT_USER_UID = FIREBASE_AUTH.currentUser?.uid;
 
+// Current user UID - initially set as null, and will be updated dynamically
+let currentUserUID: string | null = FIREBASE_AUTH.currentUser?.uid || null;
+
+// utils.js or wherever you define your utility functions
+export const getCurrentUserUID = () => {
+  return new Promise(resolve => {
+    const uid = FIREBASE_AUTH.currentUser?.uid; // Get UID
+    if (uid) {
+      resolve(uid); // Resolve with UID if available
+    } else {
+      const unsubscribeAuth = onAuthStateChanged(FIREBASE_AUTH, (user: any) => {
+        if (user) {
+          resolve(user.uid); // Resolve with UID when user logs in
+        } else {
+          resolve(null); // Resolve with null if user is logged out
+        }
+        unsubscribeAuth(); // Cleanup listener
+      });
+    }
+  });
+};
+// Export Firestore collections
 export const JOBS = FIRESTORE_DB.collection('jobs');

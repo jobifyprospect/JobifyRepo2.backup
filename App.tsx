@@ -7,7 +7,11 @@ import Login from './src/screens/auth/Login';
 import Transaction from './src/screens/Transaction';
 import Profile from './src/screens/Profile';
 import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {FIREBASE_AUTH, FIRESTORE_DB} from './src/config/firebase';
+import {
+  FIREBASE_AUTH,
+  FIRESTORE_DB,
+  getCurrentUserUID,
+} from './src/config/firebase';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faHouse,
