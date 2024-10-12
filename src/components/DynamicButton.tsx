@@ -13,7 +13,7 @@ import Colors from '../styles/Colors';
 interface DynamicButtonProps {
   title: string;
   onPress: () => void | Promise<void>;
-  type?: 'primary' | 'secondary';
+  type?: 'primary' | 'secondary' | 'logout';
   disabled?: boolean;
 }
 
@@ -46,12 +46,19 @@ const DynamicButton = forwardRef<
     dynamicButtonStyles.button,
     type === 'primary'
       ? dynamicButtonStyles.primary
-      : dynamicButtonStyles.secondary,
+      : type === 'secondary'
+      ? dynamicButtonStyles.secondary
+      : dynamicButtonStyles.logout,
     disabled ? dynamicButtonStyles.disabled : {},
   ];
 
   const textStyle: TextStyle = {
-    color: type === 'primary' ? Colors.white : Colors.primary,
+    color:
+      type === 'primary'
+        ? Colors.white
+        : type === 'secondary'
+        ? Colors.primary
+        : Colors.danger,
   };
 
   return (
@@ -63,7 +70,13 @@ const DynamicButton = forwardRef<
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={type === 'primary' ? Colors.white : Colors.primary}
+          color={
+            type === 'primary'
+              ? Colors.white
+              : type === 'secondary'
+              ? Colors.primary
+              : Colors.danger
+          }
         />
       ) : (
         <Text style={[styles.boldText, textStyle]}>{title}</Text>
@@ -80,6 +93,7 @@ const dynamicButtonStyles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     marginVertical: 8,
+    minWidth: 96,
   },
   primary: {
     backgroundColor: Colors.primary,
@@ -88,6 +102,11 @@ const dynamicButtonStyles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: Colors.primary,
+  },
+  logout: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.danger,
   },
   disabled: {
     backgroundColor: Colors.placeholder,

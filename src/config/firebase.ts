@@ -2,16 +2,21 @@ import firebase from '@react-native-firebase/app';
 import auth, {onAuthStateChanged} from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import 'firebase/auth';
 
 // Exports for Firebase services, initialized in one file
 export const FIREBASE_APP = firebase.app();
 export const FIREBASE_AUTH = auth();
+export const FIREBASE_AUTH_EMAIL_PROVIDER = firebase.auth.EmailAuthProvider;
 export const FIRESTORE_DB = firestore();
 export const FIRESTORE_STORAGE = storage();
 export const FIRESTORE_TIMESTAMP =
   firebase.firestore.FieldValue.serverTimestamp();
 export const rolesRef = firestore().collection('roles');
 export const usersRef = firestore().collection('users');
+export const addressesRef = firestore().collection('addresses');
+export const validationsRef = firestore().collection('validations');
+
 // utils.js or wherever you define your utility functions
 // utils.js or wherever you define your utility functions
 export const getCurrentUserUID = () => {

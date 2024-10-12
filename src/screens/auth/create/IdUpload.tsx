@@ -125,7 +125,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
         roleId: [clientRoleId, workerRoleId], // Store both role IDs
         firstName,
         lastName,
-        defaultRole: userType == 'client' ? clientRoleId : workerRoleId,
+        defaultRole: userType === 'client' ? clientRoleId : workerRoleId,
         profilePicture: selfieImageUrl,
         validationId,
         addressId,

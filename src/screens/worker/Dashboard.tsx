@@ -333,7 +333,7 @@ const localStyles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
     paddingTop: 25,
-    paddingBottom: 100,
+    // paddingBottom: 10,
   },
   btnContainerEnd: {
     alignItems: 'flex-end',

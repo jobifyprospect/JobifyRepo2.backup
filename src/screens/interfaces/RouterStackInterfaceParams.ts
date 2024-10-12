@@ -72,5 +72,6 @@ export type RootStackParamList = {
   Login: undefined;
   Forgot: undefined;
   Loading: undefined;
+  ChangePassword: undefined;
   Inside: {role: string | null};
 };
