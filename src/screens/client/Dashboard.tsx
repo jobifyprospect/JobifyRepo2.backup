@@ -36,8 +36,6 @@ const Dashboard = ({navigation}: RouterProps) => {
   const [currentRoleId, setCurrentRoleId] = useState<string | undefined>(
     undefined,
   );
-
-  // Fetch jobs for the current user
   const fetchJobs = useCallback(async (roleId: string | undefined) => {
     if (!roleId) {
       console.log(`${roleId} NO ID`);
