@@ -19,7 +19,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import WorkerDashboard from './src/screens/worker/Dashboard'; // worker dashboard
 import ClientDashboard from './src/screens/client/Dashboard'; // client dashboard
 import ForgotPassword from './src/screens/auth/forgot/ForgotPassword';
-import {Platform, SafeAreaView} from 'react-native';
+import {Platform} from 'react-native';
 import UserTypeSelection from './src/screens/auth/create/UserTypeSelection';
 import PersonalDetails from './src/screens/auth/create/PersonalDetails';
 import { RootStackParamList } from './src/screens/interfaces/RouterStackInterfaceParams';
@@ -40,6 +40,7 @@ import JobDetailsClient from './src/screens/client/JobDetailsClient';
 import AcceptOrDeclineApplicant from './src/screens/client/AcceptOrDeclineApplicant';
 import ApplyToJob from './src/screens/worker/ApplyToJob';
 import ChangePassword from './src/screens/auth/ChangePassword';
+import EditUserDetails from './src/screens/EditUserDetails';
 
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
@@ -90,7 +91,12 @@ const DashboardStack = ({ role }: { role: string | null }) => {
           <Stack.Screen
             name="Notification"
             component={Notification}
-            options={{ title: 'Notifications', headerShown: false }} // Notification Screen
+            options={{title: 'Notifications', headerShown: false }} // Notification Screen
+          />
+          <Stack.Screen
+            name="EditUserDetails"
+            component={EditUserDetails}
+            options={{headerShown: false}}
           />
         </>
       )}
@@ -219,26 +225,30 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <SafeAreaView style={{flex: 1}}>
-        <Stack.Navigator initialRouteName="Login">
-          {user ? (
-            <>
-              <Stack.Screen
-                name="Inside"
-                children={() => <TabLayout role={role} />}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Post"
-                component={PostJob}
-                options={{ title: 'Post', headerShown: false }} // Make sure this exists
-              />
-              <Stack.Screen
-                name="ChangePassword"
-                component={ChangePassword}
-                options={{headerShown: false}} // Notification Screen
-              />
-              <Stack.Screen
+      <Stack.Navigator initialRouteName="Login">
+        {user ? (
+          <>
+            <Stack.Screen
+              name="Inside"
+              children={() => <TabLayout role={role} />}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Post"
+              component={PostJob}
+              options={{title: 'Post', headerShown: false}}
+            />
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePassword}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="EditUserDetails"
+              component={EditUserDetails}
+              options={{headerShown: false}}
+            />
+                          <Stack.Screen
               name="JobDetailsClient"
               component={JobDetailsClient}
               options={{ title: 'JobDetailsClient', headerShown: false }} // Job Details, Client View Screen
@@ -253,59 +263,57 @@ export default function App() {
               component={ApplyToJob}
               options={{ title: 'ApplyToJob', headerShown: false }} // Job Application, Worker View Screen
             />
-
           </>
-          ) : (
-            <>
-              <Stack.Screen
-                name="Login"
-                component={Login}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="UserTypeSelection"
-                component={UserTypeSelection}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="PersonalDetails"
-                component={PersonalDetails}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="AddressDetails"
-                component={AddressDetails}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="LoginInfo"
-                component={LoginInfo}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="PasswordCreation"
-                component={PasswordCreation}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="IDUpload"
-                component={IDUpload}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Success"
-                component={Success}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Forgot"
-                component={ForgotPassword}
-                options={{ headerShown: false }}
-              />
-            </>
-          )}
-        </Stack.Navigator>
-      </SafeAreaView>
+        ) : (
+          <>
+            <Stack.Screen
+              name="Login"
+              component={Login}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="UserTypeSelection"
+              component={UserTypeSelection}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="PersonalDetails"
+              component={PersonalDetails}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="AddressDetails"
+              component={AddressDetails}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="LoginInfo"
+              component={LoginInfo}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="PasswordCreation"
+              component={PasswordCreation}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="IDUpload"
+              component={IDUpload}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Success"
+              component={Success}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Forgot"
+              component={ForgotPassword}
+              options={{headerShown: false}}
+            />
+          </>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

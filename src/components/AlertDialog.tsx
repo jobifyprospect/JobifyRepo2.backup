@@ -1,13 +1,21 @@
 import {Alert} from 'react-native';
 
-export const showAlert = (title: string, message: string) => {
+export const showAlert = (
+  title: string,
+  message: string,
+  callback?: () => void, // Nullable callback parameter
+) => {
   Alert.alert(
     title,
     message,
     [
       {
-        text: 'OK',
-        onPress: () => console.log('OK Pressed'),
+        text: 'PROCEED',
+        onPress: () => {
+          if (callback) {
+            callback(); // Call the callback if it exists
+          }
+        },
       },
     ],
     {cancelable: true},

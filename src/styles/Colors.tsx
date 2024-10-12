@@ -4,6 +4,7 @@ const Colors = {
   secondary: '#FF5733',
   accent: '#FFC107',
   background: '#F5F5F5',
+  defaultBackground: '#f2f2f2',
   labelText: '#525A6A',
   placeholder: '#D0D5DD',
   white: '#FFFFFF',

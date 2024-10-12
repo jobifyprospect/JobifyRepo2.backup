@@ -200,10 +200,7 @@ const ChangePassword = ({navigation}: RouterProps) => {
                 disabled={!isFormValid()}
                 title="Change Password"
                 type="primary"
-                onPress={() => {
-                  handleChangePassword();
-                  console.log('PRESSED');
-                }}
+                onPress={handleChangePassword}
               />
             </View>
           </View>

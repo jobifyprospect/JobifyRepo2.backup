@@ -7,11 +7,24 @@ export type RootStackParamList = {
   ClientDashboardScreen: undefined;
   Transaction: { _role: string }
   Home: undefined;
-  Profile: undefined;
   JobDetailsClient: { id: string };
   AcceptOrDeclineApplicant: { worker_id: string, job_id: string, app_id: string };
   ApplyToJob: { id: string };
   PersonalDetails: { userType: 'client' | 'worker' };
+  Profile: undefined;
+  EditUserDetails: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    address: {
+      country: string;
+      region: string;
+      province: string;
+      city: string;
+      postalCode: string;
+    };
+  };
   AddressDetails: {
     userType: 'client' | 'worker';
     firstName: string;

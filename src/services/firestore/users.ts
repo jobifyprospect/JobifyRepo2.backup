@@ -93,6 +93,59 @@ export const updateUser = async (
   }
 };
 
+export const updateUserDetails = async (
+  userId: string,
+  updates: {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    address?: {
+      region: string;
+      province: string;
+      city: string;
+      postalCode: string;
+    };
+  },
+): Promise<void> => {
+  try {
+    const userDoc = await usersRef.doc(userId).get();
+    const user = userDoc.data();
+
+    if (!user) {
+      showAlert('Error', 'User not found.');
+      return;
+    }
+
+    // Update address if provided
+    if (updates.address && user.addressId) {
+      await addressesRef.doc(user.addressId).update({
+        region: updates.address.region,
+        province: updates.address.province,
+        city: updates.address.city,
+        postalCode: updates.address.postalCode,
+      });
+    }
+
+    // Prepare user updates for first name, last name, phone number
+    const userUpdates: Partial<User> = {};
+    if (updates.firstName) {
+      userUpdates.firstName = updates.firstName;
+    }
+    if (updates.lastName) {
+      userUpdates.lastName = updates.lastName;
+    }
+    if (updates.phoneNumber) {
+      userUpdates.phoneNumber = updates.phoneNumber;
+    }
+
+    // Update user document
+    await usersRef.doc(userId).update(userUpdates);
+  } catch (error) {
+    showAlert('Error', 'Failed to update user.');
+    console.error(error);
+  }
+};
+
 export const deleteUser = async (userId: string): Promise<void> => {
   try {
     await usersRef.doc(userId).delete();
