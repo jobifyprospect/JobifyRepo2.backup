@@ -20,7 +20,7 @@ import {formatAddress} from '../utils/FormatAddress';
 import {faCheckCircle} from '@fortawesome/free-solid-svg-icons';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {NavigationProp} from '@react-navigation/native';
+import {NavigationProp, useFocusEffect} from '@react-navigation/native';
 library.add(faCheckCircle);
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -57,6 +57,13 @@ const Profile = ({navigation}: RouterProps) => {
     }
   }, []);
 
+  // Use useFocusEffect to refetch user profile when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserProfile();
+    }, [fetchUserProfile]), // Empty dependency array ensures it runs when the screen is focused
+  );
+
   useEffect(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);
@@ -86,7 +93,15 @@ const Profile = ({navigation}: RouterProps) => {
             <DynamicButton
               title="Edit"
               type="primary"
-              onPress={() => {}} // Only call post on button press
+              onPress={async () =>
+                navigation.navigate('EditUserDetails', {
+                  userId: user?.userId,
+                  firstName: user?.firstName,
+                  lastName: user?.lastName,
+                  phoneNumber: user?.phoneNumber,
+                  address: address,
+                })
+              }
             />
           </View>
         </SafeAreaView>
@@ -190,12 +205,24 @@ const Profile = ({navigation}: RouterProps) => {
           <DynamicButton
             title="Switch Mode"
             type="secondary"
-            onPress={handleUpdateUser} // Handle user role update
+            onPress={() => {
+              showAlert(
+                'Switch Mode?',
+                'You are currently in Client Mode, and you are about to switch to Worker mode.\n\nIt Requires a Logout. Tap anywhere to cancel',
+                () => handleUpdateUser,
+              );
+            }} // Handle user role update
           />
           <DynamicButton
             title="Logout"
             type="logout"
-            onPress={() => FIREBASE_AUTH.signOut()} // Handle sign-out
+            onPress={() => {
+              showAlert(
+                'Log out?',
+                'You are about to Log out.Tap anywhere to cancel',
+                () => FIREBASE_AUTH.signOut(),
+              );
+            }} // Handle user role update
           />
         </View>
       </View>
