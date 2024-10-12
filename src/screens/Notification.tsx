@@ -1,58 +1,133 @@
-import {View, Text, StyleSheet} from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
+import {View, FlatList, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {formatDateToReadable} from '../utils/Utils'; // Assuming this function exists
+import {Notification} from '../services/interfaces/notification';
+import {
+  fetchNotifications,
+  updateNotificationReadStatus,
+} from '../services/firestore/notifications';
 import BackButton from '../components/BackButton';
 import {NavigationProp} from '@react-navigation/native';
-import {styles} from '../styles/Globals';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {getCurrentUserUID} from '../config/firebase';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Notification = ({navigation}: RouterProps) => {
-  return (
-    <View style={localStyles.container}>
-      <View style={localStyles.screen}>
-        <SafeAreaView style={localStyles.btnContainerBetween}>
-          <BackButton onPress={async () => navigation.goBack()} />
-          {/* <DynamicButton title='' type='primary' onPress={async () => navigation.navigate('Notification')} /> */}
-        </SafeAreaView>
+const NotificationScreen = ({navigation}: RouterProps) => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-        <View style={localStyles.headerContainer}>
-          <Text style={styles.largeHeading}>Notifications</Text>
+  useEffect(() => {
+    const getNotifications = async () => {
+      try {
+        const uid: string | null = await getCurrentUserUID();
+
+        const notificationsList = await fetchNotifications(uid);
+        setNotifications(notificationsList);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getNotifications();
+  }, []);
+
+  const handleNotificationPress = async (notification: Notification) => {
+    console.log('Notification ID:', notification.id); // Log the notification ID
+
+    try {
+      // Only update the read status if it's not already read
+      if (!notification.isRead) {
+        await updateNotificationReadStatus(notification.id);
+        // Update the local state to reflect that the notification has been read
+        setNotifications(prevNotifications =>
+          prevNotifications.map(n =>
+            n.id === notification.id ? {...n, isRead: true} : n,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error('Error updating notification read status:', error);
+    }
+  };
+
+  const renderNotificationItem = ({item}: {item: Notification}) => (
+    <TouchableOpacity
+      onPress={() => handleNotificationPress(item)}
+      style={styles.notificationCard}>
+      <View style={styles.notificationContent}>
+        {/* Conditionally render the circle if isRead is false */}
+        {!item.isRead && <View style={styles.unreadIndicator} />}
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.subtitle}>{item.subtitle}</Text>
         </View>
-
-        <View style={localStyles.mainContent} />
-        <View style={localStyles.mainContent} />
       </View>
+      <Text style={styles.date}>{formatDateToReadable(item.createdAt)}</Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        <View>
+          <BackButton onPress={async () => navigation.goBack()} />
+
+          <FlatList
+            data={notifications}
+            renderItem={renderNotificationItem}
+            keyExtractor={item => item.id}
+            removeClippedSubviews={false}
+            ListEmptyComponent={<Text>No notifications available.</Text>}
+          />
+        </View>
+      )}
     </View>
   );
 };
 
-export default Notification;
-
-const localStyles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 30,
     flex: 1,
+    padding: 16,
   },
-  screen: {
-    justifyContent: 'center',
-    flex: 1,
-    paddingVertical: 25,
-  },
-  btnContainerEnd: {
-    alignItems: 'flex-end',
-  },
-  btnContainerBetween: {
+  notificationCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    alignItems: 'center',
   },
-  headerContainer: {},
-  mainContent: {
+  notificationContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
-    gap: 15,
-    paddingHorizontal: 16,
-    paddingTop: 40,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  unreadIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6, // Makes the view a circle
+    backgroundColor: 'red', // You can change this color based on your theme
+    marginRight: 10, // Adds spacing between the circle and the text
+  },
+  title: {
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    color: '#666',
+  },
+  date: {
+    fontSize: 12,
+    color: '#999',
   },
 });
+
+export default NotificationScreen;

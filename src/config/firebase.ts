@@ -16,7 +16,7 @@ export const rolesRef = firestore().collection('roles');
 export const usersRef = firestore().collection('users');
 export const addressesRef = firestore().collection('addresses');
 export const validationsRef = firestore().collection('validations');
-
+export const notificationsRef = firestore().collection('notifications');
 // utils.js or wherever you define your utility functions
 // utils.js or wherever you define your utility functions
 export const getCurrentUserUID = () => {

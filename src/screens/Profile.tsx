@@ -209,7 +209,9 @@ const Profile = ({navigation}: RouterProps) => {
               showAlert(
                 'Switch Mode?',
                 'You are currently in Client Mode, and you are about to switch to Worker mode.\n\nIt Requires a Logout. Tap anywhere to cancel',
-                () => handleUpdateUser,
+                () => {
+                  handleUpdateUser();
+                },
               );
             }} // Handle user role update
           />
