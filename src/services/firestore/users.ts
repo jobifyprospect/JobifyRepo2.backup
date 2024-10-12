@@ -1,9 +1,15 @@
-import { showAlert } from '../../components/AlertDialog';
-import { FIRESTORE_DB, rolesRef } from '../../config/firebase';
-import { Role } from '../interfaces/role';
-import { User } from '../interfaces/user';
-
-const usersRef = FIRESTORE_DB.collection('users');
+import {showAlert} from '../../components/AlertDialog';
+import {
+  addressesRef,
+  rolesRef,
+  usersRef,
+  validationsRef,
+} from '../../config/firebase';
+import {Address} from '../interfaces/address';
+import {Role} from '../interfaces/role';
+import {User} from '../interfaces/user';
+import {UserDetails} from '../interfaces/userDetails';
+import {Validation} from '../interfaces/validation';
 
 export const createUser = async (user: User): Promise<void> => {
   try {
@@ -21,6 +27,56 @@ export const getUser = async (userId: string): Promise<User | undefined> => {
   } catch (error) {
     showAlert('Error', 'Failed to retrieve user.');
     console.error(error);
+    return undefined;
+  }
+};
+
+export const getUserDetails = async (
+  userId: string,
+): Promise<Array<UserDetails> | undefined> => {
+  try {
+    const userDoc = await usersRef.doc(userId).get();
+    const user = userDoc.exists ? (userDoc.data() as User) : null;
+
+    if (!user) {
+      showAlert('Error', 'User not found.');
+      return undefined;
+    }
+
+    // Fetch related details concurrently using Promise.all
+    const [validationDoc, addressDoc, roleDocs] = await Promise.all([
+      user.validationId
+        ? validationsRef.doc(user.validationId).get()
+        : Promise.resolve(null),
+      user.addressId
+        ? addressesRef.doc(user.addressId).get()
+        : Promise.resolve(null),
+      user.roleId && user.roleId.length > 0
+        ? Promise.all(user.roleId.map(roleId => rolesRef.doc(roleId).get()))
+        : Promise.resolve([]),
+    ]);
+
+    const validation = validationDoc?.exists
+      ? (validationDoc.data() as Validation)
+      : null;
+    const address = addressDoc?.exists ? (addressDoc.data() as Address) : null;
+    const roles =
+      roleDocs.length > 0
+        ? roleDocs.map(roleDoc => roleDoc.data() as Role)
+        : [];
+
+    // Return the data in the specified structure
+    return [
+      {
+        validation,
+        address,
+        role: roles.length > 0 ? roles[0] : null, // Assuming you're interested in the first role only
+        user,
+      },
+    ];
+  } catch (error) {
+    showAlert('Error', 'Failed to retrieve user details.');
+    console.error('Error fetching user details:', error);
     return undefined;
   }
 };
