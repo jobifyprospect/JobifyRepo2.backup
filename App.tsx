@@ -41,14 +41,11 @@ import AcceptOrDeclineApplicant from './src/screens/client/AcceptOrDeclineApplic
 import ApplyToJob from './src/screens/worker/ApplyToJob';
 import ChangePassword from './src/screens/auth/ChangePassword';
 import EditUserDetails from './src/screens/EditUserDetails';
+import messaging, {firebase} from '@react-native-firebase/messaging';
 import {FCMTokenProvider} from './src/config/FCMTokenContext';
-
-// import {FCMTokenProvider} from './src/config/FCMTokenContext';
 
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
-
-import messaging, {firebase} from '@react-native-firebase/messaging';
 
 // Register background handler
 firebase.messaging().setBackgroundMessageHandler(async remoteMessage => {
@@ -184,6 +181,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const unsubscribe = firebase
       .messaging()

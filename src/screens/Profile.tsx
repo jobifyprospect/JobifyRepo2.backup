@@ -13,7 +13,11 @@ import {
   FIRESTORE_TIMESTAMP,
   getCurrentUserUID,
 } from '../config/firebase';
-import {getUserDetails, updateUserRole} from '../services/firestore/users';
+import {
+  getUserDetails,
+  removeFcmToken,
+  updateUserRole,
+} from '../services/firestore/users';
 import {showAlert} from '../components/AlertDialog';
 import Colors from '../styles/Colors';
 import DynamicButton from '../components/DynamicButton';
@@ -27,6 +31,7 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {NavigationProp, useFocusEffect} from '@react-navigation/native';
 import {createNotification} from '../services/firestore/notifications';
 import uuid from 'react-native-uuid';
+import {useFCMToken} from '../config/FCMTokenContext';
 
 library.add(faCheckCircle);
 interface RouterProps {
@@ -39,7 +44,7 @@ const Profile = ({navigation}: RouterProps) => {
   const [validation, setValidation] = useState<Validation | null>(null);
   const [loading, setLoading] = useState<boolean>(true); // Track loading state
   const [userId, setUserId] = useState<string>(''); // Track loading state
-  // const fcmToken = useFCMToken();
+  const fcmToken = useFCMToken();
 
   const fetchUserProfile = useCallback(async () => {
     try {
@@ -107,7 +112,7 @@ const Profile = ({navigation}: RouterProps) => {
         createdAt: FIRESTORE_TIMESTAMP,
         updatedAt: FIRESTORE_TIMESTAMP,
         from: `client-${userId}`, // The ID of the user sending the notification
-        to: `client-${userId}`, // The recipient's ID
+        to: fcmToken, // The recipient's ID
         // messageId: `client-${userId}`,
         // threadId: `client-${userId}`,
         notification: {
@@ -134,7 +139,10 @@ const Profile = ({navigation}: RouterProps) => {
       );
     }
   };
-
+  const logOutUser = async () => {
+    await removeFcmToken(userId); // Remove token on logout
+    FIREBASE_AUTH.signOut();
+  };
   return (
     <View style={localStyles.container}>
       <View style={localStyles.screen}>
@@ -272,7 +280,7 @@ const Profile = ({navigation}: RouterProps) => {
               showAlert(
                 'Log out?',
                 'You are about to Log out.Tap anywhere to cancel',
-                () => FIREBASE_AUTH.signOut(),
+                () => logOutUser(),
               );
             }} // Handle user role update
           />

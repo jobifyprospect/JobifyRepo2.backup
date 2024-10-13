@@ -10,6 +10,8 @@ import {Role} from '../interfaces/role';
 import {User} from '../interfaces/user';
 import {UserDetails} from '../interfaces/userDetails';
 import {Validation} from '../interfaces/validation';
+import firestore from '@react-native-firebase/firestore';
+import messaging from '@react-native-firebase/messaging';
 
 export const createUser = async (user: User): Promise<void> => {
   try {
@@ -275,4 +277,46 @@ export const updateUserRole = async (
     showAlert('Error', 'Failed to update user.');
     console.error('Update user error:', error);
   }
+};
+
+// Function to store the FCM token
+export const storeFcmToken = async (
+  userId: string | null,
+  token: string | null,
+) => {
+  try {
+    if (!token || !userId) {
+      throw new Error('no token');
+    }
+    await usersRef.doc(userId).set(
+      {
+        fcmToken: token,
+      },
+      {merge: true}, // This will update the existing document or create a new one
+    );
+    console.log('FCM token stored successfully');
+  } catch (error) {
+    console.error('Error storing FCM token:', error);
+  }
+};
+
+// Function to remove the FCM token
+export const removeFcmToken = async (userId: string) => {
+  try {
+    await firestore().collection('users').doc(userId).update({
+      fcmToken: firestore.FieldValue.delete(),
+    });
+    console.log('FCM token removed successfully');
+  } catch (error) {
+    console.error('Error removing FCM token:', error);
+  }
+};
+
+// Function to handle token refresh
+export const handleTokenRefresh = async (userId: string | null) => {
+  if (!userId) {
+    return;
+  }
+  const token = await messaging().getToken();
+  await storeFcmToken(userId, token); // Update the token in Firestore
 };
