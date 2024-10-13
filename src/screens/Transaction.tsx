@@ -1,27 +1,34 @@
-import {View, Text, StyleSheet, FlatList} from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import {styles} from '../styles/Globals';
+import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { styles } from '../styles/Globals';
 import Colors from '../styles/Colors';
-import {Job} from '../services/interfaces/job';
-import {getCurrentUserUID} from '../config/firebase';
-import {getUser} from '../services/firestore/users';
-import {getJobsByClient, queryJob} from '../services/firestore/jobs';
-import {formatDateToReadable} from '../utils/Utils';
+import { Job } from '../services/interfaces/job';
+import { getCurrentUserUID } from '../config/firebase';
+import { getUser } from '../services/firestore/users';
+import { getJob, getJobs, getJobsByClient, getJobsByWorker, queryJob } from '../services/firestore/jobs';
+import { formatDateToReadable } from '../utils/Utils';
 import DynamicTextInput from '../components/DynamicTextInput';
-import {NavigationProp} from '@react-navigation/native';
+import { NavigationProp, RouteProp, useFocusEffect } from '@react-navigation/native';
 import RefreshButton from '../components/RefreshComponent';
+import { RootStackParamList } from './interfaces/RouterStackInterfaceParams';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { getApplicationsByWorkerId } from '../services/firestore/applications';
+import { Application } from '../services/interfaces/application';
 
-interface RouterProps {
-  navigation: NavigationProp<any, any>;
-}
 
-export default function Transaction({}: RouterProps) {
-  const [myListings, setMyListings] = useState<Job[]>([]);
+type TransactionProps = BottomTabScreenProps<RootStackParamList, 'Transaction'>;
+
+export default function Transaction({ navigation, route }: TransactionProps) {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobIds, setJobIds] = useState<string[]>();
+  const [myApplications, setMyApplications] = useState<Application[]>([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [currentUserId, setCurrentUserId] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
 
+  console.log('received role props: ', route.params)
+  const role = route.params._role
   // Search handler with debouncing to optimize performance
   const handleSearch = useCallback(
     async (searchTerm: string) => {
@@ -29,12 +36,12 @@ export default function Transaction({}: RouterProps) {
 
       if (searchTerm.trim() === '') {
         // If search term is empty, show all listings
-        setSearchResults(myListings);
+        setSearchResults(jobs);
         return;
       }
 
       // Filter jobs based on the search term
-      const filteredJobs = myListings.filter(
+      const filteredJobs = jobs.filter(
         job =>
           [job.title, job.description, job.location].some(field =>
             field?.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -51,7 +58,7 @@ export default function Transaction({}: RouterProps) {
         setSearchResults(firestoreJobs);
       }
     },
-    [myListings],
+    [jobs],
   );
 
   const fetchJobs = useCallback(async () => {
@@ -61,13 +68,16 @@ export default function Transaction({}: RouterProps) {
         const currentRole = await getUser(uid);
         if (currentRole && currentRole.defaultRole) {
           setCurrentUserId(currentRole.defaultRole);
-          if (currentUserId) {
+          if (currentUserId && role === '') {
+            const jobs = await getJobsByClient(currentUserId)
+            setJobs(jobs)
+          } else if (currentUserId && role === "client") {
             const jobs = await getJobsByClient(currentUserId);
-            setMyListings(jobs);
+            setJobs(jobs);
             setSearchResults(jobs);
           }
         }
-      }
+      } currentUserId
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
     } finally {
@@ -80,9 +90,29 @@ export default function Transaction({}: RouterProps) {
     fetchJobs(); // Refresh the job data
   }, [fetchJobs]);
 
-  useEffect(() => {
-    fetchJobs(); // Initial fetch when the component mounts
-  }, [fetchJobs]);
+
+  const fetchApplications = async () => {
+    try {
+      const applications = await getApplicationsByWorkerId(currentUserId);
+      setMyApplications(applications);
+
+      const jobIds = applications.map(application => application.jobId);
+      setJobIds(jobIds);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    }
+  };
+
+  // Fetch jobs when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      if (currentUserId) {
+        fetchApplications();
+      }
+    }, [fetchApplications, currentUserId]),
+  );
+
+
 
   function returnJobStatus(status: string | undefined) {
     switch (status) {
@@ -92,6 +122,10 @@ export default function Transaction({}: RouterProps) {
         return Colors.placeholder;
     }
   }
+
+  useEffect(() => {
+    console.log('jobs Ive applied for: ', jobs)
+  }, [jobs])
 
   return (
     <View style={localStyles.container}>
@@ -121,7 +155,7 @@ export default function Transaction({}: RouterProps) {
           )
         }
         data={searchResults} // Display searchResults instead of myListings
-        renderItem={({item, index}) => {
+        renderItem={({ item, index }) => {
           const currentItemDate = formatDateToReadable(item.createdAt);
           const previousItemDate =
             index > 0
@@ -174,9 +208,12 @@ export default function Transaction({}: RouterProps) {
                   </Text>
                 </View>
               )}
-              <View
+              <Pressable
+                // onPress={() => navigation.navigate('JobDetailsClient', { id: item.jobId })}
+                onPress={() => navigation.navigate('JobDetailsClient', { id: item.jobId })}
                 key={item.jobId}
-                style={[localStyles.jobCard, getCardStyle()]}>
+                style={[localStyles.jobCard, getCardStyle()]}
+              >
                 <View style={localStyles.containItems}>
                   <View style={localStyles.jobCardAvatar}>
                     <Text style={localStyles.avatarPlaceholder}> PH </Text>
@@ -197,12 +234,12 @@ export default function Transaction({}: RouterProps) {
                   <Text
                     style={[
                       localStyles.statusText,
-                      {color: returnJobStatus(item.status)},
+                      { color: returnJobStatus(item.status) },
                     ]}>
                     {item.assignedWorker ? item.status : null}
                   </Text>
                 </View>
-              </View>
+              </Pressable>
             </>
           );
         }}
@@ -229,8 +266,8 @@ const localStyles = StyleSheet.create({
     alignItems: 'center',
     columnGap: 18,
   },
-  row: {flexDirection: 'row'},
-  column: {flexDirection: 'column'},
+  row: { flexDirection: 'row' },
+  column: { flexDirection: 'column' },
   jobCard: {
     borderWidth: 1,
     shadowOpacity: 1,

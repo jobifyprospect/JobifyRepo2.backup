@@ -1,4 +1,4 @@
-import React, {useState, forwardRef, useImperativeHandle} from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -7,13 +7,13 @@ import {
   TextStyle,
   ActivityIndicator,
 } from 'react-native';
-import {styles} from '../styles/Globals';
+import { styles } from '../styles/Globals';
 import Colors from '../styles/Colors';
 
 interface DynamicButtonProps {
   title: string;
   onPress: () => void | Promise<void>;
-  type?: 'primary' | 'secondary';
+  type?: 'primary' | 'secondary' | 'destructive';
   disabled?: boolean;
 }
 
@@ -22,7 +22,7 @@ const DynamicButton = forwardRef<
     triggerPress: () => void;
   },
   DynamicButtonProps
->(({title, onPress, type = 'primary', disabled = false}, ref) => {
+>(({ title, onPress, type = 'primary', disabled = false }, ref) => {
   const [loading, setLoading] = useState(false);
 
   const handlePress = async () => {
@@ -42,16 +42,29 @@ const DynamicButton = forwardRef<
     },
   }));
 
+  const buttonStyles = {
+    primary: dynamicButtonStyles.primary,
+    secondary: dynamicButtonStyles.secondary,
+    destructive: dynamicButtonStyles.destructive,
+    disabled: dynamicButtonStyles.disabled,
+  };
+
+  const activityIndicatorColors = {
+    primary: Colors.white,
+    secondary: Colors.primary,
+    destructive: Colors.danger,
+    disabled: Colors.placeholder
+    // Add more colors as needed
+  };
+
   const containerStyle: ViewStyle[] = [
     dynamicButtonStyles.button,
-    type === 'primary'
-      ? dynamicButtonStyles.primary
-      : dynamicButtonStyles.secondary,
-    disabled ? dynamicButtonStyles.disabled : {},
+    buttonStyles[type],
+    disabled ? buttonStyles.disabled : {},
   ];
 
   const textStyle: TextStyle = {
-    color: type === 'primary' ? Colors.white : Colors.primary,
+    color: activityIndicatorColors[type],
   };
 
   return (
@@ -88,6 +101,12 @@ const dynamicButtonStyles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: Colors.primary,
+  },
+  destructive: {
+    color: Colors.danger,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.danger,
   },
   disabled: {
     backgroundColor: Colors.placeholder,

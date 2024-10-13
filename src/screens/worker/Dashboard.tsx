@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,10 @@ import {
   RefreshControl,
   StyleSheet,
   Image,
+  Pressable,
 } from 'react-native';
-import {NavigationProp, useFocusEffect} from '@react-navigation/native';
-import {FIREBASE_AUTH} from '../../config/firebase';
+import { NavigationProp, useFocusEffect } from '@react-navigation/native';
+import { FIREBASE_AUTH } from '../../config/firebase';
 import {
   getAllJobsWithUserDetails,
   queryJob,
@@ -18,16 +19,16 @@ import {
 import NotificationsButton from '../../components/NotificationsButton';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
-import {formatDateToReadable} from '../../utils/Utils';
-import {styles} from '../../styles/Globals';
-import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {getUser} from '../../services/firestore/users';
+import { formatDateToReadable } from '../../utils/Utils';
+import { styles } from '../../styles/Globals';
+import { onAuthStateChanged } from '@react-native-firebase/auth';
+import { getUser } from '../../services/firestore/users';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Dashboard = ({navigation}: RouterProps) => {
+const Dashboard = ({ navigation }: RouterProps) => {
   const [myListings, setMyListings] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -49,6 +50,10 @@ const Dashboard = ({navigation}: RouterProps) => {
       const jobs = await getAllJobsWithUserDetails();
       setMyListings(jobs);
       setSearchResults(jobs);
+
+      if (!jobs) {
+        setLoading(false)
+      }
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
     } finally {
@@ -180,21 +185,21 @@ const Dashboard = ({navigation}: RouterProps) => {
                   />
                 }
                 keyExtractor={item => item?.job?.jobId?.toString()}
-                renderItem={({item, index}) => {
+                renderItem={({ item, index }) => {
                   const currentItemDate = formatDateToReadable(
                     item.job.createdAt,
                   );
                   const previousItemDate =
                     index > 0
                       ? formatDateToReadable(
-                          myListings[index - 1].job.createdAt,
-                        )
+                        myListings[index - 1].job.createdAt,
+                      )
                       : null;
                   const nextItemDate =
                     index < myListings.length - 1
                       ? formatDateToReadable(
-                          myListings[index + 1].job.createdAt,
-                        )
+                        myListings[index + 1].job.createdAt,
+                      )
                       : null;
 
                   const isGroupStart = currentItemDate !== previousItemDate;
@@ -240,14 +245,16 @@ const Dashboard = ({navigation}: RouterProps) => {
                           </Text>
                         </View>
                       )}
-                      <View
+                      <Pressable
                         key={item.job.jobId}
-                        style={[localStyles.jobCard, getCardStyle()]}>
+                        style={[localStyles.jobCard, getCardStyle()]}
+                        onPress={() => navigation.navigate('ApplyToJob', { id: item.job.jobId })}
+                      >
                         <View style={localStyles.containCard}>
                           <View style={localStyles.profileContainer}>
                             {item?.user?.profilePicture ? (
                               <Image
-                                source={{uri: item?.user?.profilePicture}}
+                                source={{ uri: item?.user?.profilePicture }}
                                 style={localStyles.profileImage}
                               />
                             ) : (
@@ -278,7 +285,7 @@ const Dashboard = ({navigation}: RouterProps) => {
                             Php {item.job.pay}
                           </Text>
                         </View>
-                      </View>
+                      </Pressable>
                     </>
                   );
                 }}
