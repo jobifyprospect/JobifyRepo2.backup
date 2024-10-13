@@ -94,5 +94,5 @@ export type RootStackParamList = {
   Forgot: undefined;
   Loading: undefined;
   ChangePassword: undefined;
-  Inside: {role: string | null};
+  Inside: { role: string | null };
 };

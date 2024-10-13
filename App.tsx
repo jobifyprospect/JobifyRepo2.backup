@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import 'react-native-get-random-values';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Login from './src/screens/auth/Login';
 import Transaction from './src/screens/Transaction';
 import Profile from './src/screens/Profile';
+import { onAuthStateChanged } from '@react-native-firebase/auth';
+import { FIREBASE_AUTH, FIRESTORE_DB } from './src/config/firebase';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { onAuthStateChanged } from '@react-native-firebase/auth';
 import { FIREBASE_AUTH, FIRESTORE_DB } from './src/config/firebase';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -19,7 +26,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import WorkerDashboard from './src/screens/worker/Dashboard'; // worker dashboard
 import ClientDashboard from './src/screens/client/Dashboard'; // client dashboard
 import ForgotPassword from './src/screens/auth/forgot/ForgotPassword';
-import {Platform} from 'react-native';
+import { Platform } from 'react-native';
 import UserTypeSelection from './src/screens/auth/create/UserTypeSelection';
 import PersonalDetails from './src/screens/auth/create/PersonalDetails';
 import { RootStackParamList } from './src/screens/interfaces/RouterStackInterfaceParams';
@@ -43,6 +50,9 @@ import ChangePassword from './src/screens/auth/ChangePassword';
 import EditUserDetails from './src/screens/EditUserDetails';
 import messaging, {firebase} from '@react-native-firebase/messaging';
 import {FCMTokenProvider} from './src/config/FCMTokenContext';
+import JobDetailsClient from './src/screens/client/JobDetailsClient';
+import AcceptOrDeclineApplicant from './src/screens/client/AcceptOrDeclineApplicant';
+import ApplyToJob from './src/screens/worker/ApplyToJob';
 
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();

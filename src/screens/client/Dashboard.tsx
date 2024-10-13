@@ -16,12 +16,12 @@ import NotificationsButton from '../../components/NotificationsButton';
 import AddJobButton from '../../components/AddJobButton';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
-import {faPlusSquare} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {formatDateToReadable} from '../../utils/Utils';
-import {styles} from '../../styles/Globals';
-import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {getUser, storeFcmToken} from '../../services/firestore/users';
+import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { formatDateToReadable } from '../../utils/Utils';
+import { styles } from '../../styles/Globals';
+import { onAuthStateChanged } from '@react-native-firebase/auth';
+import { getUser, storeFcmToken } from '../../services/firestore/users';
 import messaging from '@react-native-firebase/messaging';
 import {showAlert} from '../../components/AlertDialog';
 import {useFCMToken} from '../../config/FCMTokenContext';
@@ -267,7 +267,7 @@ const Dashboard = ({ navigation }: RouterProps) => {
                         key={item.jobId}
                         style={[localStyles.jobCard, getCardStyle()]}
                         onPress={() => navigation.navigate('JobDetailsClient', { id: item.jobId })}
-                      >
+                        >
                         <View style={localStyles.containCard}>
                           <Text
                             style={[styles.regularText, styles.bold]}
