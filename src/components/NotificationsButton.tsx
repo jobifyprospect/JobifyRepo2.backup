@@ -1,13 +1,23 @@
-import React, {useState, forwardRef, useImperativeHandle} from 'react';
+import React, {
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+  useCallback,
+} from 'react';
 import {
   TouchableOpacity,
   StyleSheet,
   ViewStyle,
   ActivityIndicator,
+  View,
 } from 'react-native';
 import Colors from '../styles/Colors';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faBell} from '@fortawesome/free-regular-svg-icons';
+import {useFocusEffect} from '@react-navigation/native';
+import {checkIfNewNotifications} from '../services/firestore/notifications';
+import {getCurrentUserUID} from '../config/firebase';
 
 interface NotificationsButtonProps {
   onPress: () => Promise<void>;
@@ -22,6 +32,7 @@ const NotificationsButton = forwardRef<
   NotificationsButtonProps
 >(({onPress, type = 'primary', disabled = false}, ref) => {
   const [loading, setLoading] = useState(false);
+  const [newNotification, setNewNotification] = useState(false);
 
   const handlePress = async () => {
     setLoading(true);
@@ -48,6 +59,28 @@ const NotificationsButton = forwardRef<
     disabled ? dynamicButtonStyles.disabled : {},
   ];
 
+  const checkForNewNotifications = async () => {
+    try {
+      const uid: string | null = await getCurrentUserUID();
+
+      const hasNewNotifications = await checkIfNewNotifications(uid);
+      setNewNotification(hasNewNotifications);
+    } catch (error) {
+      console.error('Error checking for new notifications', error);
+    }
+  };
+  useEffect(() => {
+    // Check for new notifications when the component mounts
+    checkForNewNotifications();
+  }, []);
+
+  // Use useFocusEffect to refetch user profile when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      checkForNewNotifications();
+    }, []), // Empty dependency array ensures it runs when the screen is focused
+  );
+
   return (
     <TouchableOpacity
       style={containerStyle}
@@ -60,7 +93,10 @@ const NotificationsButton = forwardRef<
           color={type === 'primary' ? Colors.white : Colors.primary}
         />
       ) : (
-        <FontAwesomeIcon icon={faBell} color={Colors.primary} />
+        <View>
+          <FontAwesomeIcon icon={faBell} color={Colors.primary} />
+          {newNotification ? <View style={dynamicButtonStyles.circle} /> : null}
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -75,6 +111,15 @@ const dynamicButtonStyles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     marginVertical: 8,
+  },
+  circle: {
+    width: 8,
+    height: 8,
+    borderRadius: 100,
+    backgroundColor: Colors.danger,
+    position: 'absolute',
+    top: 0,
+    right: -2,
   },
   primary: {
     backgroundColor: Colors.white,

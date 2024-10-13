@@ -16,4 +16,5 @@ export interface User {
     | FirebaseFirestoreTypes.Timestamp
     | FirebaseFirestoreTypes.FieldValue;
   roleId?: string[];
+  notificationIds?: string[];
 }

@@ -29,6 +29,8 @@ import uuid from 'react-native-uuid';
 import {deleteUploadedImage} from '../../../services/storage/id-delete';
 import {convertImageToBase64} from '../../../utils/Utils';
 import {FIRESTORE_TIMESTAMP} from '../../../config/firebase';
+import { Notification } from '../../../services/interfaces/notification';
+import { createNotification } from '../../../services/firestore/notifications';
 
 type IDUploadProps = NativeStackScreenProps<RootStackParamList, 'IDUpload'>;
 
@@ -150,7 +152,19 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
 
       await createRole(clientRole);
       await createRole(workerRole);
+      // Create a notification
+      const newNotification: Notification = {
+        id: uuid.v4().toString(), // Generate a unique notification ID
+        title: 'Account Created',
+        subtitle: `Welcome, ${firstName}! Your account has been successfully created.`,
+        senderId: userId, // The ID of the user who created the account
+        receiverId: userId, // The receiver ID (same user for now)
+        createdAt: FIRESTORE_TIMESTAMP,
+        updatedAt: FIRESTORE_TIMESTAMP,
+        isRead: false, // Default value
+      };
 
+      await createNotification(newNotification); // Call the function to create the notification
       showAlert('Success', 'Account created successfully!');
     } catch (error) {
       console.error('Error during account creation:', error);

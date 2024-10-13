@@ -10,7 +10,7 @@ import {
   Image,
 } from 'react-native';
 import {NavigationProp, useFocusEffect} from '@react-navigation/native';
-import {FIREBASE_AUTH} from '../../config/firebase';
+import {FIREBASE_AUTH, getCurrentUserUID} from '../../config/firebase';
 import {
   getAllJobsWithUserDetails,
   queryJob,
@@ -21,7 +21,10 @@ import Colors from '../../styles/Colors';
 import {formatDateToReadable} from '../../utils/Utils';
 import {styles} from '../../styles/Globals';
 import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {getUser} from '../../services/firestore/users';
+import {getUser, storeFcmToken} from '../../services/firestore/users';
+import {firebase} from '@react-native-firebase/messaging';
+import {showAlert} from '../../components/AlertDialog';
+import {useFCMToken} from '../../config/FCMTokenContext';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -36,7 +39,7 @@ const Dashboard = ({navigation}: RouterProps) => {
   const [currentRoleId, setCurrentRoleId] = useState<string | undefined>(
     undefined,
   );
-
+  const fcmToken = useFCMToken();
   // Fetch jobs for the current user
   const fetchJobs = useCallback(async (roleId: string | undefined) => {
     if (!roleId) {
@@ -100,9 +103,11 @@ const Dashboard = ({navigation}: RouterProps) => {
       async (user: any) => {
         if (user) {
           const currentRole = await getUser(user.uid);
+          const uid = await getCurrentUserUID();
           if (currentRole) {
             setCurrentRoleId(currentRole.defaultRole);
           }
+          await storeFcmToken(uid, fcmToken); // Store the new token
         } else {
           // Reset state when user logs out or there is no user
           setMyListings([]);
@@ -115,7 +120,7 @@ const Dashboard = ({navigation}: RouterProps) => {
 
     // Cleanup auth listener on unmount
     return () => unsubscribeAuth();
-  }, []);
+  }, [fcmToken]);
 
   // Fetch jobs when currentRoleId changes
   useEffect(() => {
@@ -132,7 +137,24 @@ const Dashboard = ({navigation}: RouterProps) => {
       }
     }, [fetchJobs, currentRoleId]),
   );
+  useEffect(() => {
+    const unsubscribe = firebase.messaging().onMessage(async remoteMessage => {
+      if (remoteMessage) {
+        // Check for the logged-in user
+        const currentUser = FIREBASE_AUTH.currentUser;
+        if (currentUser) {
+          showAlert('Notification', 'There is a new notification', () =>
+            navigation.navigate('Notification'),
+          );
+        } else {
+          console.log('ON MESSAGE: No user is logged in.');
+        }
 
+        console.log('ON MESSAGE', remoteMessage);
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
   return (
     <View style={localStyles.container}>
       <View style={localStyles.screen}>

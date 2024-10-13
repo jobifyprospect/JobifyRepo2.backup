@@ -9,7 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import {NavigationProp, useFocusEffect} from '@react-navigation/native';
-import {FIREBASE_AUTH} from '../../config/firebase';
+import {FIREBASE_AUTH, getCurrentUserUID} from '../../config/firebase';
 import {getJobsByClient, queryJob} from '../../services/firestore/jobs';
 import {Job} from '../../services/interfaces/job';
 import NotificationsButton from '../../components/NotificationsButton';
@@ -21,7 +21,10 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {formatDateToReadable} from '../../utils/Utils';
 import {styles} from '../../styles/Globals';
 import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {getUser} from '../../services/firestore/users';
+import {getUser, storeFcmToken} from '../../services/firestore/users';
+import messaging from '@react-native-firebase/messaging';
+import {showAlert} from '../../components/AlertDialog';
+import {useFCMToken} from '../../config/FCMTokenContext';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -36,26 +39,31 @@ const Dashboard = ({navigation}: RouterProps) => {
   const [currentRoleId, setCurrentRoleId] = useState<string | undefined>(
     undefined,
   );
+  const fcmToken = useFCMToken();
 
-  // Fetch jobs for the current user
-  const fetchJobs = useCallback(async (roleId: string | undefined) => {
-    if (!roleId) {
-      console.log(`${roleId} NO ID`);
-      return; // Early return if no role ID
-    }
+  const fetchJobs = useCallback(
+    async (roleId: string | undefined) => {
+      if (!roleId) {
+        console.log(`${roleId} NO ID`);
+        return; // Early return if no role ID
+      }
 
-    setLoading(true); // Set loading to true while fetching
-    try {
-      const jobs = await getJobsByClient(roleId);
-      setMyListings(jobs);
-      setSearchResults(jobs);
-    } catch (error) {
-      console.error('Failed to fetch jobs:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false); // Stop refreshing after data fetch
-    }
-  }, []);
+      setLoading(true); // Set loading to true while fetching
+      try {
+        const jobs = await getJobsByClient(roleId);
+        setMyListings(jobs);
+        setSearchResults(jobs);
+        const uid = await getCurrentUserUID();
+        await storeFcmToken(uid, fcmToken); // Store the new token
+      } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+      } finally {
+        setLoading(false);
+        setRefreshing(false); // Stop refreshing after data fetch
+      }
+    },
+    [fcmToken],
+  );
 
   // Pull down to refresh
   const onRefresh = useCallback(() => {
@@ -132,6 +140,24 @@ const Dashboard = ({navigation}: RouterProps) => {
       }
     }, [fetchJobs, currentRoleId]),
   );
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      if (remoteMessage) {
+        // Check for the logged-in user
+        const currentUser = FIREBASE_AUTH.currentUser;
+        if (currentUser) {
+          showAlert('Notification', 'There is a new notification', () =>
+            navigation.navigate('Notification'),
+          );
+        } else {
+          console.log('ON MESSAGE: No user is logged in.');
+        }
+
+        console.log('ON MESSAGE', remoteMessage);
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   return (
     <View style={localStyles.container}>
@@ -257,7 +283,7 @@ const Dashboard = ({navigation}: RouterProps) => {
               />
             </View>
           ) : (
-            <>
+            <View style={localStyles.emptyContainer}>
               <Text style={styles.xlargeHeading}>
                 {' '}
                 {'\n'}Welcome to Jobify!{' '}
@@ -269,7 +295,7 @@ const Dashboard = ({navigation}: RouterProps) => {
                 Press the <FontAwesomeIcon icon={faPlusSquare} /> button to get
                 started
               </Text>
-            </>
+            </View>
           )}
         </>
 
@@ -287,6 +313,9 @@ const Dashboard = ({navigation}: RouterProps) => {
 const localStyles = StyleSheet.create({
   container: {
     paddingHorizontal: 30,
+    flex: 1,
+  },
+  emptyContainer: {
     flex: 1,
   },
   containCard: {
