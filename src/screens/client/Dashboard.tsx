@@ -22,6 +22,8 @@ import {formatDateToReadable} from '../../utils/Utils';
 import {styles} from '../../styles/Globals';
 import {onAuthStateChanged} from '@react-native-firebase/auth';
 import {getUser} from '../../services/firestore/users';
+import messaging from '@react-native-firebase/messaging';
+import {showAlert} from '../../components/AlertDialog';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -130,6 +132,24 @@ const Dashboard = ({navigation}: RouterProps) => {
       }
     }, [fetchJobs, currentRoleId]),
   );
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      if (remoteMessage) {
+        // Check for the logged-in user
+        const currentUser = FIREBASE_AUTH.currentUser;
+        if (currentUser) {
+          showAlert('Notification', 'There is a new notification', () =>
+            navigation.navigate('Notification'),
+          );
+        } else {
+          console.log('ON MESSAGE: No user is logged in.');
+        }
+
+        console.log('ON MESSAGE', remoteMessage);
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   return (
     <View style={localStyles.container}>
@@ -255,7 +275,7 @@ const Dashboard = ({navigation}: RouterProps) => {
               />
             </View>
           ) : (
-            <>
+            <View style={localStyles.emptyContainer}>
               <Text style={styles.xlargeHeading}>
                 {' '}
                 {'\n'}Welcome to Jobify!{' '}
@@ -267,7 +287,7 @@ const Dashboard = ({navigation}: RouterProps) => {
                 Press the <FontAwesomeIcon icon={faPlusSquare} /> button to get
                 started
               </Text>
-            </>
+            </View>
           )}
         </>
 
@@ -285,6 +305,9 @@ const Dashboard = ({navigation}: RouterProps) => {
 const localStyles = StyleSheet.create({
   container: {
     paddingHorizontal: 30,
+    flex: 1,
+  },
+  emptyContainer: {
     flex: 1,
   },
   containCard: {
