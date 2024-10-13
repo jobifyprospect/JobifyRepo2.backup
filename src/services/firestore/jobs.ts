@@ -1,8 +1,8 @@
-import {showAlert} from '../../components/AlertDialog';
-import {FIRESTORE_DB} from '../../config/firebase';
-import {Job} from '../interfaces/job';
-import {User} from '../interfaces/user';
-import {getUserDetailsByClientId} from './users';
+import { showAlert } from '../../components/AlertDialog';
+import { FIRESTORE_DB } from '../../config/firebase';
+import { Job } from '../interfaces/job';
+import { User } from '../interfaces/user';
+import { getUserDetailsByClientId } from './users';
 
 export const jobsRef = FIRESTORE_DB.collection('jobs');
 
@@ -46,6 +46,27 @@ export const getJob = async (jobId: string): Promise<Job | undefined> => {
     return jobDoc.exists ? (jobDoc.data() as Job) : undefined;
   } catch (error) {
     showAlert('Error', 'Failed to retrieve job.');
+    console.error(error);
+    return undefined;
+  }
+};
+
+export const getJobs = async (jobIds: string[]): Promise<Job[] | undefined> => {
+  try {
+    const querySnapshot = await jobsRef.where('jobId', 'in', jobIds).get();
+
+    if (querySnapshot.empty) {
+      return undefined;
+    }
+
+    const jobs: Job[] = [];
+    querySnapshot.forEach(doc => {
+      jobs.push(doc.data() as Job);
+    });
+
+    return jobs;
+  } catch (error) {
+    showAlert('Error', 'Failed to retrieve jobs.');
     console.error(error);
     return undefined;
   }
@@ -97,6 +118,32 @@ export function getJobsByClient(clientId: string): Promise<Job[]> {
   });
 }
 
+export function getJobsByWorker(workerId: string): Promise<Job[]> {
+
+  console.log("Received id: ", workerId)
+  return new Promise((resolve, reject) => {
+    const unsubscribe = jobsRef
+      .where('clientId', '==', workerId)
+      .orderBy('createdAt', 'asc')
+      .onSnapshot(
+        snapshot => {
+          const jobs: Job[] = [];
+          snapshot.forEach(doc => {
+            jobs.push(doc.data() as Job);
+          });
+          resolve(jobs); // Resolve with the fetched jobs
+        },
+        error => {
+          console.error('Error getting documents:', error);
+          reject(error); // Reject on error
+        },
+      );
+
+    // Return the unsubscribe function to be used in the cleanup
+    return () => unsubscribe();
+  });
+}
+
 export function getAllJobs(): Promise<Job[]> {
   return new Promise((resolve, reject) => {
     const unsubscribe = jobsRef
@@ -122,9 +169,9 @@ export function getAllJobs(): Promise<Job[]> {
 
 // Main function to get all jobs with client user details
 export async function getAllJobsWithUserDetails(): Promise<
-  Array<{job: Job; user: User | null}>
+  Array<{ job: Job; user: User | null }>
 > {
-  const jobsWithUserDetails: Array<{job: Job; user: User | null}> = [];
+  const jobsWithUserDetails: Array<{ job: Job; user: User | null }> = [];
 
   try {
     const jobSnapshot = await jobsRef.orderBy('createdAt', 'asc').get();
@@ -132,7 +179,7 @@ export async function getAllJobsWithUserDetails(): Promise<
     const jobPromises = jobSnapshot.docs.map(async doc => {
       const jobData = doc.data() as Job;
       const userData = await getUserDetailsByClientId(jobData.clientId); // Fetch user details using clientId
-      return {job: jobData, user: userData}; // Return job and user data
+      return { job: jobData, user: userData }; // Return job and user data
     });
 
     // Wait for all user details to be fetched
