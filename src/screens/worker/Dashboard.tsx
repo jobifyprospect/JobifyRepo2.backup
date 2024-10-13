@@ -19,10 +19,12 @@ import {
 import NotificationsButton from '../../components/NotificationsButton';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
-import { formatDateToReadable } from '../../utils/Utils';
-import { styles } from '../../styles/Globals';
-import { onAuthStateChanged } from '@react-native-firebase/auth';
-import { getUser } from '../../services/firestore/users';
+import {formatDateToReadable} from '../../utils/Utils';
+import {styles} from '../../styles/Globals';
+import {onAuthStateChanged} from '@react-native-firebase/auth';
+import {getUser} from '../../services/firestore/users';
+import {firebase} from '@react-native-firebase/messaging';
+import {showAlert} from '../../components/AlertDialog';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -137,7 +139,24 @@ const Dashboard = ({ navigation }: RouterProps) => {
       }
     }, [fetchJobs, currentRoleId]),
   );
+  useEffect(() => {
+    const unsubscribe = firebase.messaging().onMessage(async remoteMessage => {
+      if (remoteMessage) {
+        // Check for the logged-in user
+        const currentUser = FIREBASE_AUTH.currentUser;
+        if (currentUser) {
+          showAlert('Notification', 'There is a new notification', () =>
+            navigation.navigate('Notification'),
+          );
+        } else {
+          console.log('ON MESSAGE: No user is logged in.');
+        }
 
+        console.log('ON MESSAGE', remoteMessage);
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
   return (
     <View style={localStyles.container}>
       <View style={localStyles.screen}>

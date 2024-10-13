@@ -24,6 +24,8 @@ export const getCurrentUserUID = () => {
     const uid = FIREBASE_AUTH.currentUser?.uid; // Get UID
 
     if (uid) {
+      console.log('Current User ID:', uid);
+
       resolve(uid); // Resolve with UID if available
     } else {
       const unsubscribeAuth = onAuthStateChanged(FIREBASE_AUTH, (user: any) => {

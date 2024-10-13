@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {View, FlatList, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {formatDateToReadable} from '../utils/Utils'; // Assuming this function exists
 import {Notification} from '../services/interfaces/notification';
@@ -7,8 +7,9 @@ import {
   updateNotificationReadStatus,
 } from '../services/firestore/notifications';
 import BackButton from '../components/BackButton';
-import {NavigationProp} from '@react-navigation/native';
+import {NavigationProp, useFocusEffect} from '@react-navigation/native';
 import {getCurrentUserUID} from '../config/firebase';
+import RefreshButton from '../components/RefreshComponent';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -17,27 +18,38 @@ interface RouterProps {
 const NotificationScreen = ({navigation}: RouterProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState(false); // State to track refreshing
 
-  useEffect(() => {
-    const getNotifications = async () => {
-      try {
-        const uid: string | null = await getCurrentUserUID();
-
-        const notificationsList = await fetchNotifications(uid);
-        setNotifications(notificationsList);
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-      } finally {
-        setLoading(false);
+  const getNotifications = async () => {
+    try {
+      const uid: string | null = await getCurrentUserUID();
+      if (!uid) {
+        return;
       }
-    };
 
+      const notificationsList = await fetchNotifications(uid);
+      setNotifications(notificationsList);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false); // Start the refreshing spinner
+    }
+  };
+
+  // Refetch notifications when the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      getNotifications();
+    }, []),
+  );
+  const onRefresh = () => {
+    setRefreshing(true); // Start the refreshing spinner
     getNotifications();
-  }, []);
+  };
 
   const handleNotificationPress = async (notification: Notification) => {
-    console.log('Notification ID:', notification.id); // Log the notification ID
-
     try {
       // Only update the read status if it's not already read
       if (!notification.isRead) {
@@ -75,9 +87,15 @@ const NotificationScreen = ({navigation}: RouterProps) => {
       {loading ? (
         <Text>Loading...</Text>
       ) : (
-        <View>
-          <BackButton onPress={async () => navigation.goBack()} />
-
+        <View style={styles.contentContainer}>
+          <View style={styles.containHeaderButton}>
+            <BackButton onPress={async () => navigation.goBack()} />
+            <RefreshButton
+              type="primary"
+              onPress={onRefresh} // Trigger the refresh function
+              disabled={refreshing} // Disable button when refreshing
+            />
+          </View>
           <FlatList
             data={notifications}
             renderItem={renderNotificationItem}
@@ -94,7 +112,15 @@ const NotificationScreen = ({navigation}: RouterProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 30,
+    paddingTop: 25,
+  },
+  containHeaderButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  contentContainer: {
+    marginBottom: 148,
   },
   notificationCard: {
     flexDirection: 'row',

@@ -41,9 +41,27 @@ import AcceptOrDeclineApplicant from './src/screens/client/AcceptOrDeclineApplic
 import ApplyToJob from './src/screens/worker/ApplyToJob';
 import ChangePassword from './src/screens/auth/ChangePassword';
 import EditUserDetails from './src/screens/EditUserDetails';
+import {FCMTokenProvider} from './src/config/FCMTokenContext';
+
+// import {FCMTokenProvider} from './src/config/FCMTokenContext';
 
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
+
+import messaging, {firebase} from '@react-native-firebase/messaging';
+
+// Register background handler
+firebase.messaging().setBackgroundMessageHandler(async remoteMessage => {
+  // Check for the logged-in user
+  const currentUser = FIREBASE_AUTH.currentUser;
+  if (currentUser) {
+    console.log('Background Message: User is logged in:', currentUser.uid);
+  } else {
+    console.log('Background Message: No user is logged in.');
+  }
+
+  console.log('Message handled in the background!', remoteMessage);
+});
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<RootStackParamList>();
@@ -166,7 +184,22 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
+  useEffect(() => {
+    const unsubscribe = firebase
+      .messaging()
+      .onSendError(async remoteMessage => {
+        console.log('Send error', remoteMessage);
+      });
+    return unsubscribe;
+  }, []);
+  useEffect(() => {
+    const unsubscribe = firebase
+      .messaging()
+      .onMessageSent(async remoteMessage => {
+        console.log('Message sent', remoteMessage);
+      });
+    return unsubscribe;
+  }, []);
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
       FIREBASE_AUTH,
@@ -184,8 +217,20 @@ export default function App() {
                 if (foundRole) {
                   if (userData.roleId[0] === foundRole.roleId) {
                     setRole('client');
+                    const TOPIC = `client-${authUser.uid}`;
+                    messaging()
+                      .subscribeToTopic(TOPIC)
+                      .then(() => {
+                        console.log(`TOPIC: ${TOPIC} Subscribed`);
+                      });
                   } else if (userData.roleId[1] === foundRole.roleId) {
                     setRole('worker');
+                    const TOPIC = `worker-${authUser.uid}`;
+                    messaging()
+                      .subscribeToTopic(TOPIC)
+                      .then(() => {
+                        console.log(`TOPIC: ${TOPIC} Subscribed`);
+                      });
                   } else {
                     setRole(null);
                   }
@@ -224,30 +269,31 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        {user ? (
-          <>
-            <Stack.Screen
-              name="Inside"
-              children={() => <TabLayout role={role} />}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Post"
-              component={PostJob}
-              options={{title: 'Post', headerShown: false}}
-            />
-            <Stack.Screen
-              name="ChangePassword"
-              component={ChangePassword}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="EditUserDetails"
-              component={EditUserDetails}
-              options={{headerShown: false}}
-            />
+    <FCMTokenProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Login">
+          {user ? (
+            <>
+              <Stack.Screen
+                name="Inside"
+                children={() => <TabLayout role={role} />}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Post"
+                component={PostJob}
+                options={{title: 'Post', headerShown: false}}
+              />
+              <Stack.Screen
+                name="ChangePassword"
+                component={ChangePassword}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="EditUserDetails"
+                component={EditUserDetails}
+                options={{headerShown: false}}
+              />
                           <Stack.Screen
               name="JobDetailsClient"
               component={JobDetailsClient}
@@ -263,57 +309,58 @@ export default function App() {
               component={ApplyToJob}
               options={{ title: 'ApplyToJob', headerShown: false }} // Job Application, Worker View Screen
             />
-          </>
-        ) : (
-          <>
-            <Stack.Screen
-              name="Login"
-              component={Login}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="UserTypeSelection"
-              component={UserTypeSelection}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="PersonalDetails"
-              component={PersonalDetails}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="AddressDetails"
-              component={AddressDetails}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="LoginInfo"
-              component={LoginInfo}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="PasswordCreation"
-              component={PasswordCreation}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="IDUpload"
-              component={IDUpload}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Success"
-              component={Success}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Forgot"
-              component={ForgotPassword}
-              options={{headerShown: false}}
-            />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+            </>
+          ) : (
+            <>
+              <Stack.Screen
+                name="Login"
+                component={Login}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="UserTypeSelection"
+                component={UserTypeSelection}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="PersonalDetails"
+                component={PersonalDetails}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="AddressDetails"
+                component={AddressDetails}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="LoginInfo"
+                component={LoginInfo}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="PasswordCreation"
+                component={PasswordCreation}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="IDUpload"
+                component={IDUpload}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Success"
+                component={Success}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Forgot"
+                component={ForgotPassword}
+                options={{headerShown: false}}
+              />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </FCMTokenProvider>
   );
 }

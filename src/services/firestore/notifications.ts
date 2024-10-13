@@ -1,6 +1,8 @@
 // services/notificationService.ts
+import {showAlert} from '../../components/AlertDialog';
 import {FIRESTORE_TIMESTAMP, notificationsRef} from '../../config/firebase';
 import {Notification} from '../interfaces/notification';
+import {firebase} from '@react-native-firebase/messaging';
 
 export const fetchNotifications = async (
   userId: string | null,
@@ -8,7 +10,7 @@ export const fetchNotifications = async (
   try {
     const snapshot = await notificationsRef
       .where('receiverId', '==', userId)
-      .orderBy('createdAt', 'asc')
+      .orderBy('createdAt', 'desc')
       .get();
 
     const notifications: Notification[] = snapshot.docs.map(doc => ({
@@ -58,28 +60,66 @@ export const updateNotificationReadStatus = async (notificationId: string) => {
       });
 
       console.log(`Notification ${notificationDoc.id} updated successfully`);
-    } else {
-      console.error('No unread notifications found for the user.');
     }
   } catch (error) {
     console.error('Error updating notification read status:', error);
   }
 };
 
-// Function to create a new notification
 export const createNotification = async (
-  notificationData: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'>,
+  notificationData: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> & {
+    from?: string; // Nullable parameter for sender ID
+    to?: string; // Nullable parameter for receiver ID
+    messageId?: string; // Nullable parameter for receiver ID
+    threadId?: string; // Nullable parameter for receiver ID
+    notification?: {title: string; body: string}; // Nullable notification object
+  },
 ): Promise<Notification | null> => {
   try {
+    // Create a new notification in Firestore
     const newNotificationRef = await notificationsRef.add(notificationData);
 
-    // Retrieve the newly created notification
+    // Retrieve the newly created notification snapshot
+    const newNotificationSnapshot = await newNotificationRef.get();
+
     const newNotification: Notification = {
       id: newNotificationRef.id,
       ...notificationData,
-      createdAt: (await newNotificationRef.get()).data()?.createdAt, // Get the createdAt timestamp from Firestore
-      updatedAt: (await newNotificationRef.get()).data()?.updatedAt, // Get the updatedAt timestamp from Firestore
+      createdAt: newNotificationSnapshot.data()?.createdAt,
+      updatedAt: newNotificationSnapshot.data()?.updatedAt,
     };
+
+    // Send a message after creating the notification
+    const {from, to, notification, messageId, threadId} = notificationData; // Destructure params
+
+    if (from && to && notification) {
+      await firebase
+        .messaging()
+        .sendMessage({
+          messageId: messageId,
+          threadId: threadId,
+          from: from, // Sender ID
+          to: to, // Receiver ID
+          notification: {
+            title: notification.title,
+            body: notification.body,
+          },
+          fcmOptions: {},
+        })
+        .then(() => {
+          showAlert(
+            'Success',
+            'Test notification created and sent to devices.',
+          );
+        })
+        .catch((error: any) => {
+          console.log(`${error} notifications not sent`);
+        });
+    } else {
+      console.log(
+        'From, To, and Notification parameters are required to send a message.',
+      );
+    }
 
     return newNotification; // Return the newly created notification
   } catch (error) {
