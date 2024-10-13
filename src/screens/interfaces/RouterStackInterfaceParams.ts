@@ -4,6 +4,20 @@ export type RootStackParamList = {
   Post: undefined;
   ClientDashboardScreen: undefined;
   PersonalDetails: {userType: 'client' | 'worker'};
+  Profile: undefined;
+  EditUserDetails: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    address: {
+      country: string;
+      region: string;
+      province: string;
+      city: string;
+      postalCode: string;
+    };
+  };
   AddressDetails: {
     userType: 'client' | 'worker';
     firstName: string;
@@ -72,5 +86,6 @@ export type RootStackParamList = {
   Login: undefined;
   Forgot: undefined;
   Loading: undefined;
+  ChangePassword: undefined;
   Inside: {role: string | null};
 };

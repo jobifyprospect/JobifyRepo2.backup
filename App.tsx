@@ -36,6 +36,8 @@ import PostJob from './src/screens/client/PostJob';
 import {enableScreens} from 'react-native-screens';
 import SplashScreen from './src/screens/Splashscreen';
 import LoadingScreen from './src/screens/utils/LoadingScreen';
+import ChangePassword from './src/screens/auth/ChangePassword';
+import EditUserDetails from './src/screens/EditUserDetails';
 
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
@@ -87,6 +89,11 @@ const DashboardStack = ({role}: {role: string | null}) => {
             name="Notification"
             component={Notification}
             options={{title: 'Notifications', headerShown: false}} // Notification Screen
+          />
+          <Stack.Screen
+            name="EditUserDetails"
+            component={EditUserDetails}
+            options={{headerShown: false}}
           />
         </>
       )}
@@ -225,7 +232,17 @@ export default function App() {
             <Stack.Screen
               name="Post"
               component={PostJob}
-              options={{title: 'Post', headerShown: false}} // Make sure this exists
+              options={{title: 'Post', headerShown: false}}
+            />
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePassword}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="EditUserDetails"
+              component={EditUserDetails}
+              options={{headerShown: false}}
             />
           </>
         ) : (

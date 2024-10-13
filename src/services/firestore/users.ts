@@ -1,9 +1,15 @@
 import {showAlert} from '../../components/AlertDialog';
-import {FIRESTORE_DB, rolesRef} from '../../config/firebase';
+import {
+  addressesRef,
+  rolesRef,
+  usersRef,
+  validationsRef,
+} from '../../config/firebase';
+import {Address} from '../interfaces/address';
 import {Role} from '../interfaces/role';
 import {User} from '../interfaces/user';
-
-const usersRef = FIRESTORE_DB.collection('users');
+import {UserDetails} from '../interfaces/userDetails';
+import {Validation} from '../interfaces/validation';
 
 export const createUser = async (user: User): Promise<void> => {
   try {
@@ -25,12 +31,115 @@ export const getUser = async (userId: string): Promise<User | undefined> => {
   }
 };
 
+export const getUserDetails = async (
+  userId: string,
+): Promise<Array<UserDetails> | undefined> => {
+  try {
+    const userDoc = await usersRef.doc(userId).get();
+    const user = userDoc.exists ? (userDoc.data() as User) : null;
+
+    if (!user) {
+      showAlert('Error', 'User not found.');
+      return undefined;
+    }
+
+    // Fetch related details concurrently using Promise.all
+    const [validationDoc, addressDoc, roleDocs] = await Promise.all([
+      user.validationId
+        ? validationsRef.doc(user.validationId).get()
+        : Promise.resolve(null),
+      user.addressId
+        ? addressesRef.doc(user.addressId).get()
+        : Promise.resolve(null),
+      user.roleId && user.roleId.length > 0
+        ? Promise.all(user.roleId.map(roleId => rolesRef.doc(roleId).get()))
+        : Promise.resolve([]),
+    ]);
+
+    const validation = validationDoc?.exists
+      ? (validationDoc.data() as Validation)
+      : null;
+    const address = addressDoc?.exists ? (addressDoc.data() as Address) : null;
+    const roles =
+      roleDocs.length > 0
+        ? roleDocs.map(roleDoc => roleDoc.data() as Role)
+        : [];
+
+    // Return the data in the specified structure
+    return [
+      {
+        validation,
+        address,
+        role: roles.length > 0 ? roles[0] : null, // Assuming you're interested in the first role only
+        user,
+      },
+    ];
+  } catch (error) {
+    showAlert('Error', 'Failed to retrieve user details.');
+    console.error('Error fetching user details:', error);
+    return undefined;
+  }
+};
+
 export const updateUser = async (
   userId: string,
   updates: Partial<User>,
 ): Promise<void> => {
   try {
     await usersRef.doc(userId).update(updates);
+  } catch (error) {
+    showAlert('Error', 'Failed to update user.');
+    console.error(error);
+  }
+};
+
+export const updateUserDetails = async (
+  userId: string,
+  updates: {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    address?: {
+      region: string;
+      province: string;
+      city: string;
+      postalCode: string;
+    };
+  },
+): Promise<void> => {
+  try {
+    const userDoc = await usersRef.doc(userId).get();
+    const user = userDoc.data();
+
+    if (!user) {
+      showAlert('Error', 'User not found.');
+      return;
+    }
+
+    // Update address if provided
+    if (updates.address && user.addressId) {
+      await addressesRef.doc(user.addressId).update({
+        region: updates.address.region,
+        province: updates.address.province,
+        city: updates.address.city,
+        postalCode: updates.address.postalCode,
+      });
+    }
+
+    // Prepare user updates for first name, last name, phone number
+    const userUpdates: Partial<User> = {};
+    if (updates.firstName) {
+      userUpdates.firstName = updates.firstName;
+    }
+    if (updates.lastName) {
+      userUpdates.lastName = updates.lastName;
+    }
+    if (updates.phoneNumber) {
+      userUpdates.phoneNumber = updates.phoneNumber;
+    }
+
+    // Update user document
+    await usersRef.doc(userId).update(userUpdates);
   } catch (error) {
     showAlert('Error', 'Failed to update user.');
     console.error(error);

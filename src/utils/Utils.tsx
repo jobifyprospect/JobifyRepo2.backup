@@ -7,6 +7,9 @@ import {
 import RNFS from 'react-native-fs'; // Required for converting to base64
 
 export const isNotEmpty = (input: string): boolean => {
+  if (input === undefined) {
+    return false;
+  }
   return input.trim().length >= 3;
 };
 
@@ -20,6 +23,9 @@ export const isPasswordValid = (password: string): boolean => {
 };
 
 export const isValidPhoneNumber = (phoneNumber: string): boolean => {
+  if (phoneNumber === undefined) {
+    return false;
+  }
   const cleaned = phoneNumber.replace(/\D+/g, '');
 
   return /^63\d{10}$/.test(cleaned);

@@ -125,7 +125,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
         roleId: [clientRoleId, workerRoleId], // Store both role IDs
         firstName,
         lastName,
-        defaultRole: userType == 'client' ? clientRoleId : workerRoleId,
+        defaultRole: userType === 'client' ? clientRoleId : workerRoleId,
         profilePicture: selfieImageUrl,
         validationId,
         addressId,
@@ -186,7 +186,10 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
           <View style={styles.headerContainer}>
             <Text style={styles.largeHeading}>Verification Process</Text>
           </View>
-          <Text style={styles.regularText}>Upload your ID and selfie</Text>
+          <Text style={styles.regularText}>
+            Upload your ID and selfie. Selfie Image will be used as your profile
+            picture
+          </Text>
 
           {/* ID Front Upload */}
           <View style={idUploadStyles.imageContainer}>
