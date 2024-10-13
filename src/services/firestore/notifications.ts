@@ -69,7 +69,7 @@ export const updateNotificationReadStatus = async (notificationId: string) => {
 export const createNotification = async (
   notificationData: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> & {
     from?: string; // Nullable parameter for sender ID
-    to?: string; // Nullable parameter for receiver ID
+    to?: string | null; // Nullable parameter for receiver ID
     messageId?: string; // Nullable parameter for receiver ID
     threadId?: string; // Nullable parameter for receiver ID
     notification?: {title: string; body: string}; // Nullable notification object

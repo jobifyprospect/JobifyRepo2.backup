@@ -9,7 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import {NavigationProp, useFocusEffect} from '@react-navigation/native';
-import {FIREBASE_AUTH} from '../../config/firebase';
+import {FIREBASE_AUTH, getCurrentUserUID} from '../../config/firebase';
 import {getJobsByClient, queryJob} from '../../services/firestore/jobs';
 import {Job} from '../../services/interfaces/job';
 import NotificationsButton from '../../components/NotificationsButton';
@@ -21,9 +21,10 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {formatDateToReadable} from '../../utils/Utils';
 import {styles} from '../../styles/Globals';
 import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {getUser} from '../../services/firestore/users';
+import {getUser, storeFcmToken} from '../../services/firestore/users';
 import messaging from '@react-native-firebase/messaging';
 import {showAlert} from '../../components/AlertDialog';
+import {useFCMToken} from '../../config/FCMTokenContext';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -38,24 +39,31 @@ const Dashboard = ({navigation}: RouterProps) => {
   const [currentRoleId, setCurrentRoleId] = useState<string | undefined>(
     undefined,
   );
-  const fetchJobs = useCallback(async (roleId: string | undefined) => {
-    if (!roleId) {
-      console.log(`${roleId} NO ID`);
-      return; // Early return if no role ID
-    }
+  const fcmToken = useFCMToken();
 
-    setLoading(true); // Set loading to true while fetching
-    try {
-      const jobs = await getJobsByClient(roleId);
-      setMyListings(jobs);
-      setSearchResults(jobs);
-    } catch (error) {
-      console.error('Failed to fetch jobs:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false); // Stop refreshing after data fetch
-    }
-  }, []);
+  const fetchJobs = useCallback(
+    async (roleId: string | undefined) => {
+      if (!roleId) {
+        console.log(`${roleId} NO ID`);
+        return; // Early return if no role ID
+      }
+
+      setLoading(true); // Set loading to true while fetching
+      try {
+        const jobs = await getJobsByClient(roleId);
+        setMyListings(jobs);
+        setSearchResults(jobs);
+        const uid = await getCurrentUserUID();
+        await storeFcmToken(uid, fcmToken); // Store the new token
+      } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+      } finally {
+        setLoading(false);
+        setRefreshing(false); // Stop refreshing after data fetch
+      }
+    },
+    [fcmToken],
+  );
 
   // Pull down to refresh
   const onRefresh = useCallback(() => {

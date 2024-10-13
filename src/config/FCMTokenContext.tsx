@@ -1,5 +1,7 @@
 import React, {createContext, useContext, useState, useEffect} from 'react';
 import messaging from '@react-native-firebase/messaging';
+import {handleTokenRefresh} from '../services/firestore/users';
+import {getCurrentUserUID} from './firebase';
 
 // Define a context to hold the FCM token
 const FCMTokenContext = createContext<string | null>(null);
@@ -42,9 +44,11 @@ export const FCMTokenProvider: React.FC<{children: React.ReactNode}> = ({
     getToken();
 
     // Listen for FCM token refresh
-    const unsubscribe = messaging().onTokenRefresh(token => {
+    const unsubscribe = messaging().onTokenRefresh(async token => {
       console.log('FCM token refreshed:', token);
+      const uid = await getCurrentUserUID();
       setFcmToken(token);
+      handleTokenRefresh(uid);
     });
 
     return () => {
