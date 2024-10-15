@@ -15,6 +15,8 @@ import { getCurrentUserUID } from '../../config/firebase';
 import { getUser } from '../../services/firestore/users';
 import { getWorker } from '../../services/firestore/workers';
 import { Worker } from '../../services/interfaces/worker';
+import { deleteJob } from '../../services/firestore/jobs';
+import { showAlert } from '../../components/AlertDialog';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -27,7 +29,7 @@ export default function JobDetailsClient({ navigation, route }: RouterProps) {
 
     const [job, setJob] = useState<Job>();
     const [applicants, setApplicants] = useState<Application[]>()
-    const [worker, setWorker] = useState<Worker | null>()
+    const [worker, setWorker] = useState<Worker | undefined>()
 
     const [loading, setIsLoading] = useState<boolean>(false)
     const [currentScreen, setCurrentScreen] = useState<'Listing' | 'Applicants'>('Listing')
@@ -72,22 +74,33 @@ export default function JobDetailsClient({ navigation, route }: RouterProps) {
         }
     }, [applicants]);
 
-    const fetchWorkerDetails = useCallback(async (worker_id: string) => {
-        if (!worker_id) { return }
+    // const fetchWorkerDetails = useCallback(async (worker_id: string) => {
+    //     if (!worker_id) { return }
+
+    //     try {
+    //         console.log('running fetchWorkerDetails function')
+    //         if (id) {
+    //             const workerDetails = await getWorker(worker_id);
+
+    //             worker && setWorker(workerDetails);
+    //         }
+    //     } catch (error) {
+    //         console.error('Failed to fetch worker details:', error);
+    //     } finally {
+    //         setRefreshing(false); // Stop the refreshing spinner
+    //     }
+    // }, [worker]);
+
+    async function handleDeleteJob(id: string) {
+
+        if (!id) { showAlert('error', 'No job found.') }
 
         try {
-            console.log('running fetchWorkerDetails function')
-            if (id) {
-                const worker = await getWorker(worker_id);
-
-                worker && setWorker(worker);
-            }
-        } catch (error) {
-            console.error('Failed to fetch worker details:', error);
-        } finally {
-            setRefreshing(false); // Stop the refreshing spinner
+            await deleteJob(id)
+        } catch (e) {
+            console.error(e)
         }
-    }, [job]);
+    }
 
     const onRefresh = useCallback(() => {
         setRefreshing(true); // Start the refreshing spinner
@@ -122,7 +135,7 @@ export default function JobDetailsClient({ navigation, route }: RouterProps) {
                 <BackButton onPress={async () => navigation.goBack()} />
 
                 {
-                    currentScreen === 'Listing' && <DynamicButton onPress={() => undefined} title='Edit'/>
+                    currentScreen === 'Listing' && <DynamicButton onPress={() => undefined} title='Edit' />
                 }
 
                 {
@@ -180,7 +193,7 @@ export default function JobDetailsClient({ navigation, route }: RouterProps) {
                                     <Text style={localStyles.cardContentHeader}> Rate / hr </Text>
                                     <Text style={localStyles.footerTextXL}> PHP {job?.pay}.00  </Text>
 
-                                    <DynamicButton type='destructive' onPress={() => undefined} title='Delete' />
+                                    <DynamicButton type='destructive' onPress={() => handleDeleteJob(job?.jobId as string)} title='Delete' />
                                 </View>
 
                             </View>
@@ -263,7 +276,7 @@ export default function JobDetailsClient({ navigation, route }: RouterProps) {
                                                         <View style={localStyles.containItems}>
                                                             <View style={localStyles.column}>
                                                                 <Text style={[styles.boldText]}>
-                                                                    test1
+                                                                    {item.workerId}
                                                                 </Text>
 
                                                                 <View style={localStyles.row}>

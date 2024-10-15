@@ -15,20 +15,29 @@ export const createApplication = async (
   }
 };
 
-export const getApplication = async (
-  applicationId: string,
-): Promise<Application | undefined> => {
-  try {
-    console.log('function received application id: ', applicationId)
-    const applicationDoc = await applicationsRef.doc(applicationId).get();
-    return applicationDoc.exists
-      ? (applicationDoc.data() as Application)
-      : undefined;
-  } catch (error) {
-    showAlert('Error', 'Failed to retrieve application.');
-    return undefined;
-  }
-};
+//moved fetch to in-component due to 
+//issues with component not updating to db changes
+
+
+// export function getApplication(applicationId: string): Promise<Application | undefined> {
+//   return new Promise((resolve, reject) => {
+//     const unsubscribe = applicationsRef
+//       .where('applicationId', '==', applicationId)
+//       .onSnapshot(
+//         snapshot => {
+//           const application = snapshot.docs[0].data() as Application;
+//           console.log('receiving changes from db.')
+//           resolve(application);
+//         },
+//         error => {
+//           console.error('Error getting documents:', error);
+//           reject(error);
+//         },
+//       );
+
+//     return () => unsubscribe();
+//   });
+// }
 
 export const getApplicationsByJobId = async (
   jobId: string,

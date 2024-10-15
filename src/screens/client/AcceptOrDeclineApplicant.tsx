@@ -12,11 +12,11 @@ import { Job } from "../../services/interfaces/job";
 import { styles } from "../../styles/Globals";
 import { getAddress } from "../../services/firestore/addresses";
 import { Address } from "../../services/interfaces/address";
-import { getApplication, updateApplication } from "../../services/firestore/applications";
+import { updateApplication } from "../../services/firestore/applications";
 import { Application } from "../../services/interfaces/application";
 import DynamicButton from "../../components/DynamicButton";
 import { FIRESTORE_DB, FIRESTORE_TIMESTAMP } from "../../config/firebase";
-import { onSnapshot, doc } from "@react-native-firebase/firestore";
+
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -60,20 +60,6 @@ export default function AcceptOrDeclineApplicant({ navigation, route }: RouterPr
         }
     }, [job]);
 
-    const fetchApplication = useCallback(async () => {
-        try {
-            if (params_appId) {
-                const applicationDetails = await getApplication(params_appId);
-
-                applicationDetails && setApplication(applicationDetails);
-            }
-
-            console.log('application details fetched.')
-        } catch (error) {
-            console.error('Failed to fetch application details:', error);
-        }
-    }, [job]);
-
     async function handleApplicationStatusUpdate(type: "rejected" | "accepted") {
         setIsSubmitting(true);
         try {
@@ -108,12 +94,30 @@ export default function AcceptOrDeclineApplicant({ navigation, route }: RouterPr
     useEffect(() => {
         fetchJob();
         fetchWorkerDetails();
-        fetchApplication();
     }, [])
 
     useEffect(() => {
         fetchAddy();
     }, [worker])
+
+    //subscribe to changes to db.
+    useEffect(() => {
+        const applicationsRef = FIRESTORE_DB.collection('applications')
+        const unsubscribe = applicationsRef
+            .where('applicationId', '==', params_appId)
+            .onSnapshot(
+                snapshot => {
+                    const applicationData = snapshot.docs[0].data() as Application;
+                    setApplication(applicationData); // Update state with new data
+                    setIsLoading(false)
+                },
+                error => {
+                    console.error('Error getting documents:', error);
+                },
+            );
+
+        return () => unsubscribe(); // Cleanup listener on unmount
+    }, []);
 
     const initials = `${worker?.firstName}${worker?.lastName}`.toUpperCase();
 

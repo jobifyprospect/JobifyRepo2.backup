@@ -108,12 +108,15 @@ const Dashboard = ({ navigation }: RouterProps) => {
           if (currentRole) {
             setCurrentRoleId(currentRole.defaultRole);
           }
+          setLoading(false);
+          setRefreshing(false);
         } else {
           // Reset state when user logs out or there is no user
           setMyListings([]);
           setSearchResults([]);
           setSearch('');
           setLoading(false);
+          setRefreshing(false);
         }
       },
     );
@@ -129,14 +132,14 @@ const Dashboard = ({ navigation }: RouterProps) => {
     }
   }, [currentRoleId, fetchJobs]);
 
-  // Fetch jobs when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      if (currentRoleId) {
-        fetchJobs(currentRoleId);
-      }
-    }, [fetchJobs, currentRoleId]),
-  );
+  // // Fetch jobs when screen is focused
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     if (currentRoleId) {
+  //       fetchJobs(currentRoleId);
+  //     }
+  //   }, [fetchJobs, currentRoleId]),
+  // );
 
   return (
     <View style={localStyles.container}>
@@ -242,7 +245,7 @@ const Dashboard = ({ navigation }: RouterProps) => {
                         key={item.jobId}
                         style={[localStyles.jobCard, getCardStyle()]}
                         onPress={() => navigation.navigate('JobDetailsClient', { id: item.jobId })}
-                        >
+                      >
                         <View style={localStyles.containCard}>
                           <Text
                             style={[styles.regularText, styles.bold]}
