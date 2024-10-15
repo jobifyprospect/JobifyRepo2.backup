@@ -267,7 +267,7 @@ const Dashboard = ({ navigation }: RouterProps) => {
                         key={item.jobId}
                         style={[localStyles.jobCard, getCardStyle()]}
                         onPress={() => navigation.navigate('JobDetailsClient', { id: item.jobId })}
-                        >
+                      >
                         <View style={localStyles.containCard}>
                           <Text
                             style={[styles.regularText, styles.bold]}
