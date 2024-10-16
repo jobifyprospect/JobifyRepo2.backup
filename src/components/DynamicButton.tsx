@@ -65,7 +65,12 @@ const DynamicButton = forwardRef<
   ];
 
   const textStyle: TextStyle = {
-    color: type === 'primary' ? Colors.white : Colors.primary,
+    color:
+      type === 'primary'
+        ? Colors.white
+        : type === 'secondary'
+        ? Colors.primary
+        : Colors.danger,
   };
 
   return (

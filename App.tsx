@@ -106,12 +106,12 @@ const DashboardStack = ({ role }: { role: string | null }) => {
           <Stack.Screen
             name="Notification"
             component={Notification}
-            options={{ title: 'Notifications', headerShown: false }} // Notification Screen
+            options={{title: 'Notifications', headerShown: false}} // Notification Screen
           />
           <Stack.Screen
             name="EditUserDetails"
             component={EditUserDetails}
-            options={{ headerShown: false }}
+            options={{headerShown: false}}
           />
         </>
       )}
