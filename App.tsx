@@ -1,18 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import React, { useEffect, useState } from 'react';
 import 'react-native-get-random-values';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Login from './src/screens/auth/Login';
 import Transaction from './src/screens/Transaction';
 import Profile from './src/screens/Profile';
-import { onAuthStateChanged } from '@react-native-firebase/auth';
-import { FIREBASE_AUTH, FIRESTORE_DB } from './src/config/firebase';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { onAuthStateChanged } from '@react-native-firebase/auth';
 import { FIREBASE_AUTH, FIRESTORE_DB } from './src/config/firebase';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -48,11 +41,8 @@ import AcceptOrDeclineApplicant from './src/screens/client/AcceptOrDeclineApplic
 import ApplyToJob from './src/screens/worker/ApplyToJob';
 import ChangePassword from './src/screens/auth/ChangePassword';
 import EditUserDetails from './src/screens/EditUserDetails';
-import messaging, {firebase} from '@react-native-firebase/messaging';
-import {FCMTokenProvider} from './src/config/FCMTokenContext';
-import JobDetailsClient from './src/screens/client/JobDetailsClient';
-import AcceptOrDeclineApplicant from './src/screens/client/AcceptOrDeclineApplicant';
-import ApplyToJob from './src/screens/worker/ApplyToJob';
+import messaging, { firebase } from '@react-native-firebase/messaging';
+import { FCMTokenProvider } from './src/config/FCMTokenContext';
 
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
@@ -116,12 +106,12 @@ const DashboardStack = ({ role }: { role: string | null }) => {
           <Stack.Screen
             name="Notification"
             component={Notification}
-            options={{title: 'Notifications', headerShown: false }} // Notification Screen
+            options={{ title: 'Notifications', headerShown: false }} // Notification Screen
           />
           <Stack.Screen
             name="EditUserDetails"
             component={EditUserDetails}
-            options={{headerShown: false}}
+            options={{ headerShown: false }}
           />
         </>
       )}
@@ -285,85 +275,85 @@ export default function App() {
               <Stack.Screen
                 name="Inside"
                 children={() => <TabLayout role={role} />}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="Post"
                 component={PostJob}
-                options={{title: 'Post', headerShown: false}}
+                options={{ title: 'Post', headerShown: false }}
               />
               <Stack.Screen
                 name="ChangePassword"
                 component={ChangePassword}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="EditUserDetails"
                 component={EditUserDetails}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
-                          <Stack.Screen
-              name="JobDetailsClient"
-              component={JobDetailsClient}
-              options={{ title: 'JobDetailsClient', headerShown: false }} // Job Details, Client View Screen
-            />
-            <Stack.Screen
-              name="AcceptOrDeclineApplicant"
-              component={AcceptOrDeclineApplicant}
-              options={{ title: 'AcceptOrDeclineApplicant', headerShown: false }} // View Job Applicants, Client View Screen
-            />
-            <Stack.Screen
-              name="ApplyToJob"
-              component={ApplyToJob}
-              options={{ title: 'ApplyToJob', headerShown: false }} // Job Application, Worker View Screen
-            />
+              <Stack.Screen
+                name="JobDetailsClient"
+                component={JobDetailsClient}
+                options={{ title: 'JobDetailsClient', headerShown: false }} // Job Details, Client View Screen
+              />
+              <Stack.Screen
+                name="AcceptOrDeclineApplicant"
+                component={AcceptOrDeclineApplicant}
+                options={{ title: 'AcceptOrDeclineApplicant', headerShown: false }} // View Job Applicants, Client View Screen
+              />
+              <Stack.Screen
+                name="ApplyToJob"
+                component={ApplyToJob}
+                options={{ title: 'ApplyToJob', headerShown: false }} // Job Application, Worker View Screen
+              />
             </>
           ) : (
             <>
               <Stack.Screen
                 name="Login"
                 component={Login}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="UserTypeSelection"
                 component={UserTypeSelection}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="PersonalDetails"
                 component={PersonalDetails}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="AddressDetails"
                 component={AddressDetails}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="LoginInfo"
                 component={LoginInfo}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="PasswordCreation"
                 component={PasswordCreation}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="IDUpload"
                 component={IDUpload}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="Success"
                 component={Success}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="Forgot"
                 component={ForgotPassword}
-                options={{headerShown: false}}
+                options={{ headerShown: false }}
               />
             </>
           )}

@@ -1,9 +1,6 @@
 import { showAlert } from '../../components/AlertDialog';
 import { FIRESTORE_DB } from '../../config/firebase';
 import { Application } from '../interfaces/application';
-import { showAlert } from '../../components/AlertDialog';
-import { FIRESTORE_DB } from '../../config/firebase';
-import { Application } from '../interfaces/application';
 
 const applicationsRef = FIRESTORE_DB.collection('applications');
 
@@ -42,20 +39,6 @@ export const createApplication = async (
 //   });
 // }
 
-export const getApplicationsByJobId = async (
-  jobId: string,
-): Promise<Application[] | undefined> => {
-  try {
-    const snapshot = await applicationsRef.where('jobId', '==', jobId).get();
-    if (snapshot.empty) {
-      return undefined;
-    }
-    return snapshot.docs.map(doc => doc.data() as Application);
-  } catch (error) {
-    showAlert('Error', 'Failed to retrieve application.');
-    return undefined;
-  }
-};
 
 export const getApplicationsByJobId = async (
   jobId: string,

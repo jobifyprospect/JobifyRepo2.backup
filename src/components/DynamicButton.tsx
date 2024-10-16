@@ -121,12 +121,6 @@ const dynamicButtonStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.danger,
   },
-  destructive: {
-    color: Colors.danger,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.danger,
-  },
   disabled: {
     backgroundColor: Colors.placeholder,
     borderColor: Colors.placeholder,
