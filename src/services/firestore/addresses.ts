@@ -1,6 +1,6 @@
-import {showAlert} from '../../components/AlertDialog';
-import {FIRESTORE_DB} from '../../config/firebase';
-import {Address} from '../interfaces/address';
+import { showAlert } from '../../components/AlertDialog';
+import { FIRESTORE_DB } from '../../config/firebase';
+import { Address } from '../interfaces/address';
 
 const addressesRef = FIRESTORE_DB.collection('addresses');
 

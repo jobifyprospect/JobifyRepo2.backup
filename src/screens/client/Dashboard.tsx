@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -16,21 +16,22 @@ import NotificationsButton from '../../components/NotificationsButton';
 import AddJobButton from '../../components/AddJobButton';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
-import {faPlusSquare} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {formatDateToReadable} from '../../utils/Utils';
-import {styles} from '../../styles/Globals';
-import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {getUser, storeFcmToken} from '../../services/firestore/users';
+import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { formatDateToReadable } from '../../utils/Utils';
+import { styles } from '../../styles/Globals';
+import { onAuthStateChanged } from '@react-native-firebase/auth';
+import { getUser, storeFcmToken } from '../../services/firestore/users';
 import messaging from '@react-native-firebase/messaging';
 import {showAlert} from '../../components/AlertDialog';
 import {useFCMToken} from '../../config/FCMTokenContext';
+import { Pressable } from 'react-native';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Dashboard = ({navigation}: RouterProps) => {
+const Dashboard = ({ navigation }: RouterProps) => {
   const [myListings, setMyListings] = useState<Job[]>([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Job[]>([]);
@@ -111,12 +112,15 @@ const Dashboard = ({navigation}: RouterProps) => {
           if (currentRole) {
             setCurrentRoleId(currentRole.defaultRole);
           }
+          setLoading(false);
+          setRefreshing(false);
         } else {
           // Reset state when user logs out or there is no user
           setMyListings([]);
           setSearchResults([]);
           setSearch('');
           setLoading(false);
+          setRefreshing(false);
         }
       },
     );
@@ -206,7 +210,7 @@ const Dashboard = ({navigation}: RouterProps) => {
                   />
                 }
                 keyExtractor={item => item?.jobId?.toString()}
-                renderItem={({item, index}) => {
+                renderItem={({ item, index }) => {
                   const currentItemDate = formatDateToReadable(item.createdAt);
                   const previousItemDate =
                     index > 0
@@ -259,9 +263,11 @@ const Dashboard = ({navigation}: RouterProps) => {
                           </Text>
                         </View>
                       )}
-                      <View
+                      <Pressable
                         key={item.jobId}
-                        style={[localStyles.jobCard, getCardStyle()]}>
+                        style={[localStyles.jobCard, getCardStyle()]}
+                        onPress={() => navigation.navigate('JobDetailsClient', { id: item.jobId })}
+                      >
                         <View style={localStyles.containCard}>
                           <Text
                             style={[styles.regularText, styles.bold]}
@@ -276,7 +282,7 @@ const Dashboard = ({navigation}: RouterProps) => {
                             Php {item.pay}
                           </Text>
                         </View>
-                      </View>
+                      </Pressable>
                     </>
                   );
                 }}
@@ -335,9 +341,8 @@ const localStyles = StyleSheet.create({
     paddingBottom: 12,
   },
   screen: {
-    justifyContent: 'center',
+    paddingTop: 24,
     flex: 1,
-    paddingTop: 25,
   },
   btnContainerEnd: {
     alignItems: 'flex-end',

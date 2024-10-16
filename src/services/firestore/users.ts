@@ -197,6 +197,45 @@ export async function getUserDetailsByClientId(
   }
 }
 
+export async function getUserDetailsByWorkerId(
+  workerId: string,
+): Promise<User | null> {
+  try {
+    // Step 1: Find the role associated with the clientId
+    const roleSnapshot = await rolesRef
+      .where('roleId', '==', workerId) // Query using clientId directly
+      .limit(1)
+      .get();
+
+    if (roleSnapshot.empty) {
+      console.log('No matching role found for workerId:', workerId);
+      return null; // No role found for the provided workerId
+    }
+
+    // Get the role data from the first matching document
+    const roleDoc = roleSnapshot.docs[0];
+    const roleData = roleDoc.data() as Role; // Get the role data
+
+    // Step 2: Use the roleId to find the user details
+    const userSnapshot = await usersRef
+      .where('roleId', 'array-contains', roleData.roleId) // Fetch user by roleId
+      .limit(1)
+      .get();
+
+    if (userSnapshot.empty) {
+      console.log('No matching user found for roleId:', roleData.roleId);
+      return null; // No user found with the roleId
+    }
+
+    // Get the user document and return the user details
+    const userDoc = userSnapshot.docs[0];
+    return userDoc.data() as User; // Return user details
+  } catch (error) {
+    console.error('Error fetching user by workerId:', error);
+    return null;
+  }
+}
+
 // Function to update the user's defaultRole
 export const updateUserRole = async (
   userId: string,
