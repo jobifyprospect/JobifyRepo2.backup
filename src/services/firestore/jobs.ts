@@ -2,7 +2,7 @@ import {showAlert} from '../../components/AlertDialog';
 import {clientsRef, jobsRef} from '../../config/firebase';
 import {Job} from '../interfaces/job';
 import {User} from '../interfaces/user';
-import {getUserDetailsByClientId} from './users';
+import {getCurrentUserUID, getUserDetailsByClientId} from './users';
 
 export const createJob = async (job: Job): Promise<void> => {
   try {
@@ -34,6 +34,53 @@ export const queryJob = async (query: any): Promise<Job | any> => {
   } catch (error) {
     console.error('Error fetching jobs from Firestore:', error);
     showAlert('Error', 'Failed to retrieve jobs from Firestore.');
+  }
+};
+
+export const queryJobWithUserDetails = async (
+  query: string,
+): Promise<Array<{job: Job; user: User | null}>> => {
+  // Query Firestore for matching jobs
+  try {
+    const snapshot = await jobsRef
+      .where('title', '>=', query)
+      .where('title', '<=', query + '\uf8ff') // Range query for title
+      .get();
+
+    if (!snapshot.empty) {
+      const currentUserId = await getCurrentUserUID(); // Get the current user ID
+      const jobsWithUserDetails: Array<{job: Job; user: User | null}> = [];
+
+      const jobPromises = snapshot.docs.map(async doc => {
+        const jobData = doc.data() as Job;
+        const userData = await getUserDetailsByClientId(jobData.clientId); // Fetch user details using clientId
+
+        // Only include jobs where the userId does not match the current user's ID
+        if (userData && userData.userId !== currentUserId) {
+          return {job: jobData, user: userData}; // Return job and user data if they match
+        }
+        return null; // Return null for non-matching jobs
+      });
+
+      // Wait for all user details to be fetched
+      const results = await Promise.all(jobPromises);
+
+      // Filter out null values from results
+      const filteredResults = results.filter(result => result !== null);
+      jobsWithUserDetails.push(...filteredResults);
+
+      return jobsWithUserDetails; // Return the jobs along with their respective user details
+    } else {
+      // No jobs found in Firestore
+      return [];
+    }
+  } catch (error) {
+    console.error(
+      'Error fetching jobs with user details from Firestore:',
+      error,
+    );
+    showAlert('Error', 'Failed to retrieve jobs from Firestore.');
+    return []; // Return an empty array in case of error
   }
 };
 
@@ -193,17 +240,28 @@ export async function getAllJobsWithUserDetails(): Promise<
   const jobsWithUserDetails: Array<{job: Job; user: User | null}> = [];
 
   try {
+    // Get the current user's UID
+    const currentUserId = await getCurrentUserUID();
+
     const jobSnapshot = await jobsRef.orderBy('createdAt', 'desc').get();
 
     const jobPromises = jobSnapshot.docs.map(async doc => {
       const jobData = doc.data() as Job;
       const userData = await getUserDetailsByClientId(jobData.clientId); // Fetch user details using clientId
-      return {job: jobData, user: userData}; // Return job and user data
+
+      // Filter jobs where userData's userId doesn't matches the current user's ID
+      if (userData && userData.userId !== currentUserId) {
+        return {job: jobData, user: userData}; // Return job and user data if they match
+      }
+      return null; // Return null for non-matching jobs
     });
 
     // Wait for all user details to be fetched
     const results = await Promise.all(jobPromises);
-    jobsWithUserDetails.push(...results);
+
+    // Filter out null values from results
+    const filteredResults = results.filter(result => result !== null);
+    jobsWithUserDetails.push(...filteredResults);
   } catch (error) {
     console.error('Error fetching jobs with user details:', error);
   }

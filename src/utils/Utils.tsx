@@ -106,7 +106,7 @@ export function formatDate(date: FirebaseTimeStampT) {
 }
 
 // Helper function to format the date
-export const formatDateToReadable = (date: Timestamp | FieldValue) => {
+export const formatDateToReadable = (date: Timestamp | FieldValue | undefined) => {
   if (!date) {
     return;
   }
