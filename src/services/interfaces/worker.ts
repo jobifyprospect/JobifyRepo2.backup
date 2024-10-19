@@ -2,7 +2,8 @@ import {FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
 
 // Represents a worker in the Firestore collection
 export interface Worker {
-  workerId: string;
+  workerId: string | undefined;
+  userId: string;
   applicationsList?: string[];
   createdAt:
     | FirebaseFirestoreTypes.Timestamp

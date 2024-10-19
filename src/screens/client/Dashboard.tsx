@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -9,68 +9,64 @@ import {
   StyleSheet,
 } from 'react-native';
 import {NavigationProp, useFocusEffect} from '@react-navigation/native';
-import {FIREBASE_AUTH, getCurrentUserUID} from '../../config/firebase';
+import {FIREBASE_AUTH} from '../../config/firebase';
 import {getJobsByClient, queryJob} from '../../services/firestore/jobs';
 import {Job} from '../../services/interfaces/job';
 import NotificationsButton from '../../components/NotificationsButton';
 import AddJobButton from '../../components/AddJobButton';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
-import { faPlusSquare } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { formatDateToReadable } from '../../utils/Utils';
-import { styles } from '../../styles/Globals';
-import { onAuthStateChanged } from '@react-native-firebase/auth';
-import { getUser, storeFcmToken } from '../../services/firestore/users';
+import {faPlusSquare} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {formatDateToReadable} from '../../utils/Utils';
+import {styles} from '../../styles/Globals';
+import {onAuthStateChanged} from '@react-native-firebase/auth';
+import {getCurrentUserUID, storeFcmToken} from '../../services/firestore/users';
 import messaging from '@react-native-firebase/messaging';
 import {showAlert} from '../../components/AlertDialog';
 import {useFCMToken} from '../../config/FCMTokenContext';
-import { Pressable } from 'react-native';
+import {Pressable} from 'react-native';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Dashboard = ({ navigation }: RouterProps) => {
+const Dashboard = ({navigation}: RouterProps) => {
   const [myListings, setMyListings] = useState<Job[]>([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [currentRoleId, setCurrentRoleId] = useState<string | undefined>(
-    undefined,
-  );
+
   const fcmToken = useFCMToken();
 
-  const fetchJobs = useCallback(
-    async (roleId: string | undefined) => {
-      if (!roleId) {
-        console.log(`${roleId} NO ID`);
-        return; // Early return if no role ID
-      }
-
-      setLoading(true); // Set loading to true while fetching
-      try {
-        const jobs = await getJobsByClient(roleId);
-        setMyListings(jobs);
-        setSearchResults(jobs);
-        const uid = await getCurrentUserUID();
-        await storeFcmToken(uid, fcmToken); // Store the new token
-      } catch (error) {
-        console.error('Failed to fetch jobs:', error);
-      } finally {
-        setLoading(false);
-        setRefreshing(false); // Stop refreshing after data fetch
-      }
-    },
-    [fcmToken],
-  );
+  const fetchJobs = useCallback(async () => {
+    setLoading(true); // Set loading to true while fetching
+    try {
+      const uid = await getCurrentUserUID();
+      getJobsByClient(uid)
+        .then(jobs => {
+          setMyListings(jobs);
+          setSearchResults(jobs);
+        })
+        .catch(error => {
+          // Handle error
+          throw new Error(`Cannot retrieve: ${error}`);
+        });
+      await storeFcmToken(uid, fcmToken); // Store the new token
+    } catch (error) {
+      console.error('Failed to fetch jobs:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false); // Stop refreshing after data fetch
+    }
+  }, [fcmToken]);
 
   // Pull down to refresh
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchJobs(currentRoleId); // Pass currentRoleId to fetchJobs
-  }, [fetchJobs, currentRoleId]);
+    fetchJobs(); // Pass currentRoleId to fetchJobs
+  }, [fetchJobs]);
 
   // Handle job search
   const handleSearch = useCallback(
@@ -108,10 +104,6 @@ const Dashboard = ({ navigation }: RouterProps) => {
       FIREBASE_AUTH,
       async (user: any) => {
         if (user) {
-          const currentRole = await getUser(user.uid);
-          if (currentRole) {
-            setCurrentRoleId(currentRole.defaultRole);
-          }
           setLoading(false);
           setRefreshing(false);
         } else {
@@ -131,18 +123,14 @@ const Dashboard = ({ navigation }: RouterProps) => {
 
   // Fetch jobs when currentRoleId changes
   useEffect(() => {
-    if (currentRoleId) {
-      fetchJobs(currentRoleId);
-    }
-  }, [currentRoleId, fetchJobs]);
+    fetchJobs();
+  }, [fetchJobs]);
 
   // Fetch jobs when screen is focused
   useFocusEffect(
     useCallback(() => {
-      if (currentRoleId) {
-        fetchJobs(currentRoleId);
-      }
-    }, [fetchJobs, currentRoleId]),
+      fetchJobs();
+    }, [fetchJobs]),
   );
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
@@ -210,7 +198,7 @@ const Dashboard = ({ navigation }: RouterProps) => {
                   />
                 }
                 keyExtractor={item => item?.jobId?.toString()}
-                renderItem={({ item, index }) => {
+                renderItem={({item, index}) => {
                   const currentItemDate = formatDateToReadable(item.createdAt);
                   const previousItemDate =
                     index > 0
@@ -266,8 +254,11 @@ const Dashboard = ({ navigation }: RouterProps) => {
                       <Pressable
                         key={item.jobId}
                         style={[localStyles.jobCard, getCardStyle()]}
-                        onPress={() => navigation.navigate('JobDetailsClient', { id: item.jobId })}
-                      >
+                        onPress={() =>
+                          navigation.navigate('JobDetailsClient', {
+                            id: item.jobId,
+                          })
+                        }>
                         <View style={localStyles.containCard}>
                           <Text
                             style={[styles.regularText, styles.bold]}

@@ -1,16 +1,14 @@
-import { ReactElement } from "react";
-
 export type RootStackParamList = {
   UserTypeSelection: undefined;
   Notification: undefined;
   Post: undefined;
   ClientDashboardScreen: undefined;
-  Transaction: { _role: string }
+  Transaction: {_role: string};
   Home: undefined;
-  JobDetailsClient: { id: string };
-  AcceptOrDeclineApplicant: { worker_id: string, job_id: string, app_id: string };
-  ApplyToJob: { id: string };
-  PersonalDetails: { userType: 'client' | 'worker' };
+  JobDetailsClient: {id: string};
+  AcceptOrDeclineApplicant: {worker_id: string; job_id: string; app_id: string};
+  ApplyToJob: {id: string};
+  PersonalDetails: {userType: 'client' | 'worker'};
   Profile: undefined;
   EditUserDetails: {
     userId: string;
@@ -94,5 +92,5 @@ export type RootStackParamList = {
   Forgot: undefined;
   Loading: undefined;
   ChangePassword: undefined;
-  Inside: { role: string | null };
+  Inside: {role: string | null};
 };

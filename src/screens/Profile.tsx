@@ -8,12 +8,9 @@ import {
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {styles} from '../styles/Globals';
+import {FIREBASE_AUTH, FIRESTORE_TIMESTAMP} from '../config/firebase';
 import {
-  FIREBASE_AUTH,
-  FIRESTORE_TIMESTAMP,
   getCurrentUserUID,
-} from '../config/firebase';
-import {
   getUserDetails,
   removeFcmToken,
   updateUserRole,

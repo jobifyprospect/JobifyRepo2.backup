@@ -12,12 +12,16 @@ import DynamicButton from '../../components/DynamicButton';
 import {createJob} from '../../services/firestore/jobs';
 import {showAlert} from '../../components/AlertDialog';
 import DynamicTextInput from '../../components/DynamicTextInput';
-import {FIRESTORE_TIMESTAMP, getCurrentUserUID} from '../../config/firebase';
+import {FIRESTORE_TIMESTAMP} from '../../config/firebase';
 import {isNotEmpty} from '../../utils/Utils';
 import uuid from 'react-native-uuid';
 import {Job} from '../../services/interfaces/job';
 import BackButton from '../../components/BackButton';
-import {getUser} from '../../services/firestore/users';
+import {
+  getCurrentUserUID,
+  getIdByRoleId,
+  getUser,
+} from '../../services/firestore/users';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -33,7 +37,7 @@ export default function PostJob({navigation}: RouterProps) {
     'open' | 'closed' | 'pending' | undefined
   >(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<any>(null);
 
   // Fetch the current user UID only once when the component mounts
   useEffect(() => {
@@ -43,7 +47,8 @@ export default function PostJob({navigation}: RouterProps) {
         if (uid) {
           const currentRole = await getUser(uid);
           if (currentRole && currentRole.defaultRole) {
-            setCurrentUserId(currentRole.defaultRole);
+            const clientIdByRole = await getIdByRoleId(currentRole.defaultRole);
+            setCurrentUserId(clientIdByRole?.clientId || null);
           }
         }
       } catch (error) {
@@ -53,7 +58,7 @@ export default function PostJob({navigation}: RouterProps) {
     };
 
     fetchCurrentUserId();
-  }, [currentUserId]);
+  }, []);
 
   function resetForm() {
     setTitle('');
@@ -66,8 +71,8 @@ export default function PostJob({navigation}: RouterProps) {
 
   const post = useCallback(async () => {
     if (isSubmitting) {
-      return;
-    } // Prevent double submission
+      return; // Prevent double submission
+    }
     Keyboard.dismiss();
     setIsSubmitting(true);
 
@@ -78,15 +83,17 @@ export default function PostJob({navigation}: RouterProps) {
       return;
     }
     if (!currentUserId) {
+      showAlert('Error', 'Current user ID is not available.');
+      setIsSubmitting(false);
       return; // If currentUserId is not available, don't proceed
     }
 
     try {
       const newJob: Job = {
-        location,
-        title,
-        description,
-        schedule,
+        location: location.trim(),
+        title: title.trim(),
+        description: description.trim(),
+        schedule: schedule.trim(),
         pay: parseInt(pay, 10),
         status: status || 'pending',
         jobId: uuid.v4().toString(),
@@ -96,7 +103,6 @@ export default function PostJob({navigation}: RouterProps) {
       };
 
       await createJob(newJob);
-      showAlert('Success', 'Job posted.');
       resetForm();
       navigation.navigate('ClientDashboardScreen', {updateList: true});
     } catch (error) {
@@ -106,6 +112,7 @@ export default function PostJob({navigation}: RouterProps) {
       );
     } finally {
       setIsSubmitting(false);
+      showAlert('Success', 'Job posted.');
     }
   }, [
     currentUserId,

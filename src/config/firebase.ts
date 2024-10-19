@@ -1,5 +1,5 @@
 import firebase from '@react-native-firebase/app';
-import auth, {onAuthStateChanged} from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import 'firebase/auth';
@@ -12,33 +12,15 @@ export const FIRESTORE_DB = firestore();
 export const FIRESTORE_STORAGE = storage();
 export const FIRESTORE_TIMESTAMP =
   firebase.firestore.FieldValue.serverTimestamp();
-export const rolesRef = firestore().collection('roles');
-export const usersRef = firestore().collection('users');
-export const addressesRef = firestore().collection('addresses');
-export const validationsRef = firestore().collection('validations');
-export const notificationsRef = firestore().collection('notifications');
-// utils.js or wherever you define your utility functions
-// utils.js or wherever you define your utility functions
-export const getCurrentUserUID = () => {
-  return new Promise<string | null>(resolve => {
-    const uid = FIREBASE_AUTH.currentUser?.uid; // Get UID
-
-    if (uid) {
-      console.log('Current User ID:', uid);
-
-      resolve(uid); // Resolve with UID if available
-    } else {
-      const unsubscribeAuth = onAuthStateChanged(FIREBASE_AUTH, (user: any) => {
-        if (user) {
-          resolve(user.uid); // Resolve with UID when user logs in
-        } else {
-          resolve(null); // Resolve with null if user is logged out
-        }
-        unsubscribeAuth(); // Cleanup listener
-      });
-    }
-  });
-};
+export const rolesRef = FIRESTORE_DB.collection('roles');
+export const usersRef = FIRESTORE_DB.collection('users');
+export const jobsRef = FIRESTORE_DB.collection('jobs');
+export const workersRef = FIRESTORE_DB.collection('workers');
+export const addressesRef = FIRESTORE_DB.collection('addresses');
+export const validationsRef = FIRESTORE_DB.collection('validations');
+export const notificationsRef = FIRESTORE_DB.collection('notifications');
+export const applicationsRef = FIRESTORE_DB.collection('applications');
+export const clientsRef = FIRESTORE_DB.collection('clients');
 
 // Export Firestore collections
 export const JOBS = FIRESTORE_DB.collection('jobs');

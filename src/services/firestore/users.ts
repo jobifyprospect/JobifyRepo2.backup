@@ -1,6 +1,8 @@
+import {onAuthStateChanged} from '@react-native-firebase/auth';
 import {showAlert} from '../../components/AlertDialog';
 import {
   addressesRef,
+  FIREBASE_AUTH,
   rolesRef,
   usersRef,
   validationsRef,
@@ -164,12 +166,11 @@ export async function getUserDetailsByClientId(
   try {
     // Step 1: Find the role associated with the clientId
     const roleSnapshot = await rolesRef
-      .where('roleId', '==', clientId) // Query using clientId directly
+      .where('clientId', '==', clientId) // Query using clientId directly
       .limit(1)
       .get();
 
     if (roleSnapshot.empty) {
-      console.log('No matching role found for clientId:', clientId);
       return null; // No role found for the provided clientId
     }
 
@@ -184,7 +185,6 @@ export async function getUserDetailsByClientId(
       .get();
 
     if (userSnapshot.empty) {
-      console.log('No matching user found for roleId:', roleData.roleId);
       return null; // No user found with the roleId
     }
 
@@ -203,12 +203,11 @@ export async function getUserDetailsByWorkerId(
   try {
     // Step 1: Find the role associated with the clientId
     const roleSnapshot = await rolesRef
-      .where('roleId', '==', workerId) // Query using clientId directly
+      .where('workerId', '==', workerId) // Query using clientId directly
       .limit(1)
       .get();
 
     if (roleSnapshot.empty) {
-      console.log('No matching role found for workerId:', workerId);
       return null; // No role found for the provided workerId
     }
 
@@ -223,7 +222,6 @@ export async function getUserDetailsByWorkerId(
       .get();
 
     if (userSnapshot.empty) {
-      console.log('No matching user found for roleId:', roleData.roleId);
       return null; // No user found with the roleId
     }
 
@@ -248,22 +246,13 @@ export const updateUserRole = async (
 
     // Check if userData and roleId are available
     if (userData && Array.isArray(userData.roleId)) {
-      console.log('User Role ID:', userData.roleId); // Log roleId for debugging
-
-      // Ensure there are at least two roles in roleId
       if (userData.roleId.length >= 2) {
         // Determine the new defaultRole
         updates.defaultRole =
           userData.defaultRole === userData.roleId[0]
             ? userData.roleId[1] // Set to worker ID
             : userData.roleId[0]; // Set to client ID
-
-        // Log the updated defaultRole for debugging
-        console.log('Updated Default Role:', updates.defaultRole);
-
-        // Update the user document in Firestore
         await usersRef.doc(userId).update(updates);
-        console.log('User role updated successfully.');
       } else {
         // Handle the case where roleId has insufficient roles
         console.error('Insufficient roles in roleId array:', userData.roleId);
@@ -320,3 +309,49 @@ export const handleTokenRefresh = async (userId: string | null) => {
   const token = await messaging().getToken();
   await storeFcmToken(userId, token); // Update the token in Firestore
 };
+
+export const getCurrentUserUID = () => {
+  return new Promise<string | null>(resolve => {
+    const uid = FIREBASE_AUTH.currentUser?.uid; // Get UID
+
+    if (uid) {
+      console.log('Current User ID:', uid);
+
+      resolve(uid); // Resolve with UID if available
+    } else {
+      const unsubscribeAuth = onAuthStateChanged(FIREBASE_AUTH, (user: any) => {
+        if (user) {
+          resolve(user.uid); // Resolve with UID when user logs in
+        } else {
+          resolve(null); // Resolve with null if user is logged out
+        }
+        unsubscribeAuth(); // Cleanup listener
+      });
+    }
+  });
+};
+
+export async function getIdByRoleId(
+  roleId: string,
+): Promise<{clientId?: string; workerId?: string} | null> {
+  try {
+    // Fetch the user document that matches the given roleId
+    const userSnapshot = await rolesRef.where('roleId', '==', roleId).get();
+
+    if (userSnapshot.empty) {
+      console.log('No user found for the given roleId');
+      return null; // No user found, return null
+    }
+
+    const userData = userSnapshot.docs[0].data() as Role;
+
+    // Return clientId or workerId based on what exists
+    return {
+      clientId: userData.clientId || undefined,
+      workerId: userData.workerId || undefined,
+    };
+  } catch (error) {
+    console.error('Error fetching ID by roleId:', error);
+    throw error; // Throw error for further handling
+  }
+}

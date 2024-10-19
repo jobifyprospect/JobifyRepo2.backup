@@ -1,7 +1,8 @@
 import {FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
 
 export interface Client {
-  clientId: string;
+  clientId: string | undefined;
+  userId: string;
   jobsList?: string[]; // List of Job IDs
   createdAt:
     | FirebaseFirestoreTypes.Timestamp

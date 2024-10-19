@@ -1,34 +1,32 @@
-import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
-import { styles } from '../styles/Globals';
+import {View, Text, StyleSheet, FlatList, Pressable} from 'react-native';
+import React, {useCallback, useState} from 'react';
+import {styles} from '../styles/Globals';
 import Colors from '../styles/Colors';
-import { Job } from '../services/interfaces/job';
-import { getCurrentUserUID } from '../config/firebase';
-import { getUser } from '../services/firestore/users';
-import { getJob, getJobs, getJobsByClient, getJobsByWorker, queryJob } from '../services/firestore/jobs';
-import { formatDateToReadable } from '../utils/Utils';
+import {Job} from '../services/interfaces/job';
+import {getJobsByClient, queryJob} from '../services/firestore/jobs';
+import {formatDateToReadable} from '../utils/Utils';
 import DynamicTextInput from '../components/DynamicTextInput';
-import { NavigationProp, RouteProp, useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 import RefreshButton from '../components/RefreshComponent';
-import { RootStackParamList } from './interfaces/RouterStackInterfaceParams';
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { getApplicationsByWorkerId } from '../services/firestore/applications';
-import { Application } from '../services/interfaces/application';
-
+import {RootStackParamList} from './interfaces/RouterStackInterfaceParams';
+import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import {getCurrentUserUID} from '../services/firestore/users';
+import WorkerItem from '../components/GetWorkerFullName';
+import ProfilePicture from '../components/GetWorkerProfilePicture';
+// import {getApplicationsByWorkerId} from '../services/firestore/applications';
+// import {Application} from '../services/interfaces/application';
 
 type TransactionProps = BottomTabScreenProps<RootStackParamList, 'Transaction'>;
 
-export default function Transaction({ navigation, route }: TransactionProps) {
+export default function Transaction({navigation, route}: TransactionProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [jobIds, setJobIds] = useState<string[]>();
-  const [myApplications, setMyApplications] = useState<Application[]>([]);
+  // const [myApplications, setMyApplications] = useState<Application[]>([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Job[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<any>(null);
-  const [refreshing, setRefreshing] = useState(false); // State to track refreshing
+  const [refreshing, setRefreshing] = useState(false);
 
-  console.log('received role props: ', route.params)
-  const role = route.params._role
+  const role = route.params._role; // Initialize role from route params
+
   // Search handler with debouncing to optimize performance
   const handleSearch = useCallback(
     async (searchTerm: string) => {
@@ -49,11 +47,8 @@ export default function Transaction({ navigation, route }: TransactionProps) {
       );
 
       if (filteredJobs.length > 0) {
-        console.log('TYPED SEARCH');
         setSearchResults(filteredJobs);
       } else {
-        console.log('DB SEARCH');
-        // If no results from local data, query from Firestore
         const firestoreJobs = await queryJob(searchTerm);
         setSearchResults(firestoreJobs);
       }
@@ -62,57 +57,46 @@ export default function Transaction({ navigation, route }: TransactionProps) {
   );
 
   const fetchJobs = useCallback(async () => {
+    setRefreshing(true); // Start the refreshing spinner
     try {
       const uid: string | null = await getCurrentUserUID();
       if (uid) {
-        const currentRole = await getUser(uid);
-        if (currentRole && currentRole.defaultRole) {
-          setCurrentUserId(currentRole.defaultRole);
-          if (currentUserId && role === '') {
-            const jobs = await getJobsByClient(currentUserId)
-            setJobs(jobs)
-          } else if (currentUserId && role === "client") {
-            const jobs = await getJobsByClient(currentUserId);
-            setJobs(jobs);
-            setSearchResults(jobs);
-          }
+        if (role === 'client') {
+          const jobbers = await getJobsByClient(uid);
+          setJobs(jobbers);
+          setSearchResults(jobbers);
+        } else if (role === 'worker') {
+          const myJobListings = await getJobsByClient(uid);
+          setJobs(myJobListings);
+          setSearchResults(myJobListings);
         }
-      } currentUserId
+      }
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
     } finally {
       setRefreshing(false); // Stop the refreshing spinner
     }
-  }, [currentUserId]);
+  }, [role]);
 
   const onRefresh = useCallback(() => {
-    setRefreshing(true); // Start the refreshing spinner
     fetchJobs(); // Refresh the job data
   }, [fetchJobs]);
 
+  // const fetchApplications = useCallback(async () => {
+  //   if (role === 'worker' && currentUserId) {
+  //     const applications = await getApplicationsByWorkerId(currentUserId);
+  //     setMyApplications(applications);
+  //     const jobberIds = applications.map(application => application.jobId);
+  //     setJobIds(jobberIds);
+  //   }
+  // }, [currentUserId, role]);
 
-  const fetchApplications = async () => {
-    try {
-      const applications = await getApplicationsByWorkerId(currentUserId);
-      setMyApplications(applications);
-
-      const jobIds = applications.map(application => application.jobId);
-      setJobIds(jobIds);
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-    }
-  };
-
-  // Fetch jobs when screen is focused
   useFocusEffect(
     useCallback(() => {
-      if (currentUserId) {
-        fetchApplications();
-      }
-    }, [fetchApplications, currentUserId]),
+      fetchJobs();
+      // fetchApplications();
+    }, [fetchJobs]),
   );
-
-
 
   function returnJobStatus(status: string | undefined) {
     switch (status) {
@@ -122,10 +106,6 @@ export default function Transaction({ navigation, route }: TransactionProps) {
         return Colors.placeholder;
     }
   }
-
-  useEffect(() => {
-    console.log('jobs Ive applied for: ', jobs)
-  }, [jobs])
 
   return (
     <View style={localStyles.container}>
@@ -145,7 +125,7 @@ export default function Transaction({ navigation, route }: TransactionProps) {
         isRequired
       />
       <FlatList
-        style={localStyles.flatList} // Style for the FlatList
+        style={localStyles.flatList}
         removeClippedSubviews={false}
         ListEmptyComponent={
           searchResults.length === 0 && search ? (
@@ -154,8 +134,8 @@ export default function Transaction({ navigation, route }: TransactionProps) {
             <Text style={[styles.mediumRegularText]}>No data</Text>
           )
         }
-        data={searchResults} // Display searchResults instead of myListings
-        renderItem={({ item, index }) => {
+        data={searchResults} // Display searchResults
+        renderItem={({item, index}) => {
           const currentItemDate = formatDateToReadable(item.createdAt);
           const previousItemDate =
             index > 0
@@ -198,7 +178,8 @@ export default function Transaction({ navigation, route }: TransactionProps) {
               };
             }
           };
-
+          // const initials =
+          //   `${item?.user?.firstName[0]}${item?.user?.lastName[0]}`.toUpperCase();
           return (
             <>
               {isGroupStart && (
@@ -209,34 +190,39 @@ export default function Transaction({ navigation, route }: TransactionProps) {
                 </View>
               )}
               <Pressable
-                // onPress={() => navigation.navigate('JobDetailsClient', { id: item.jobId })}
-                onPress={() => navigation.navigate('JobDetailsClient', { id: item.jobId })}
+                onPress={() =>
+                  navigation.navigate('JobDetailsClient', {id: item.jobId})
+                }
                 key={item.jobId}
-                style={[localStyles.jobCard, getCardStyle()]}
-              >
-                <View style={localStyles.containItems}>
-                  <View style={localStyles.jobCardAvatar}>
-                    <Text style={localStyles.avatarPlaceholder}> PH </Text>
-                  </View>
-
-                  <View style={localStyles.column}>
-                    <Text style={[styles.boldText]}>
-                      {item.assignedWorker ? item.assignedWorker : 'Unassigned'}
-                    </Text>
+                style={[localStyles.jobCard, getCardStyle()]}>
+                <View style={localStyles.containCard}>
+                  <ProfilePicture workerId={item.assignedWorker} />
+                  <View style={localStyles.jobInfoContainer}>
+                    {item.assignedWorker ? (
+                      <WorkerItem workerId={item.assignedWorker} />
+                    ) : (
+                      <Text
+                        style={[styles.regularText, styles.bold]}
+                        numberOfLines={1}>
+                        Unassigned
+                      </Text>
+                    )}
 
                     <View style={localStyles.row}>
-                      <Text style={[styles.smallText]}> {item.title} </Text>
-                      <Text style={styles.smallText}> - </Text>
-                      <Text style={[styles.smallText]}> PHP {item.pay} </Text>
+                      <Text style={styles.regularText} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text>
+                        {' - PHP'} {item.pay}
+                      </Text>
                     </View>
                   </View>
-
                   <Text
                     style={[
-                      localStyles.statusText,
-                      { color: returnJobStatus(item.status) },
+                      {color: returnJobStatus(item.status)},
+                      localStyles.containText,
                     ]}>
-                    {item.assignedWorker ? item.status : null}
+                    {item.assignedWorker ? item.status : 'N/A'}
                   </Text>
                 </View>
               </Pressable>
@@ -254,47 +240,78 @@ const localStyles = StyleSheet.create({
     paddingTop: 25,
     flex: 1,
   },
-  btnContainerEnd: {
-    alignItems: 'flex-end',
+  row: {
+    flexDirection: 'row',
+    width: 164,
+  },
+  containCard: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  containText: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end', // Align items to the bottom
+    alignSelf: 'flex-end', // Center align items horizontally
+    textAlign: 'center', // Center align text within each item
+  },
+  flatList: {
+    marginBottom: 100,
   },
   containHeader: {
     paddingTop: 12,
     paddingBottom: 12,
   },
-  containItems: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    columnGap: 18,
+  screen: {
+    justifyContent: 'center',
+    flex: 1,
+    paddingTop: 25,
+    // paddingBottom: 10,
   },
-  row: { flexDirection: 'row' },
-  column: { flexDirection: 'column' },
-  jobCard: {
+  btnContainerEnd: {
+    alignItems: 'flex-end',
+  },
+  listContainer: {
+    flex: 0.8,
+    padding: 24,
     borderWidth: 1,
-    shadowOpacity: 1,
-    borderColor: Colors.primaryWithOpacity10,
-    shadowColor: Colors.primaryWithOpacity10,
+    borderColor: Colors.placeholder,
+    borderRadius: 8,
+  },
+  headerContainer: {
+    flex: 1,
+  },
+  jobCard: {
+    borderColor: Colors.placeholder,
     backgroundColor: Colors.white,
-    paddingVertical: 15,
+    paddingVertical: 10,
     borderRadius: 5,
     paddingHorizontal: 8,
   },
-  jobCardAvatar: {
-    minHeight: 52,
-    minWidth: 52,
-    backgroundColor: Colors.primaryWithOpacity10,
-    borderRadius: 100,
+  profileContainer: {
+    marginRight: 10,
   },
-  avatarPlaceholder: {
-    height: 52,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    color: Colors.primary,
-    fontSize: 18,
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
-  statusText: {
-    marginLeft: 'auto',
+  initialsContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  flatList: {
-    marginBottom: 100,
+  initialsText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  jobInfoContainer: {
+    flex: 1,
+    marginRight: 10,
   },
 });

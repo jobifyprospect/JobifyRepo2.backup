@@ -14,6 +14,23 @@ export const styles = StyleSheet.create({
   },
   w100: {maxWidth: 100, width: 100},
   bold: {fontWeight: Fonts.weights.bold},
+  card: {
+    borderWidth: 1,
+    shadowOpacity: 1,
+    borderColor: Colors.primaryWithOpacity10,
+    shadowColor: Colors.primaryWithOpacity10,
+    flexDirection: 'column',
+    backgroundColor: Colors.white,
+    borderRadius: 5,
+    paddingHorizontal: 24,
+    rowGap: 24,
+    marginBottom: 60,
+  },
+  gap: {
+    marginTop: 32,
+    marginBottom: 32,
+    padding: 48,
+  },
   headerContainer: {
     gap: 10,
     paddingBottom: 10,

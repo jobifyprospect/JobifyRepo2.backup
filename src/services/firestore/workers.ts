@@ -1,8 +1,6 @@
 import {showAlert} from '../../components/AlertDialog';
-import {FIRESTORE_DB} from '../../config/firebase';
+import {workersRef} from '../../config/firebase';
 import {Worker} from '../interfaces/worker';
-
-const workersRef = FIRESTORE_DB.collection('workers');
 
 export const createWorker = async (worker: Worker): Promise<void> => {
   try {

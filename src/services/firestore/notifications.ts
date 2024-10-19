@@ -58,8 +58,6 @@ export const updateNotificationReadStatus = async (notificationId: string) => {
         isRead: true,
         updatedAt: FIRESTORE_TIMESTAMP, // Assuming you have this constant defined
       });
-
-      console.log(`Notification ${notificationDoc.id} updated successfully`);
     }
   } catch (error) {
     console.error('Error updating notification read status:', error);
@@ -113,10 +111,10 @@ export const createNotification = async (
           );
         })
         .catch((error: any) => {
-          console.log(`${error} notifications not sent`);
+          console.error(`${error} notifications not sent`);
         });
     } else {
-      console.log(
+      console.error(
         'From, To, and Notification parameters are required to send a message.',
       );
     }

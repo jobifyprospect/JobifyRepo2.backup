@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   Pressable,
 } from 'react-native';
 import {NavigationProp, useFocusEffect} from '@react-navigation/native';
-import {FIREBASE_AUTH, getCurrentUserUID} from '../../config/firebase';
+import {FIREBASE_AUTH, jobsRef} from '../../config/firebase';
 import {
   getAllJobsWithUserDetails,
   queryJob,
@@ -22,7 +22,11 @@ import Colors from '../../styles/Colors';
 import {formatDateToReadable} from '../../utils/Utils';
 import {styles} from '../../styles/Globals';
 import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {getUser, storeFcmToken} from '../../services/firestore/users';
+import {
+  getCurrentUserUID,
+  getUser,
+  storeFcmToken,
+} from '../../services/firestore/users';
 import {firebase} from '@react-native-firebase/messaging';
 import {showAlert} from '../../components/AlertDialog';
 import {useFCMToken} from '../../config/FCMTokenContext';
@@ -31,7 +35,7 @@ interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Dashboard = ({ navigation }: RouterProps) => {
+const Dashboard = ({navigation}: RouterProps) => {
   const [myListings, setMyListings] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -55,7 +59,7 @@ const Dashboard = ({ navigation }: RouterProps) => {
       setSearchResults(jobs);
 
       if (!jobs) {
-        setLoading(false)
+        setLoading(false);
       }
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
@@ -89,12 +93,8 @@ const Dashboard = ({ navigation }: RouterProps) => {
       );
 
       if (filteredJobs.length > 0) {
-        console.log('TYPED SEARCH');
-
         setSearchResults(filteredJobs);
       } else {
-        console.log('DB SEARCH');
-
         const firestoreJobs = await queryJob(searchTerm);
         setSearchResults(firestoreJobs);
       }
@@ -160,6 +160,24 @@ const Dashboard = ({ navigation }: RouterProps) => {
     });
     return unsubscribe;
   }, [navigation]);
+
+  useEffect(() => {
+    const unsubscribe = jobsRef.onSnapshot(
+      snapshot => {
+        console.log('Snapshot: ' + snapshot.size);
+        if (!snapshot.empty) {
+          onRefresh();
+        }
+      },
+      error => {
+        console.error('Error listening to jobs:', error);
+      },
+    );
+
+    // Cleanup listener on unmount
+    return () => unsubscribe();
+  }, [onRefresh]);
+
   return (
     <View style={localStyles.container}>
       <View style={localStyles.screen}>
@@ -207,21 +225,21 @@ const Dashboard = ({ navigation }: RouterProps) => {
                   />
                 }
                 keyExtractor={item => item?.job?.jobId?.toString()}
-                renderItem={({ item, index }) => {
+                renderItem={({item, index}) => {
                   const currentItemDate = formatDateToReadable(
                     item.job.createdAt,
                   );
                   const previousItemDate =
                     index > 0
                       ? formatDateToReadable(
-                        myListings[index - 1].job.createdAt,
-                      )
+                          myListings[index - 1].job.createdAt,
+                        )
                       : null;
                   const nextItemDate =
                     index < myListings.length - 1
                       ? formatDateToReadable(
-                        myListings[index + 1].job.createdAt,
-                      )
+                          myListings[index + 1].job.createdAt,
+                        )
                       : null;
 
                   const isGroupStart = currentItemDate !== previousItemDate;
@@ -270,13 +288,16 @@ const Dashboard = ({ navigation }: RouterProps) => {
                       <Pressable
                         key={item.job.jobId}
                         style={[localStyles.jobCard, getCardStyle()]}
-                        onPress={() => navigation.navigate('ApplyToJob', { id: item.job.jobId })}
-                      >
+                        onPress={() =>
+                          navigation.navigate('ApplyToJob', {
+                            id: item.job.jobId,
+                          })
+                        }>
                         <View style={localStyles.containCard}>
                           <View style={localStyles.profileContainer}>
                             {item?.user?.profilePicture ? (
                               <Image
-                                source={{ uri: item?.user?.profilePicture }}
+                                source={{uri: item?.user?.profilePicture}}
                                 style={localStyles.profileImage}
                               />
                             ) : (
