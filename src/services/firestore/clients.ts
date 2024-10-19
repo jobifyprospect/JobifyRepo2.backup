@@ -1,8 +1,6 @@
 import {showAlert} from '../../components/AlertDialog';
-import {FIRESTORE_DB} from '../../config/firebase';
+import {clientsRef} from '../../config/firebase';
 import {Client} from '../interfaces/client';
-
-const clientsRef = FIRESTORE_DB.collection('clients');
 
 export const createClient = async (client: Client): Promise<void> => {
   try {

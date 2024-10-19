@@ -1,6 +1,6 @@
-import { showAlert } from '../../components/AlertDialog';
-import { FIRESTORE_DB } from '../../config/firebase';
-import { Application } from '../interfaces/application';
+import {showAlert} from '../../components/AlertDialog';
+import {FIRESTORE_DB} from '../../config/firebase';
+import {Application} from '../interfaces/application';
 
 const applicationsRef = FIRESTORE_DB.collection('applications');
 
@@ -15,44 +15,19 @@ export const createApplication = async (
   }
 };
 
-//moved fetch to in-component due to 
-//issues with component not updating to db changes
-
-
-// export function getApplication(applicationId: string): Promise<Application | undefined> {
-//   return new Promise((resolve, reject) => {
-//     const unsubscribe = applicationsRef
-//       .where('applicationId', '==', applicationId)
-//       .onSnapshot(
-//         snapshot => {
-//           const application = snapshot.docs[0].data() as Application;
-//           console.log('receiving changes from db.')
-//           resolve(application);
-//         },
-//         error => {
-//           console.error('Error getting documents:', error);
-//           reject(error);
-//         },
-//       );
-
-//     return () => unsubscribe();
-//   });
-// }
-
-
 export const getApplicationsByJobId = async (
   jobId: string,
 ): Promise<Application[] | undefined> => {
   try {
     const snapshot = await applicationsRef.where('jobId', '==', jobId).get();
     if (snapshot.empty) {
-      return undefined;
+      return [];
     }
     return snapshot.docs.map(doc => doc.data() as Application);
   } catch (error) {
     showAlert('Error', 'Failed to retrieve application.');
     console.error(error);
-    return undefined;
+    return [];
   }
 };
 
@@ -77,15 +52,14 @@ export const getApplicationsByWorkerId = async (
 };
 
 type hasAppliedT = {
-  workerId: string
-  jobId: string
-}
+  workerId: string;
+  jobId: string;
+};
 
 export async function hasWorkerApplied(props: hasAppliedT): Promise<boolean> {
-  const { workerId, jobId } = props;
+  const {workerId, jobId} = props;
 
   try {
-    console.log('received props: ', props)
     var result;
     const snapShot = await applicationsRef
       .where('workerId', '==', workerId)
@@ -93,17 +67,14 @@ export async function hasWorkerApplied(props: hasAppliedT): Promise<boolean> {
       .get();
 
     if (snapShot.empty) {
-      result = false
+      result = false;
       return result;
     }
 
-    result = true
+    result = true;
     return result;
-
   } catch (error) {
-    return false
-  } finally {
-    console.log("In function result: ", result)
+    return false;
   }
 }
 
@@ -112,8 +83,8 @@ export const updateApplication = async (
   updates: Partial<Application>,
 ): Promise<void> => {
   try {
-    const res = await applicationsRef.doc(applicationId).update(updates);
-    showAlert('Application Accepted', '')
+    await applicationsRef.doc(applicationId).update(updates);
+    showAlert('Application Accepted', '');
   } catch (error) {
     showAlert('Error', 'Failed to update application.');
     console.error(error);

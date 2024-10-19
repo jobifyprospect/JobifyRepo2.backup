@@ -1,7 +1,6 @@
 import React, {createContext, useContext, useState, useEffect} from 'react';
 import messaging from '@react-native-firebase/messaging';
-import {handleTokenRefresh} from '../services/firestore/users';
-import {getCurrentUserUID} from './firebase';
+import {getCurrentUserUID, handleTokenRefresh} from '../services/firestore/users';
 
 // Define a context to hold the FCM token
 const FCMTokenContext = createContext<string | null>(null);

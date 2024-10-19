@@ -8,8 +8,8 @@ import {
 } from '../services/firestore/notifications';
 import BackButton from '../components/BackButton';
 import {NavigationProp, useFocusEffect} from '@react-navigation/native';
-import {getCurrentUserUID} from '../config/firebase';
 import RefreshButton from '../components/RefreshComponent';
+import { getCurrentUserUID } from '../services/firestore/users';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;

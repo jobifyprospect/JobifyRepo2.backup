@@ -14,7 +14,7 @@ export interface Job {
   updatedAt:
     | FirebaseFirestoreTypes.Timestamp
     | FirebaseFirestoreTypes.FieldValue;
-  clientId: string; // List of Client IDs
+  clientId: string;
   applicationsList?: string[]; // List of Application IDs
   assignedWorker?: string;
 }

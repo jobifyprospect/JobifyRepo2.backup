@@ -17,7 +17,7 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faBell} from '@fortawesome/free-regular-svg-icons';
 import {useFocusEffect} from '@react-navigation/native';
 import {checkIfNewNotifications} from '../services/firestore/notifications';
-import {getCurrentUserUID} from '../config/firebase';
+import { getCurrentUserUID } from '../services/firestore/users';
 
 interface NotificationsButtonProps {
   onPress: () => Promise<void>;

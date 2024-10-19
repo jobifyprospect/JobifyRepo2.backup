@@ -1,10 +1,8 @@
-import { showAlert } from '../../components/AlertDialog';
-import { FIRESTORE_DB } from '../../config/firebase';
-import { Job } from '../interfaces/job';
-import { User } from '../interfaces/user';
-import { getUserDetailsByClientId } from './users';
-
-export const jobsRef = FIRESTORE_DB.collection('jobs');
+import {showAlert} from '../../components/AlertDialog';
+import {clientsRef, jobsRef} from '../../config/firebase';
+import {Job} from '../interfaces/job';
+import {User} from '../interfaces/user';
+import {getCurrentUserUID, getUserDetailsByClientId} from './users';
 
 export const createJob = async (job: Job): Promise<void> => {
   try {
@@ -36,6 +34,53 @@ export const queryJob = async (query: any): Promise<Job | any> => {
   } catch (error) {
     console.error('Error fetching jobs from Firestore:', error);
     showAlert('Error', 'Failed to retrieve jobs from Firestore.');
+  }
+};
+
+export const queryJobWithUserDetails = async (
+  query: string,
+): Promise<Array<{job: Job; user: User | null}>> => {
+  // Query Firestore for matching jobs
+  try {
+    const snapshot = await jobsRef
+      .where('title', '>=', query)
+      .where('title', '<=', query + '\uf8ff') // Range query for title
+      .get();
+
+    if (!snapshot.empty) {
+      const currentUserId = await getCurrentUserUID(); // Get the current user ID
+      const jobsWithUserDetails: Array<{job: Job; user: User | null}> = [];
+
+      const jobPromises = snapshot.docs.map(async doc => {
+        const jobData = doc.data() as Job;
+        const userData = await getUserDetailsByClientId(jobData.clientId); // Fetch user details using clientId
+
+        // Only include jobs where the userId does not match the current user's ID
+        if (userData && userData.userId !== currentUserId) {
+          return {job: jobData, user: userData}; // Return job and user data if they match
+        }
+        return null; // Return null for non-matching jobs
+      });
+
+      // Wait for all user details to be fetched
+      const results = await Promise.all(jobPromises);
+
+      // Filter out null values from results
+      const filteredResults = results.filter(result => result !== null);
+      jobsWithUserDetails.push(...filteredResults);
+
+      return jobsWithUserDetails; // Return the jobs along with their respective user details
+    } else {
+      // No jobs found in Firestore
+      return [];
+    }
+  } catch (error) {
+    console.error(
+      'Error fetching jobs with user details from Firestore:',
+      error,
+    );
+    showAlert('Error', 'Failed to retrieve jobs from Firestore.');
+    return []; // Return an empty array in case of error
   }
 };
 
@@ -84,6 +129,20 @@ export const updateJob = async (
   }
 };
 
+export const updateJobAssignedWorker = async (
+  jobId: string,
+  workerId: string | undefined, // Worker ID to assign or undefined to remove
+): Promise<void> => {
+  try {
+    await jobsRef.doc(jobId).update({
+      assignedWorker: workerId, // Update assignedWorker field
+    });
+  } catch (error) {
+    showAlert('Error', 'Failed to update job.');
+    console.error('Error updating job:', error);
+  }
+};
+
 export const deleteJob = async (jobId: string): Promise<void> => {
   try {
     await jobsRef.doc(jobId).delete();
@@ -93,34 +152,41 @@ export const deleteJob = async (jobId: string): Promise<void> => {
   }
 };
 
-// Update this to return the unsubscribe function and allow fetching jobs
-export function getJobsByClient(clientId: string): Promise<Job[]> {
-  return new Promise((resolve, reject) => {
-    const unsubscribe = jobsRef
-      .where('clientId', '==', clientId)
-      .orderBy('createdAt', 'asc')
-      .onSnapshot(
-        snapshot => {
-          const jobs: Job[] = [];
-          snapshot.forEach(doc => {
-            jobs.push(doc.data() as Job);
-          });
-          resolve(jobs); // Resolve with the fetched jobs
-        },
-        error => {
-          console.error('Error getting documents:', error);
-          reject(error); // Reject on error
-        },
-      );
+export function getJobsByClient(userId: string | null): Promise<Job[]> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const userSnapshot = await clientsRef.where('userId', '==', userId).get();
 
-    // Return the unsubscribe function to be used in the cleanup
-    return () => unsubscribe();
+      if (userSnapshot.empty) {
+        resolve([]); // No user found, resolve with an empty array
+        return;
+      }
+      const clientId = userSnapshot.docs[0].data().clientId; // Assuming clientId is stored in user document
+      if (!clientId) {
+        resolve([]); // No clientId found, resolve with an empty array
+        return;
+      }
+
+      // Fetch jobs related to the client ID
+      const jobsSnapshot = await jobsRef
+        .where('clientId', '==', clientId)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      const jobs: Job[] = [];
+      jobsSnapshot.forEach(doc => {
+        jobs.push(doc.data() as Job);
+      });
+
+      resolve(jobs); // Resolve with the fetched jobs
+    } catch (error) {
+      console.error('Error fetching jobs by client:', error);
+      reject(error); // Reject on error
+    }
   });
 }
 
 export function getJobsByWorker(workerId: string): Promise<Job[]> {
-
-  console.log("Received id: ", workerId)
   return new Promise((resolve, reject) => {
     const unsubscribe = jobsRef
       .where('clientId', '==', workerId)
@@ -169,22 +235,33 @@ export function getAllJobs(): Promise<Job[]> {
 
 // Main function to get all jobs with client user details
 export async function getAllJobsWithUserDetails(): Promise<
-  Array<{ job: Job; user: User | null }>
+  Array<{job: Job; user: User | null}>
 > {
-  const jobsWithUserDetails: Array<{ job: Job; user: User | null }> = [];
+  const jobsWithUserDetails: Array<{job: Job; user: User | null}> = [];
 
   try {
-    const jobSnapshot = await jobsRef.orderBy('createdAt', 'asc').get();
+    // Get the current user's UID
+    const currentUserId = await getCurrentUserUID();
+
+    const jobSnapshot = await jobsRef.orderBy('createdAt', 'desc').get();
 
     const jobPromises = jobSnapshot.docs.map(async doc => {
       const jobData = doc.data() as Job;
       const userData = await getUserDetailsByClientId(jobData.clientId); // Fetch user details using clientId
-      return { job: jobData, user: userData }; // Return job and user data
+
+      // Filter jobs where userData's userId doesn't matches the current user's ID
+      if (userData && userData.userId !== currentUserId) {
+        return {job: jobData, user: userData}; // Return job and user data if they match
+      }
+      return null; // Return null for non-matching jobs
     });
 
     // Wait for all user details to be fetched
     const results = await Promise.all(jobPromises);
-    jobsWithUserDetails.push(...results);
+
+    // Filter out null values from results
+    const filteredResults = results.filter(result => result !== null);
+    jobsWithUserDetails.push(...filteredResults);
   } catch (error) {
     console.error('Error fetching jobs with user details:', error);
   }

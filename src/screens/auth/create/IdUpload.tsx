@@ -28,9 +28,13 @@ import {showAlert} from '../../../components/AlertDialog';
 import uuid from 'react-native-uuid';
 import {deleteUploadedImage} from '../../../services/storage/id-delete';
 import {convertImageToBase64} from '../../../utils/Utils';
-import {FIRESTORE_TIMESTAMP} from '../../../config/firebase';
-import { Notification } from '../../../services/interfaces/notification';
-import { createNotification } from '../../../services/firestore/notifications';
+import {FIREBASE_AUTH, FIRESTORE_TIMESTAMP} from '../../../config/firebase';
+import {Notification} from '../../../services/interfaces/notification';
+import {createNotification} from '../../../services/firestore/notifications';
+import {createClient} from '../../../services/firestore/clients';
+import {createWorker} from '../../../services/firestore/workers';
+import {Client} from '../../../services/interfaces/client';
+import {Worker} from '../../../services/interfaces/worker';
 
 type IDUploadProps = NativeStackScreenProps<RootStackParamList, 'IDUpload'>;
 
@@ -71,15 +75,18 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
     setIsSubmitting(true);
 
     let userId: string | null = null;
+    let userEmail: string | null = null;
     let frontImageUrl: string | null = null;
     let backImageUrl: string | null = null;
     let selfieImageUrl: string | null = null;
 
     try {
-      const authUser = await firebase
-        .auth()
-        .createUserWithEmailAndPassword(email, password);
+      const authUser = await FIREBASE_AUTH.createUserWithEmailAndPassword(
+        email,
+        password,
+      );
       userId = authUser.user.uid;
+      userEmail = authUser.user.email;
 
       const addressId = uuid.v4().toString(); // Unique address ID
       const validationId = uuid.v4().toString(); // Unique validation ID
@@ -127,6 +134,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
         roleId: [clientRoleId, workerRoleId], // Store both role IDs
         firstName,
         lastName,
+        email: userEmail,
         defaultRole: userType === 'client' ? clientRoleId : workerRoleId,
         profilePicture: selfieImageUrl,
         validationId,
@@ -152,6 +160,25 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
 
       await createRole(clientRole);
       await createRole(workerRole);
+
+      // Create Client
+      const newClient: Client = {
+        clientId: clientRole.clientId, // Use the unique client ID created earlier
+        userId,
+        createdAt: FIRESTORE_TIMESTAMP,
+        updatedAt: FIRESTORE_TIMESTAMP,
+      };
+      await createClient(newClient); // Function to create the client document in Firestore
+
+      // Create Worker
+      const newWorker: Worker = {
+        workerId: workerRole.workerId, // Use the unique worker ID created earlier
+        userId,
+        createdAt: FIRESTORE_TIMESTAMP,
+        updatedAt: FIRESTORE_TIMESTAMP,
+      };
+      await createWorker(newWorker); // Function to create the worker document in Firestore
+
       // Create a notification
       const newNotification: Notification = {
         id: uuid.v4().toString(), // Generate a unique notification ID

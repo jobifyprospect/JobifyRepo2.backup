@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import React, {useState, forwardRef, useImperativeHandle} from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -7,7 +7,7 @@ import {
   TextStyle,
   ActivityIndicator,
 } from 'react-native';
-import { styles } from '../styles/Globals';
+import {styles} from '../styles/Globals';
 import Colors from '../styles/Colors';
 
 interface DynamicButtonProps {
@@ -22,7 +22,7 @@ const DynamicButton = forwardRef<
     triggerPress: () => void;
   },
   DynamicButtonProps
->(({ title, onPress, type = 'primary', disabled = false }, ref) => {
+>(({title, onPress, type = 'primary', disabled = false}, ref) => {
   const [loading, setLoading] = useState(false);
 
   const handlePress = async () => {
@@ -50,13 +50,13 @@ const DynamicButton = forwardRef<
     disabled: dynamicButtonStyles.disabled,
   };
 
-  const activityIndicatorColors = {
-    primary: Colors.white,
-    secondary: Colors.primary,
-    destructive: Colors.danger,
-    disabled: Colors.placeholder
-    // Add more colors as needed
-  };
+  // const activityIndicatorColors = {
+  //   primary: Colors.white,
+  //   secondary: Colors.primary,
+  //   destructive: Colors.danger,
+  //   disabled: Colors.placeholder,
+  //   // Add more colors as needed
+  // };
 
   const containerStyle: ViewStyle[] = [
     dynamicButtonStyles.button,
@@ -91,7 +91,9 @@ const DynamicButton = forwardRef<
           }
         />
       ) : (
-        <Text style={[styles.boldText, textStyle]}>{title}</Text>
+        <Text style={[styles.boldText, textStyle, dynamicButtonStyles.text]}>
+          {title}
+        </Text>
       )}
     </TouchableOpacity>
   );
@@ -106,6 +108,9 @@ const dynamicButtonStyles = StyleSheet.create({
     paddingHorizontal: 16,
     marginVertical: 8,
     minWidth: 96,
+  },
+  text: {
+    textAlign: 'center',
   },
   primary: {
     backgroundColor: Colors.primary,

@@ -31,6 +31,7 @@ const Login = ({navigation}: RouterProps) => {
   const [password, setPassword] = useState('');
   const [suffixIcon, setSuffixIcon] = useState('eye');
   const [obscure, setObscure] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const auth = FIREBASE_AUTH;
   const emailInputRef = useRef<TextInput>(null);
@@ -56,11 +57,14 @@ const Login = ({navigation}: RouterProps) => {
     if (obscure === false) {
       handleChildClick();
     }
+    setIsSubmitting(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const response = await auth.signInWithEmailAndPassword(email, password);
     } catch (error: any) {
       showAlert('Sign in failed', error.message || 'An error occurred');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -133,7 +137,9 @@ const Login = ({navigation}: RouterProps) => {
             ref={buttonRef}
             title="Login"
             onPress={signIn}
-            disabled={!isEmailValid(email) || !isPasswordValid(password)}
+            disabled={
+              isSubmitting || !isEmailValid(email) || !isPasswordValid(password)
+            }
             type="primary"
           />
           <View style={loginScreenStyles.subContainer}>
