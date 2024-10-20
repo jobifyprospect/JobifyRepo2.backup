@@ -6,11 +6,15 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {styles} from '../../styles/Globals';
 import Colors from '../../styles/Colors';
 import {Job} from '../../services/interfaces/job';
-import {getCurrentUserUID, getUser} from '../../services/firestore/users';
+import {
+  getCurrentUserUID,
+  getIdByRoleId,
+  getUser,
+} from '../../services/firestore/users';
 import {FIRESTORE_TIMESTAMP} from '../../config/firebase';
 import {getUserDetailsByClientId} from '../../services/firestore/users';
 import {
@@ -43,23 +47,34 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
   const [client, setClient] = useState<User>();
   const [hasApplied, setHasApplied] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [currentUserId, setCurrentUserId] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
   const [isModalVisible, setIsModalVisible] = useState(false);
-
+  const [currentUserId, setCurrentUserId] = useState<any>(null);
   const job_id = route.params.id;
 
-  async function fetchMyRoleId() {
-    try {
-      const uid = await getCurrentUserUID();
-      if (uid) {
-        const currentRole = await getUser(uid);
-        setCurrentUserId(currentRole?.defaultRole);
+  // Fetch the current user UID only once when the component mounts
+  useEffect(() => {
+    const fetchCurrentUserId = async () => {
+      try {
+        const uid: string | null = await getCurrentUserUID();
+        if (uid) {
+          const currentUserData = await getUser(uid);
+
+          if (currentUserData && currentUserData.defaultRole) {
+            const clientIdByRole = await getIdByRoleId(
+              currentUserData.defaultRole,
+            );
+            setCurrentUserId(clientIdByRole?.workerId || null);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user ID:', error);
+        showAlert('Error', 'Failed to fetch user ID.');
       }
-    } catch (err) {
-      console.error('something went wrong while fetching user');
-    }
-  }
+    };
+
+    fetchCurrentUserId();
+  }, []);
 
   async function handleSubmitApplication() {
     try {
@@ -160,9 +175,6 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
   useFocusEffect(
     useCallback(() => {
       setIsLoading(true);
-      if (currentUserId === null) {
-        fetchMyRoleId();
-      }
       if (currentUserId !== null) {
         fetchJob(currentUserId);
       }
