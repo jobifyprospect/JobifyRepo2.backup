@@ -27,25 +27,20 @@ export const getRole = async (roleId: string): Promise<Role | undefined> => {
 };
 
 export const getWorkerFullName = async (
-  roleId: string,
+  workerId: string,
 ): Promise<string | undefined> => {
   try {
-    const roleDoc = await rolesRef.doc(roleId).get();
-    if (roleDoc.exists) {
-      const roleData = roleDoc.data() as Role;
-      const workerId = roleData.workerId;
-      const workerDoc = await workersRef.doc(workerId).get();
-      if (workerDoc.exists) {
-        const workerData = workerDoc.data() as Worker;
-        const userId = workerData.userId;
-        const userDoc = await usersRef.doc(userId).get();
-        if (userDoc.exists) {
-          const userData = userDoc.data() as User;
-          const fullName = `${userData.firstName ?? ''} ${
-            userData.lastName ?? ''
-          }`.trim();
-          return fullName || undefined;
-        }
+    const workerDoc = await workersRef.doc(workerId).get();
+    if (workerDoc.exists) {
+      const workerData = workerDoc.data() as Worker;
+      const userId = workerData.userId;
+      const userDoc = await usersRef.doc(userId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data() as User;
+        const fullName = `${userData.firstName ?? ''} ${
+          userData.lastName ?? ''
+        }`.trim();
+        return fullName || undefined;
       }
     }
     return undefined;
@@ -57,31 +52,24 @@ export const getWorkerFullName = async (
 };
 
 export const getWorkerProfilePicture = async (
-  roleId: string,
+  workerId: string,
 ): Promise<string | undefined> => {
   try {
-    const roleDoc = await rolesRef.doc(roleId).get();
-    if (roleDoc.exists) {
-      const roleData = roleDoc.data() as Role;
-      const workerId = roleData.workerId;
-
-      const workerDoc = await workersRef.doc(workerId).get();
-      if (workerDoc.exists) {
-        const workerData = workerDoc.data() as Worker;
-        const userId = workerData.userId;
-        const userDoc = await usersRef.doc(userId).get();
-        if (userDoc.exists) {
-          const userData = userDoc.data() as User;
-          const profilePicture = userData.profilePicture ?? undefined;
-          if (!profilePicture) {
-            const firstInitial =
-              userData.firstName?.charAt(0).toUpperCase() ?? '';
-            const lastInitial =
-              userData.lastName?.charAt(0).toUpperCase() ?? '';
-            return `${firstInitial}${lastInitial}` || undefined;
-          }
-          return profilePicture;
+    const workerDoc = await workersRef.doc(workerId).get();
+    if (workerDoc.exists) {
+      const workerData = workerDoc.data() as Worker;
+      const userId = workerData.userId;
+      const userDoc = await usersRef.doc(userId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data() as User;
+        const profilePicture = userData.profilePicture ?? undefined;
+        if (!profilePicture) {
+          const firstInitial =
+            userData.firstName?.charAt(0).toUpperCase() ?? '';
+          const lastInitial = userData.lastName?.charAt(0).toUpperCase() ?? '';
+          return `${firstInitial}${lastInitial}` || undefined;
         }
+        return profilePicture;
       }
     }
     return undefined;

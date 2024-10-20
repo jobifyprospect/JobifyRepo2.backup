@@ -12,10 +12,7 @@ import Colors from '../../styles/Colors';
 import {NavigationProp, Route} from '@react-navigation/native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {User} from '../../services/interfaces/user';
-import {
-  getIdByRoleId,
-  getUserDetailsByWorkerId,
-} from '../../services/firestore/users';
+import {getUserDetailsByWorkerId} from '../../services/firestore/users';
 import {getJob, updateJobAssignedWorker} from '../../services/firestore/jobs';
 import {Job} from '../../services/interfaces/job';
 import {styles} from '../../styles/Globals';
@@ -53,13 +50,8 @@ export default function AcceptOrDeclineApplicant({
     setLoadingWorker(true);
     try {
       if (params_workerId) {
-        const workerIdByRole = await getIdByRoleId(params_workerId);
-        if (workerIdByRole && workerIdByRole.workerId) {
-          const workerDetails = await getUserDetailsByWorkerId(
-            workerIdByRole.workerId,
-          );
-          workerDetails && setWorker(workerDetails);
-        }
+        const workerDetails = await getUserDetailsByWorkerId(params_workerId);
+        workerDetails && setWorker(workerDetails);
       }
     } catch (error) {
       console.error('Failed to fetch worker details:', error);
