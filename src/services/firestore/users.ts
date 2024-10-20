@@ -355,3 +355,41 @@ export async function getIdByRoleId(
     throw error; // Throw error for further handling
   }
 }
+
+export const getUserDefaultRole = async (): Promise<string | null> => {
+  try {
+    // Get the current user's UID
+    const uid = await getCurrentUserUID();
+
+    // Ensure the UID is available
+    if (!uid) {
+      throw new Error('User not authenticated.');
+    }
+
+    // Query Firestore for the user's role data
+    const userDoc = await usersRef.doc(uid).get();
+
+    // Check if the document exists
+    if (!userDoc.exists) {
+      throw new Error('User document does not exist.');
+    }
+
+    // Get the role data from the document
+    const userData = userDoc.data();
+
+    // Ensure that the role data exists in the document
+    if (!userData || !userData.roleId) {
+      throw new Error('Role data not found for user.');
+    }
+    if (userData.roleId[0] === userData.defaultRole) {
+      return 'client';
+    } else if (userData.roleId[1] === userData.defaultRole) {
+      return 'worker';
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error('Failed to fetch user role:', error);
+    return null; // Return null or handle the error appropriately
+  }
+};
