@@ -42,6 +42,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
   );
   const [currentUserId, setCurrentUserId] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
+  const [deleting, setDeleting] = useState(false); // State to track refreshing
 
   async function fetchMyRoleId() {
     try {
@@ -77,16 +78,25 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
     }
   }, [id]);
 
-  async function handleDeleteJob(iid: string) {
-    if (!iid) {
-      showAlert('error', 'No job found.');
-    }
+  function handleDeleteJob(iid: string): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      if (!iid) {
+        showAlert('error', 'No job found.');
+        return reject(new Error('No job ID provided'));
+      }
+      setDeleting(true);
 
-    try {
-      await deleteJob(iid);
-    } catch (e) {
-      console.error(e);
-    }
+      try {
+        await deleteJob(iid);
+        resolve();
+      } catch (error) {
+        console.error(error);
+        reject(error);
+      } finally {
+        setDeleting(false);
+        navigation.goBack();
+      }
+    });
   }
 
   const onRefresh = useCallback(() => {
@@ -217,11 +227,19 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                   <Text style={localStyles.footerTextXL}>
                     PHP {job?.pay}.00
                   </Text>
-
                   <DynamicButton
                     type="destructive"
-                    onPress={() => handleDeleteJob(job?.jobId as string)}
+                    onPress={() => {
+                      showAlert(
+                        'Delete Job Entry?',
+                        'You are about to delete a job entry. Tap anywhere to cancel',
+                        () => {
+                          handleDeleteJob(job?.jobId as string);
+                        },
+                      );
+                    }}
                     title="Delete"
+                    disabled={deleting}
                   />
                 </View>
               </View>
