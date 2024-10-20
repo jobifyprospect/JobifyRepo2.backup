@@ -1,5 +1,5 @@
 import {View, Text, StyleSheet, FlatList, Pressable} from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {styles} from '../styles/Globals';
 import Colors from '../styles/Colors';
 import {Job} from '../services/interfaces/job';
@@ -10,7 +10,10 @@ import {useFocusEffect} from '@react-navigation/native';
 import RefreshButton from '../components/RefreshComponent';
 import {RootStackParamList} from './interfaces/RouterStackInterfaceParams';
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import {getCurrentUserUID} from '../services/firestore/users';
+import {
+  getCurrentUserUID,
+  getUserDefaultRole,
+} from '../services/firestore/users';
 import WorkerItem from '../components/GetWorkerFullName';
 import ProfilePicture from '../components/GetWorkerProfilePicture';
 // import {getApplicationsByWorkerId} from '../services/firestore/applications';
@@ -24,9 +27,21 @@ export default function Transaction({navigation, route}: TransactionProps) {
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [role, setRole] = useState<string | null>(route.params._role || null);
 
-  const role = route.params._role; // Initialize role from route params
-
+  const fetchDefaultRole = useCallback(async () => {
+    if (!role) {
+      const defaultRole = await getUserDefaultRole();
+      if (defaultRole) {
+        setRole(defaultRole); // Assuming the first role is default
+      }
+    }
+  }, [role]);
+  useEffect(() => {
+    if (role === null) {
+      fetchDefaultRole(); // Fetch default role if necessary
+    }
+  }, [fetchDefaultRole, role]);
   // Search handler with debouncing to optimize performance
   const handleSearch = useCallback(
     async (searchTerm: string) => {
@@ -79,8 +94,9 @@ export default function Transaction({navigation, route}: TransactionProps) {
   }, [role]);
 
   const onRefresh = useCallback(() => {
+    fetchDefaultRole();
     fetchJobs(); // Refresh the job data
-  }, [fetchJobs]);
+  }, [fetchDefaultRole, fetchJobs]);
 
   // const fetchApplications = useCallback(async () => {
   //   if (role === 'worker' && currentUserId) {

@@ -6,11 +6,15 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {styles} from '../../styles/Globals';
 import Colors from '../../styles/Colors';
 import {Job} from '../../services/interfaces/job';
-import {getCurrentUserUID, getUser} from '../../services/firestore/users';
+import {
+  getCurrentUserUID,
+  getIdByRoleId,
+  getUser,
+} from '../../services/firestore/users';
 import {FIRESTORE_TIMESTAMP} from '../../config/firebase';
 import {getUserDetailsByClientId} from '../../services/firestore/users';
 import {
@@ -30,6 +34,7 @@ import {Application} from '../../services/interfaces/application';
 import uuid from 'react-native-uuid';
 import {showAlert} from '../../components/AlertDialog';
 import {RootStackParamList} from '../interfaces/RouterStackInterfaceParams';
+import CounterOfferModal from '../../components/Modal';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -42,22 +47,34 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
   const [client, setClient] = useState<User>();
   const [hasApplied, setHasApplied] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [currentUserId, setCurrentUserId] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
-
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<any>(null);
   const job_id = route.params.id;
 
-  async function fetchMyRoleId() {
-    try {
-      const uid = await getCurrentUserUID();
-      if (uid) {
-        const currentRole = await getUser(uid);
-        setCurrentUserId(currentRole?.defaultRole);
+  // Fetch the current user UID only once when the component mounts
+  useEffect(() => {
+    const fetchCurrentUserId = async () => {
+      try {
+        const uid: string | null = await getCurrentUserUID();
+        if (uid) {
+          const currentUserData = await getUser(uid);
+
+          if (currentUserData && currentUserData.defaultRole) {
+            const clientIdByRole = await getIdByRoleId(
+              currentUserData.defaultRole,
+            );
+            setCurrentUserId(clientIdByRole?.workerId || null);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user ID:', error);
+        showAlert('Error', 'Failed to fetch user ID.');
       }
-    } catch (err) {
-      console.error('something went wrong while fetching user');
-    }
-  }
+    };
+
+    fetchCurrentUserId();
+  }, []);
 
   async function handleSubmitApplication() {
     try {
@@ -80,6 +97,37 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
       showAlert('Error', 'Oops, something went wrong.');
     } finally {
       setIsSubmitting(false);
+    }
+  }
+  async function handleSubmitApplicationWithOffer(
+    newOffer: number | undefined,
+  ) {
+    if (newOffer === undefined || newOffer === null) {
+      setIsModalVisible(false);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const newApplication: Application = {
+        applicationId: uuid.v4().toString(), // Ensure uuid is properly imported
+        offer: Number(newOffer), // Keep this if you're receiving 'newOffer' as a string, otherwise you can remove the Number()
+        status: 'pending',
+        jobId: job?.jobId as string, // Ensure 'job' and 'jobId' exist
+        workerId: currentUserId, // Make sure currentUserId is defined
+        createdAt: FIRESTORE_TIMESTAMP, // Type this appropriately
+        updatedAt: FIRESTORE_TIMESTAMP, // Type this appropriately
+      };
+
+      await createApplication(newApplication);
+      showAlert('Success', 'Your profile has been sent to the client.');
+      onRefresh(); // Ensure onRefresh is defined
+    } catch (e) {
+      showAlert('Error', 'Oops, something went wrong.');
+    } finally {
+      setIsSubmitting(false);
+      setIsModalVisible(false);
     }
   }
 
@@ -127,9 +175,6 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
   useFocusEffect(
     useCallback(() => {
       setIsLoading(true);
-      if (currentUserId === null) {
-        fetchMyRoleId();
-      }
       if (currentUserId !== null) {
         fetchJob(currentUserId);
       }
@@ -148,113 +193,122 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
   }
 
   return (
-    <View style={localStyles.container}>
-      <View style={localStyles.btnContainerStart}>
-        <BackButton onPress={async () => navigation.goBack()} />
-      </View>
+    <>
+      <View style={localStyles.container}>
+        <View style={localStyles.btnContainerStart}>
+          <BackButton onPress={async () => navigation.goBack()} />
+        </View>
 
-      <View style={localStyles.screen}>
-        <Text style={styles.largeHeading}>{job?.title}</Text>
+        <View style={localStyles.screen}>
+          <Text style={styles.largeHeading}>{job?.title}</Text>
 
-        <ScrollView>
-          <View style={localStyles.sectionContainer}>
-            <View style={localStyles.card}>
-              <View style={localStyles.cardContent}>
-                <View style={localStyles.contentRow}>
-                  <View style={localStyles.contentItemRow}>
-                    <View style={localStyles.profileContainer}>
-                      {client?.profilePicture ? (
-                        <Image
-                          source={{uri: client?.profilePicture}}
-                          style={localStyles.profileImage}
-                        />
-                      ) : (
-                        <View style={localStyles.initialsContainer}>
-                          <Text style={localStyles.initialsText}>
-                            {initials}
-                          </Text>
-                        </View>
-                      )}
+          <ScrollView>
+            <View style={localStyles.sectionContainer}>
+              <View style={localStyles.card}>
+                <View style={localStyles.cardContent}>
+                  <View style={localStyles.contentRow}>
+                    <View style={localStyles.contentItemRow}>
+                      <View style={localStyles.profileContainer}>
+                        {client?.profilePicture ? (
+                          <Image
+                            source={{uri: client?.profilePicture}}
+                            style={localStyles.profileImage}
+                          />
+                        ) : (
+                          <View style={localStyles.initialsContainer}>
+                            <Text style={localStyles.initialsText}>
+                              {initials}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={localStyles.nameContainer}>
+                        {client?.firstName} {client?.lastName}
+                      </Text>
                     </View>
-                    <Text style={localStyles.nameContainer}>
-                      {client?.firstName} {client?.lastName}
+                  </View>
+
+                  <View style={localStyles.contentRow}>
+                    <Text style={localStyles.cardContentHeader}>
+                      Contact Info
                     </Text>
+                    <View>
+                      <Text style={localStyles.contentTextRegular}>
+                        Email: {client?.email}
+                      </Text>
+                      <Text style={localStyles.contentTextRegular}>
+                        Phone: {client?.phoneNumber}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={localStyles.contentRow}>
+                    <Text style={localStyles.cardContentHeader}>Address </Text>
+                    <Text style={localStyles.contentTextRegular}>
+                      {job?.location}
+                    </Text>
+                  </View>
+
+                  <View style={localStyles.contentRow}>
+                    <Text style={localStyles.cardContentHeader}>Schedule </Text>
+                    <Text style={localStyles.contentTextRegular}>
+                      {job?.schedule}
+                    </Text>
+                  </View>
+
+                  <View style={localStyles.contentRow}>
+                    <Text style={localStyles.cardContentHeader}>
+                      Job Description
+                    </Text>
+                    <View>
+                      <Text style={localStyles.contentTextRegular}>
+                        {job?.description}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
-                <View style={localStyles.contentRow}>
-                  <Text style={localStyles.cardContentHeader}>
-                    Contact Info
-                  </Text>
-                  <View>
-                    <Text style={localStyles.contentTextRegular}>
-                      Email: {client?.email}
-                    </Text>
-                    <Text style={localStyles.contentTextRegular}>
-                      Phone: {client?.phoneNumber}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={localStyles.contentRow}>
-                  <Text style={localStyles.cardContentHeader}>Address </Text>
-                  <Text style={localStyles.contentTextRegular}>
-                    {job?.location}
+                <View style={localStyles.cardFooter}>
+                  <Text style={localStyles.cardContentHeader}>Rate / hr </Text>
+                  <Text style={localStyles.footerTextXL}>
+                    PHP {job?.pay}.00
                   </Text>
                 </View>
-
-                <View style={localStyles.contentRow}>
-                  <Text style={localStyles.cardContentHeader}>Schedule </Text>
-                  <Text style={localStyles.contentTextRegular}>
-                    {job?.schedule}
-                  </Text>
-                </View>
-
-                <View style={localStyles.contentRow}>
-                  <Text style={localStyles.cardContentHeader}>
-                    Job Description
-                  </Text>
-                  <View>
-                    <Text style={localStyles.contentTextRegular}>
-                      {job?.description}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={localStyles.cardFooter}>
-                <Text style={localStyles.cardContentHeader}>Rate / hr </Text>
-                <Text style={localStyles.footerTextXL}>PHP {job?.pay}.00</Text>
-              </View>
-              <View style={localStyles.actionBtnGroup}>
-                {hasApplied ? (
-                  <DynamicButton
-                    disabled
-                    type="primary"
-                    onPress={() => undefined}
-                    title="You have already applied to this listing."
-                  />
-                ) : (
-                  <>
+                <View style={localStyles.actionBtnGroup}>
+                  {hasApplied ? (
                     <DynamicButton
+                      disabled
                       type="primary"
-                      onPress={() => handleSubmitApplication()}
-                      title="Apply"
-                      disabled={isSubmitting}
-                    />
-                    <DynamicButton
-                      type="secondary"
                       onPress={() => undefined}
-                      title="Counter Offer"
+                      title="You have already applied to this listing."
                     />
-                  </>
-                )}
+                  ) : (
+                    <>
+                      <DynamicButton
+                        type="primary"
+                        onPress={() => handleSubmitApplication()}
+                        title="Apply"
+                        disabled={isSubmitting}
+                      />
+                      <DynamicButton
+                        type="secondary"
+                        onPress={() => setIsModalVisible(true)}
+                        title="Counter Offer"
+                        disabled={isSubmitting}
+                      />
+                    </>
+                  )}
+                </View>
               </View>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </View>
-    </View>
+      <CounterOfferModal
+        isVisible={isModalVisible}
+        onClose={value => handleSubmitApplicationWithOffer(value)}
+      />
+    </>
   );
 }
 

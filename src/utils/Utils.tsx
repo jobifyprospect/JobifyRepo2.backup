@@ -12,7 +12,15 @@ export const isNotEmpty = (input: string): boolean => {
   }
   return input.trim().length >= 3;
 };
-
+// Utility function to check if the input contains only numbers and is not empty
+export const isNumberOnly = (input: string): boolean => {
+  if (input === undefined || input.trim().length === 0) {
+    return false;
+  }
+  // Regular expression to check if the input consists only of digits
+  const numberOnlyRegex = /^[0-9]+$/;
+  return numberOnlyRegex.test(input);
+};
 export const isEmailValid = (email: string): boolean => {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
@@ -106,7 +114,9 @@ export function formatDate(date: FirebaseTimeStampT) {
 }
 
 // Helper function to format the date
-export const formatDateToReadable = (date: Timestamp | FieldValue | undefined) => {
+export const formatDateToReadable = (
+  date: Timestamp | FieldValue | undefined,
+) => {
   if (!date) {
     return;
   }
