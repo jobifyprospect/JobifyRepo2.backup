@@ -18,6 +18,8 @@ import { getUserDetailsByWorkerId } from '../services/firestore/users';
 import { User } from '../services/interfaces/user';
 import { Application } from '../services/interfaces/application';
 import { applicationsRef, FIRESTORE_TIMESTAMP } from '../config/firebase';
+import { Review } from '../services/interfaces/review';
+import { getReviewsByAppId } from '../services/firestore/reviews';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -30,15 +32,12 @@ export default function WorkerReviews({
 }: RouterProps) {
     console.log('route: ', route.params)
     const params_workerId = route.params.worker_id;
-    const params_appId = route.params.app_id;
 
-    const [fetchingWorker, setIsFetchingWorker] = useState<boolean>(false)
-    
     const [worker, setWorker] = useState<User | null>(null);
-    const [application, setApplication] = useState<Application | null>(null);
+    const [reviews, setReviews] = useState<Review[] | null>(null);
+    const [applications, setApplications] = useState<Application[] | null>(null);
 
     const fetchWorkerDetails = useCallback(async () => {
-        setIsFetchingWorker(true);
         try {
             if (params_workerId) {
                 const workerDetails = await getUserDetailsByWorkerId(params_workerId);
@@ -46,49 +45,62 @@ export default function WorkerReviews({
             }
         } catch (error) {
             console.error('Failed to fetch worker details:', error);
-        } finally {
-            setIsFetchingWorker(false);
+        }
+    }, [params_workerId]);
+
+    const fetchWorkerReviews = useCallback(async () => {
+        try {
+            if (Array.isArray(applications) && applications !== null)  {
+                const ids = applications.map((application) => application.applicationId)
+
+                const workerReviews = await getReviewsByAppId(ids);
+                
+                workerReviews && setReviews(workerReviews);
+            }
+        } catch (error) {
+            console.error('Failed to fetch worker reviews:', error);
         }
     }, [params_workerId]);
 
     useEffect(() => {
         fetchWorkerDetails();
-    }, [fetchWorkerDetails]);
+        fetchWorkerReviews();
+    }, [fetchWorkerDetails, fetchWorkerReviews]);
 
     useEffect(() => {
-        if (!params_appId) {
-          console.error('params_appId is undefined or null');
-          return;
+        if (!params_workerId) {
+            console.error('Worker ID is undefined or null');
+            return;
         }
-    
+
         try {
-          const unsubscribe = applicationsRef
-            .where('applicationId', '==', params_appId)
-            .onSnapshot(
-              snapshot => {
-                if (snapshot.empty) {
-                  return;
-                }
-    
-                const applicationData = snapshot.docs[0]?.data() as Application;
-    
-                setApplication(applicationData);
-              },
-              error => {
-                console.error('Error getting documents in snapshot:', error);
-              },
-            );
-    
-          return () => unsubscribe();
+            const unsubscribe = applicationsRef
+                .where('workerId', '==', params_workerId)
+                .onSnapshot(
+                    snapshot => {
+                        if (snapshot.empty) {
+                            return;
+                        }
+
+                        const applications = snapshot.docs[0]?.data() as Application[];
+
+                        setApplications(applications);
+                    },
+                    error => {
+                        console.error('Error getting documents in snapshot:', error);
+                    },
+                );
+
+            return () => unsubscribe();
         } catch (error) {
-          console.error('Error setting up Firestore onSnapshot:', error);
+            console.error('Error setting up Firestore onSnapshot:', error);
         }
-      }, [params_appId]);
+    }, [params_workerId]);
 
     const initials = `${worker?.firstName ?? ''}${worker?.lastName ?? ''
         }`.toUpperCase();
 
-
+    console.log('apps: ', applications)
     return (
         <View style={localStyles.container}>
             <SafeAreaView style={localStyles.btnContainerBetween}>
@@ -118,6 +130,8 @@ export default function WorkerReviews({
                             </View>
                         </View>
 
+                        <View style={{ height: 1, marginVertical: 8, marginHorizontal: 12, backgroundColor: Colors.black }}> <Text> </Text></View>
+
                         {/* body */}
                         <View>
                             {/* body header */}
@@ -125,7 +139,6 @@ export default function WorkerReviews({
                                 <Text> Gardening </Text>
                                 <Text> PHP500 </Text>
                             </View>
-
                             {/* body content */}
                             <View>
                                 <View>
