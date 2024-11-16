@@ -6,26 +6,27 @@ import {
   ActivityIndicator,
   Image,
   ScrollView,
+  Pressable,
 } from 'react-native';
 import BackButton from '../../components/BackButton';
 import Colors from '../../styles/Colors';
-import {NavigationProp, Route} from '@react-navigation/native';
-import React, {useCallback, useEffect, useState} from 'react';
-import {User} from '../../services/interfaces/user';
-import {getUserDetailsByWorkerId} from '../../services/firestore/users';
-import {getJob, updateJobAssignedWorker} from '../../services/firestore/jobs';
-import {Job} from '../../services/interfaces/job';
-import {styles} from '../../styles/Globals';
-import {getAddress} from '../../services/firestore/addresses';
-import {Address} from '../../services/interfaces/address';
-import {updateApplication} from '../../services/firestore/applications';
-import {Application} from '../../services/interfaces/application';
+import { NavigationProp, Route } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { User } from '../../services/interfaces/user';
+import { getUserDetailsByWorkerId } from '../../services/firestore/users';
+import { getJob, updateJobAssignedWorker } from '../../services/firestore/jobs';
+import { Job } from '../../services/interfaces/job';
+import { styles } from '../../styles/Globals';
+import { getAddress } from '../../services/firestore/addresses';
+import { Address } from '../../services/interfaces/address';
+import { updateApplication } from '../../services/firestore/applications';
+import { Application } from '../../services/interfaces/application';
 import DynamicButton from '../../components/DynamicButton';
-import {applicationsRef, FIRESTORE_TIMESTAMP} from '../../config/firebase';
+import { applicationsRef, FIRESTORE_TIMESTAMP } from '../../config/firebase';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
-  route: Route<string, {worker_id: string; job_id: string; app_id: string}>;
+  route: Route<string, { worker_id: string; job_id: string; app_id: string }>;
 }
 
 export default function AcceptOrDeclineApplicant({
@@ -159,9 +160,8 @@ export default function AcceptOrDeclineApplicant({
     }
   }, [params_appId]);
 
-  const initials = `${worker?.firstName ?? ''}${
-    worker?.lastName ?? ''
-  }`.toUpperCase();
+  const initials = `${worker?.firstName ?? ''}${worker?.lastName ?? ''
+    }`.toUpperCase();
 
   // Check if any data is still loading
   if (loadingWorker || loadingJob || loadingAddress) {
@@ -184,11 +184,15 @@ export default function AcceptOrDeclineApplicant({
         <ScrollView>
           <View style={localStyles.card}>
             <View style={localStyles.contentRow}>
-              <View style={localStyles.contentItemRow}>
+              <Pressable
+                onPress={async () => navigation.navigate('WorkerReviews', {
+                  worker_id: params_workerId, app_id: application?.applicationId,
+                } )}
+                style={localStyles.contentItemRow}>
                 <View style={localStyles.profileContainer}>
                   {worker?.profilePicture ? (
                     <Image
-                      source={{uri: worker?.profilePicture}}
+                      source={{ uri: worker?.profilePicture }}
                       style={localStyles.profileImage}
                     />
                   ) : (
@@ -200,7 +204,7 @@ export default function AcceptOrDeclineApplicant({
                 <Text style={localStyles.nameContainer}>
                   {worker?.firstName} {worker?.lastName}
                 </Text>
-              </View>
+              </Pressable>
             </View>
 
             <View style={localStyles.cardContent}>
@@ -306,7 +310,7 @@ const localStyles = StyleSheet.create({
     paddingTop: 25,
     flex: 1,
   },
-  nameContainer: {fontWeight: '600', fontSize: 24},
+  nameContainer: { fontWeight: '600', fontSize: 24 },
   screen: {
     flex: 1,
     paddingTop: 24,
@@ -400,7 +404,14 @@ const localStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.placeholder,
   },
-  contentItemRow: {flexDirection: 'row', alignItems: 'center'},
+  contentItemRow: {
+    borderWidth: 0.5,
+    borderColor: Colors.placeholder,
+    padding: 6,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
   cardTitle: {
     fontSize: 20,
     fontWeight: '600',
