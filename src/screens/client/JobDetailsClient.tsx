@@ -18,7 +18,6 @@ import RefreshButton from '../../components/RefreshComponent';
 import DynamicButton from '../../components/DynamicButton';
 import BackButton from '../../components/BackButton';
 import {formatDateToReadable} from '../../utils/Utils';
-import {getApplicationsByJobId} from '../../services/firestore/applications';
 import {Application} from '../../services/interfaces/application';
 import {applicationsRef} from '../../config/firebase';
 import {
@@ -69,14 +68,10 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
     try {
       if (id) {
         // Fetch job and applicants simultaneously
-        const [jobData, applicantsData] = await Promise.all([
-          getJob(id),
-          getApplicationsByJobId(id),
-        ]);
+        const [jobData] = await Promise.all([getJob(id)]);
 
         // Update states with fetched data
         jobData && setJob(jobData);
-        applicantsData && setApplicants(applicantsData);
       }
     } catch (error) {
       console.error('Error fetching job or applicants:', error);
@@ -165,7 +160,6 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       </View>
     );
   }
-
   return (
     <View style={localStyles.container}>
       <SafeAreaView style={localStyles.btnContainerBetween}>
