@@ -20,22 +20,29 @@ import { Application } from '../services/interfaces/application';
 import { applicationsRef, FIRESTORE_TIMESTAMP } from '../config/firebase';
 import { Review } from '../services/interfaces/review';
 import { getReviewsByAppId } from '../services/firestore/reviews';
+import { getJobs, getJobsByClient } from '../services/firestore/jobs';
+import { Job } from '../services/interfaces/job';
+import { formatDateToReadable } from '../utils/Utils';
+import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
-    route: Route<string, { worker_id: string, app_id: string }>;
+    route: Route<string, { worker_id: string }>;
 }
 
 export default function WorkerReviews({
     navigation,
     route,
 }: RouterProps) {
-    console.log('route: ', route.params)
     const params_workerId = route.params.worker_id;
 
     const [worker, setWorker] = useState<User | null>(null);
     const [reviews, setReviews] = useState<Review[] | null>(null);
-    const [applications, setApplications] = useState<Application[] | null>(null);
+    const [appIds, setAppIds] = useState<string[]>([])
+    const [applications, setApplications] = useState<any[]>([]);
+    const [jobIds, setJobIds] = useState<string[]>([]);
+
+    const [appJobs, setAppJobs] = useState<Job[]>([]);
 
     const fetchWorkerDetails = useCallback(async () => {
         try {
@@ -48,25 +55,52 @@ export default function WorkerReviews({
         }
     }, [params_workerId]);
 
-    const fetchWorkerReviews = useCallback(async () => {
-        try {
-            if (Array.isArray(applications) && applications !== null)  {
-                const ids = applications.map((application) => application.applicationId)
+    const fetchWorkerReviews = useCallback(async (ids: string[]) => {
 
-                const workerReviews = await getReviewsByAppId(ids);
-                
-                workerReviews && setReviews(workerReviews);
-            }
+        if (!ids) {
+            console.error('no ids passed');
+            return;
+        }
+
+        try {
+            const workerReviews = await getReviewsByAppId(ids);
+            workerReviews && setReviews(workerReviews);
         } catch (error) {
             console.error('Failed to fetch worker reviews:', error);
         }
+
+    }, [params_workerId]);
+
+    const fetchAppJobs = useCallback(async (ids: string[]) => {
+
+        if (!ids) {
+            console.error('no ids passed');
+            return;
+        }
+
+        try {
+            const appJobs = await getJobs(ids);
+            appJobs && setAppJobs(appJobs);
+        } catch (error) {
+            console.error('Failed to application jobs:', error);
+        }
+
     }, [params_workerId]);
 
     useEffect(() => {
         fetchWorkerDetails();
-        fetchWorkerReviews();
-    }, [fetchWorkerDetails, fetchWorkerReviews]);
 
+        if (appIds.length !== 0) {
+            fetchWorkerReviews(appIds);
+        }
+
+        if (jobIds.length !== 0) {
+            fetchAppJobs(jobIds)
+        }
+        // fetchAppJobs(jobIds);
+    }, [fetchWorkerDetails, fetchWorkerReviews, applications]);
+
+    //fetch application ids here.
     useEffect(() => {
         if (!params_workerId) {
             console.error('Worker ID is undefined or null');
@@ -82,9 +116,21 @@ export default function WorkerReviews({
                             return;
                         }
 
-                        const applications = snapshot.docs[0]?.data() as Application[];
+                        const applications = snapshot.docs;
 
-                        setApplications(applications);
+                        if (applications) {
+                            const jobIds = applications.map((application => application.data().jobId))
+                            const appIds = applications.map((application => application.data().applicationId))
+                            const apps = applications.map(application => ({
+                                appId: application.data().applicationId,
+                                jobId: application.data().jobId,
+                                offer: application.data().offer,
+                                status: application.data().status,
+                            }));
+                            setJobIds(jobIds);
+                            setAppIds(appIds);
+                            setApplications(apps);
+                        }
                     },
                     error => {
                         console.error('Error getting documents in snapshot:', error);
@@ -97,10 +143,12 @@ export default function WorkerReviews({
         }
     }, [params_workerId]);
 
+    console.log('apps', applications)
+    console.log('appIds', appIds)
+
     const initials = `${worker?.firstName ?? ''}${worker?.lastName ?? ''
         }`.toUpperCase();
 
-    console.log('apps: ', applications)
     return (
         <View style={localStyles.container}>
             <SafeAreaView style={localStyles.btnContainerBetween}>
@@ -110,49 +158,64 @@ export default function WorkerReviews({
             <View style={localStyles.screen}>
                 <Text style={styles.largeHeading}> Worker Reviews </Text>
                 <ScrollView>
-                    <View style={localStyles.reviewContainer}>
-                        {/* header */}
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <View style={localStyles.profileContainer}>
-                                    {worker?.profilePicture ? (
-                                        <Image
-                                            source={{ uri: worker?.profilePicture }}
-                                            style={localStyles.profileImage}
-                                        />
-                                    ) : (
-                                        <View style={localStyles.initialsContainer}>
-                                            <Text style={localStyles.initialsText}>{initials}</Text>
-                                        </View>
-                                    )}
-                                </View>
-                                <Text style={styles.boldText}> John Doe </Text>
-                            </View>
-                        </View>
+                    {
+                        applications.map((application) => (
+                            <>
+                                {appJobs.map((appJob) => (
+                                    <>
+                                        {reviews?.map((review) => {
 
-                        <View style={{ height: 1, marginVertical: 8, marginHorizontal: 12, backgroundColor: Colors.black }}> <Text> </Text></View>
+                                            if (appJob.jobId === application.jobId) {
+                                                return (
+                                                    <>
+                                                        {/* header */}
+                                                        <View style={localStyles.reviewContainer}>
+                                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                                    <View style={localStyles.profileContainer}>
+                                                                        {worker?.profilePicture ? (
+                                                                            <Image
+                                                                                source={{ uri: worker?.profilePicture }}
+                                                                                style={localStyles.profileImage}
+                                                                            />
+                                                                        ) : (
+                                                                            <View style={localStyles.initialsContainer}>
+                                                                                <Text style={localStyles.initialsText}>{initials}</Text>
+                                                                            </View>
+                                                                        )}
+                                                                    </View>
+                                                                    <View style={{ flex: 0.99, flexDirection: 'row', justifyContent: 'space-between' }}>
+                                                                        <Text style={styles.boldText}> {worker?.firstName} {worker?.lastName} </Text>
+                                                                        <Text> {formatDateToReadable(appJob.updatedAt)} </Text>
+                                                                    </View>
+                                                                </View>
+                                                            </View>
 
-                        {/* body */}
-                        <View>
-                            {/* body header */}
-                            <View style={localStyles.cardHeader}>
-                                <Text> Gardening </Text>
-                                <Text> PHP500 </Text>
-                            </View>
-                            {/* body content */}
-                            <View>
-                                <View>
-                                    <Text> Gardening </Text>
-                                    <Text> PHP500 </Text>
-                                </View>
+                                                            <View style={{ height: 1, marginVertical: 8, marginHorizontal: 12, backgroundColor: Colors.black }}> <Text> - </Text> </View>
 
-                                {/* rating */}
-                                <View>
-
-                                </View>
-                            </View>
-                        </View>
-                    </View>
+                                                            {/* body */}
+                                                            <View style={{ padding: 10, rowGap: 12 }}>
+                                                                <View style={localStyles.cardHeader}>
+                                                                    <Text style={styles.mediumText}> {appJob.title} </Text>
+                                                                    <Text style={styles.mediumText}> PHP {application.offer} </Text>
+                                                                </View>
+                                                                <View style={{ rowGap: 5 }}>
+                                                                    <Text style={styles.regularText}> {review.comment} </Text>
+                                                                    {/* TODO: svg not showing */}
+                                                                    {/* <Image style={localStyles.profileImage} source={{ uri: '../assets/star2.svg' }} /> */}
+                                                                    <Text style={styles.bold}> {review.rating} / 5 Stars </Text>
+                                                                </View>
+                                                            </View>
+                                                        </View>
+                                                    </>
+                                                )
+                                            }
+                                        })}
+                                    </>
+                                ))}
+                            </>
+                        ))
+                    }
                 </ScrollView>
             </View>
         </View>
@@ -178,10 +241,10 @@ const localStyles = StyleSheet.create({
         backgroundColor: Colors.white,
         borderRadius: 5,
         borderWidth: 1,
+        padding: 12,
         borderColor: Colors.placeholder
     },
     cardHeader: {
-        backgroundColor: 'orange',
         flexDirection: 'row',
         justifyContent: 'space-between'
     },
@@ -207,3 +270,4 @@ const localStyles = StyleSheet.create({
         fontWeight: 'bold',
     },
 })
+

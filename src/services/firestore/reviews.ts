@@ -52,10 +52,9 @@ export async function getReviewsByAppId(applicationId: string[]): Promise<Review
   try {
     // Create an empty array to store fetched reviews
     const reviews: Review[] = [];
-
     // Loop through each application ID and fetch reviews
     for (const appId of applicationId) {
-      const reviewsQuery = query(reviewsRef, where("application_id", "==", appId));
+      const reviewsQuery = query(reviewsRef, where("applicationId", "==", appId));
       const querySnapshot = await getDocs(reviewsQuery);
 
       // Process fetched reviews (optional)
