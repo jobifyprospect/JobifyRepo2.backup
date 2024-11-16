@@ -3,7 +3,11 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {styles} from '../styles/Globals';
 import Colors from '../styles/Colors';
 import {Job} from '../services/interfaces/job';
-import {getJobsByClient, queryJob} from '../services/firestore/jobs';
+import {
+  getJobsByClient,
+  getJobsByWorker,
+  queryJob,
+} from '../services/firestore/jobs';
 import {formatDateToReadable} from '../utils/Utils';
 import DynamicTextInput from '../components/DynamicTextInput';
 import {useFocusEffect} from '@react-navigation/native';
@@ -13,6 +17,7 @@ import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {
   getCurrentUserUID,
   getUserDefaultRole,
+  getUserDefaultUserUid,
 } from '../services/firestore/users';
 import WorkerItem from '../components/GetWorkerFullName';
 import ProfilePicture from '../components/GetWorkerProfilePicture';
@@ -75,13 +80,14 @@ export default function Transaction({navigation, route}: TransactionProps) {
     setRefreshing(true); // Start the refreshing spinner
     try {
       const uid: string | null = await getCurrentUserUID();
+      const workerUid: string | null = await getUserDefaultUserUid();
       if (uid) {
         if (role === 'client') {
           const jobbers = await getJobsByClient(uid);
           setJobs(jobbers);
           setSearchResults(jobbers);
         } else if (role === 'worker') {
-          const myJobListings = await getJobsByClient(uid);
+          const myJobListings = await getJobsByWorker(workerUid);
           setJobs(myJobListings);
           setSearchResults(myJobListings);
         }
@@ -238,7 +244,7 @@ export default function Transaction({navigation, route}: TransactionProps) {
                       {color: returnJobStatus(item.status)},
                       localStyles.containText,
                     ]}>
-                    {item.assignedWorker ? item.status : 'N/A'}
+                    {item.assignedWorker ? item.status : 'Pending'}
                   </Text>
                 </View>
               </Pressable>
@@ -258,7 +264,7 @@ const localStyles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    width: 164,
+    width: 140,
   },
   containCard: {
     flex: 1,

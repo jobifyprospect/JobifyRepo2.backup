@@ -1,7 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import {NavigationProp, Route} from '@react-navigation/native';
 import BackButton from '../components/BackButton';
-
 import React, {
   View,
   Text,
@@ -87,7 +86,6 @@ export default function WorkerReviews({navigation, route}: RouterProps) {
     if (jobIds.length !== 0) {
       fetchAppJobs(jobIds);
     }
-    // fetchAppJobs(jobIds);
   }, [
     fetchWorkerDetails,
     fetchWorkerReviews,
@@ -97,7 +95,7 @@ export default function WorkerReviews({navigation, route}: RouterProps) {
     fetchAppJobs,
   ]);
 
-  //fetch application ids here.
+  // Fetch application ids here.
   useEffect(() => {
     if (!params_workerId) {
       console.error('Worker ID is undefined or null');
@@ -144,9 +142,6 @@ export default function WorkerReviews({navigation, route}: RouterProps) {
     }
   }, [params_workerId]);
 
-  console.log('apps', applications);
-  console.log('appIds', appIds);
-
   const initials = `${worker?.firstName ?? ''}${
     worker?.lastName ?? ''
   }`.toUpperCase();
@@ -160,105 +155,110 @@ export default function WorkerReviews({navigation, route}: RouterProps) {
       <View style={localStyles.screen}>
         <Text style={styles.largeHeading}> Worker Reviews </Text>
         <ScrollView>
-          {applications.map(application => (
-            <>
-              {appJobs.map(appJob => (
-                <>
-                  {reviews?.map(review => {
-                    if (appJob.jobId === application.jobId) {
-                      return (
-                        <>
-                          {/* header */}
-                          <View style={localStyles.reviewContainer}>
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                              }}>
+          {reviews && reviews.length === 0 ? (
+            <Text style={[styles.card, styles.gap]}>
+              No Worker Reviews yet.
+            </Text>
+          ) : (
+            applications.map(application => (
+              <>
+                {appJobs.map(appJob => (
+                  <>
+                    {reviews?.map(review => {
+                      if (appJob.jobId === application.jobId) {
+                        return (
+                          <>
+                            {/* header */}
+                            <View style={localStyles.reviewContainer}>
                               <View
                                 style={{
                                   flexDirection: 'row',
                                   alignItems: 'center',
                                 }}>
-                                <View style={localStyles.profileContainer}>
-                                  {worker?.profilePicture ? (
-                                    <Image
-                                      source={{uri: worker?.profilePicture}}
-                                      style={localStyles.profileImage}
-                                    />
-                                  ) : (
-                                    <View style={localStyles.initialsContainer}>
-                                      <Text style={localStyles.initialsText}>
-                                        {initials}
-                                      </Text>
-                                    </View>
-                                  )}
-                                </View>
                                 <View
                                   style={{
-                                    flex: 0.99,
                                     flexDirection: 'row',
-                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
                                   }}>
-                                  <Text style={styles.boldText}>
+                                  <View style={localStyles.profileContainer}>
+                                    {worker?.profilePicture ? (
+                                      <Image
+                                        source={{uri: worker?.profilePicture}}
+                                        style={localStyles.profileImage}
+                                      />
+                                    ) : (
+                                      <View
+                                        style={localStyles.initialsContainer}>
+                                        <Text style={localStyles.initialsText}>
+                                          {initials}
+                                        </Text>
+                                      </View>
+                                    )}
+                                  </View>
+                                  <View
+                                    style={{
+                                      flex: 0.99,
+                                      flexDirection: 'row',
+                                      justifyContent: 'space-between',
+                                    }}>
+                                    <Text style={styles.boldText}>
+                                      {' '}
+                                      {worker?.firstName} {worker?.lastName}{' '}
+                                    </Text>
+                                    <Text>
+                                      {' '}
+                                      {formatDateToReadable(
+                                        appJob.updatedAt,
+                                      )}{' '}
+                                    </Text>
+                                  </View>
+                                </View>
+                              </View>
+
+                              <View
+                                style={{
+                                  height: 1,
+                                  marginVertical: 8,
+                                  marginHorizontal: 12,
+                                  backgroundColor: Colors.black,
+                                }}>
+                                {' '}
+                                <Text> - </Text>{' '}
+                              </View>
+
+                              {/* body */}
+                              <View style={{padding: 10, rowGap: 12}}>
+                                <View style={localStyles.cardHeader}>
+                                  <Text style={styles.mediumText}>
                                     {' '}
-                                    {worker?.firstName} {worker?.lastName}{' '}
+                                    {appJob.title}{' '}
                                   </Text>
-                                  <Text>
+                                  <Text style={styles.mediumText}>
                                     {' '}
-                                    {formatDateToReadable(
-                                      appJob.updatedAt,
-                                    )}{' '}
+                                    PHP {application.offer}{' '}
+                                  </Text>
+                                </View>
+                                <View style={{rowGap: 5}}>
+                                  <Text style={styles.regularText}>
+                                    {' '}
+                                    {review.comment}{' '}
+                                  </Text>
+                                  <Text style={styles.bold}>
+                                    {' '}
+                                    {review.rating} / 5 Stars{' '}
                                   </Text>
                                 </View>
                               </View>
                             </View>
-
-                            <View
-                              style={{
-                                height: 1,
-                                marginVertical: 8,
-                                marginHorizontal: 12,
-                                backgroundColor: Colors.black,
-                              }}>
-                              {' '}
-                              <Text> - </Text>{' '}
-                            </View>
-
-                            {/* body */}
-                            <View style={{padding: 10, rowGap: 12}}>
-                              <View style={localStyles.cardHeader}>
-                                <Text style={styles.mediumText}>
-                                  {' '}
-                                  {appJob.title}{' '}
-                                </Text>
-                                <Text style={styles.mediumText}>
-                                  {' '}
-                                  PHP {application.offer}{' '}
-                                </Text>
-                              </View>
-                              <View style={{rowGap: 5}}>
-                                <Text style={styles.regularText}>
-                                  {' '}
-                                  {review.comment}{' '}
-                                </Text>
-                                {/* TODO: svg not showing */}
-                                {/* <Image style={localStyles.profileImage} source={{ uri: '../assets/star2.svg' }} /> */}
-                                <Text style={styles.bold}>
-                                  {' '}
-                                  {review.rating} / 5 Stars{' '}
-                                </Text>
-                              </View>
-                            </View>
-                          </View>
-                        </>
-                      );
-                    }
-                  })}
-                </>
-              ))}
-            </>
-          ))}
+                          </>
+                        );
+                      }
+                    })}
+                  </>
+                ))}
+              </>
+            ))
+          )}
         </ScrollView>
       </View>
     </View>

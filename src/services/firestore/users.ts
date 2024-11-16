@@ -393,3 +393,84 @@ export const getUserDefaultRole = async (): Promise<string | null> => {
     return null; // Return null or handle the error appropriately
   }
 };
+
+export const getUserDefaultRoleUId = async (): Promise<string | null> => {
+  try {
+    // Get the current user's UID
+    const uid = await getCurrentUserUID();
+
+    // Ensure the UID is available
+    if (!uid) {
+      throw new Error('User not authenticated.');
+    }
+
+    // Query Firestore for the user's role data
+    const userDoc = await usersRef.doc(uid).get();
+
+    // Check if the document exists
+    if (!userDoc.exists) {
+      throw new Error('User document does not exist.');
+    }
+
+    // Get the role data from the document
+    const userData = userDoc.data();
+
+    // Ensure that the role data exists in the document
+    if (!userData || !userData.roleId) {
+      throw new Error('Role data not found for user.');
+    }
+    if (userData.roleId[0] === userData.defaultRole) {
+      return userData.defaultRole;
+    } else if (userData.roleId[1] === userData.defaultRole) {
+      return userData.defaultRole;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error('Failed to fetch user role:', error);
+    return null; // Return null or handle the error appropriately
+  }
+};
+
+export const getUserDefaultUserUid = async (): Promise<string | null> => {
+  try {
+    // Get the current user's UID
+    const uid = await getUserDefaultRoleUId();
+    console.log(uid);
+
+    // Ensure the UID is available
+    if (!uid) {
+      throw new Error('User not authenticated.');
+    }
+
+    // Query Firestore for the user's role data
+    const userDoc = await rolesRef.doc(uid).get();
+    console.log(userDoc);
+
+    // Check if the document exists
+    if (!userDoc.exists) {
+      throw new Error('User document does not exist.');
+    }
+
+    // Get the role data from the document
+    const userData = userDoc.data();
+
+    // Ensure that the role data exists in the document
+    if (!userData || !userData.roleId) {
+      throw new Error('Role data or default role not found for user.');
+    }
+    console.log(userDoc);
+
+    // Assuming the user has only one roleId, determine if it’s client or worker
+    if (userData.clientId) {
+      return userData.clientId;
+    } else if (userData.workerId) {
+      return userData.workerId;
+    } else {
+      return null; // Return null if no valid role or ids are found
+    }
+  } catch (error) {
+    console.error('Failed to fetch user role:', error);
+    return null; // Return null or handle the error appropriately
+  }
+};

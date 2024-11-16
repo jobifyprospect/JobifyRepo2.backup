@@ -21,7 +21,11 @@ import {formatDateToReadable} from '../../utils/Utils';
 import {getApplicationsByJobId} from '../../services/firestore/applications';
 import {Application} from '../../services/interfaces/application';
 import {applicationsRef} from '../../config/firebase';
-import {getCurrentUserUID, getUser} from '../../services/firestore/users';
+import {
+  getCurrentUserUID,
+  getUser,
+  getUserDefaultRole,
+} from '../../services/firestore/users';
 import {deleteJob} from '../../services/firestore/jobs';
 import {showAlert} from '../../components/AlertDialog';
 import WorkerItem from '../../components/GetWorkerFullName';
@@ -41,6 +45,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
     'Listing',
   );
   const [currentUserId, setCurrentUserId] = useState<any>(null);
+  const [currentRole, setCurrentRole] = useState<any>('worker');
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
   const [deleting, setDeleting] = useState(false); // State to track refreshing
 
@@ -48,8 +53,11 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
     try {
       const uid = await getCurrentUserUID();
       if (uid) {
-        const currentRole = await getUser(uid);
-        setCurrentUserId(currentRole?.defaultRole);
+        const currentRoleA = await getUser(uid);
+        const currentRoleValue = await getUserDefaultRole();
+        console.log(`AWESOME ${currentRoleValue}`);
+        setCurrentRole(currentRoleValue);
+        setCurrentUserId(currentRoleA?.defaultRole);
       }
     } catch (err) {
       console.error('something went wrong while fetching user');
@@ -163,9 +171,9 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       <SafeAreaView style={localStyles.btnContainerBetween}>
         <BackButton onPress={async () => navigation.goBack()} />
 
-        {currentScreen === 'Listing' && (
+        {/* {currentScreen === 'Listing' && (
           <DynamicButton onPress={() => undefined} title="Edit" />
-        )}
+        )} */}
 
         {currentScreen === 'Applicants' && (
           <RefreshButton
@@ -178,31 +186,35 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
 
       <View>
         <Text style={localStyles.pageHeader}>{job?.title}</Text>
-        <View style={localStyles.containTab}>
-          <Pressable
-            style={[
-              styles.w100,
-              localStyles.tabStyle,
-              currentScreen === 'Listing'
-                ? {}
-                : {backgroundColor: Colors.placeholder},
-            ]}
-            onPress={() => setCurrentScreen('Listing')}>
-            <Text style={localStyles.centerText}>Job Listing</Text>
-          </Pressable>
+        {currentRole !== 'worker' ? (
+          <View style={localStyles.containTab}>
+            <Pressable
+              style={[
+                styles.w100,
+                localStyles.tabStyle,
+                currentScreen === 'Listing'
+                  ? {}
+                  : {backgroundColor: Colors.placeholder},
+              ]}
+              onPress={() => setCurrentScreen('Listing')}>
+              <Text style={localStyles.centerText}>Job Listing</Text>
+            </Pressable>
 
-          <Pressable
-            style={[
-              styles.w100,
-              localStyles.tabStyle,
-              currentScreen === 'Applicants'
-                ? {}
-                : {backgroundColor: Colors.placeholder},
-            ]}
-            onPress={() => setCurrentScreen('Applicants')}>
-            <Text style={localStyles.centerText}>Applicants</Text>
-          </Pressable>
-        </View>
+            <Pressable
+              style={[
+                styles.w100,
+                localStyles.tabStyle,
+                currentScreen === 'Applicants'
+                  ? {}
+                  : {backgroundColor: Colors.placeholder},
+              ]}
+              onPress={() => setCurrentScreen('Applicants')}>
+              <Text style={localStyles.centerText}>Applicants</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <></>
+        )}
       </View>
 
       <>
@@ -245,20 +257,24 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                   <Text style={localStyles.footerTextXL}>
                     PHP {job?.pay}.00
                   </Text>
-                  <DynamicButton
-                    type="destructive"
-                    onPress={() => {
-                      showAlert(
-                        'Delete Job Entry?',
-                        'You are about to delete a job entry. Tap anywhere to cancel',
-                        () => {
-                          handleDeleteJob(job?.jobId as string);
-                        },
-                      );
-                    }}
-                    title="Delete"
-                    disabled={deleting}
-                  />
+                  {currentRole !== 'worker' ? (
+                    <DynamicButton
+                      type="destructive"
+                      onPress={() => {
+                        showAlert(
+                          'Delete Job Entry?',
+                          'You are about to delete a job entry. Tap anywhere to cancel',
+                          () => {
+                            handleDeleteJob(job?.jobId as string);
+                          },
+                        );
+                      }}
+                      title="Delete"
+                      disabled={deleting}
+                    />
+                  ) : (
+                    <></>
+                  )}
                 </View>
               </View>
             </ScrollView>
