@@ -91,7 +91,10 @@ const Profile = ({navigation}: RouterProps) => {
       } else {
         showAlert('Error', 'No user ID found.');
       }
-      showAlert('Success', 'User role changed successfully');
+      showAlert(
+        'Success',
+        'User role changed successfully\nLogin your account again.',
+      );
     } catch (error) {
       showAlert('Error', `Failed to Update: ${error}`);
     } finally {
@@ -263,16 +266,27 @@ const Profile = ({navigation}: RouterProps) => {
           <DynamicButton
             title="Switch Mode"
             type="secondary"
-            onPress={() => {
+            onPress={async () => {
+              const currentMode =
+                user?.roleId?.[0]?.toString() === user?.defaultRole?.toString()
+                  ? 'Client Mode'
+                  : 'Worker Mode';
+
+              const newMode =
+                user?.roleId?.[0]?.toString() === user?.defaultRole?.toString()
+                  ? 'Worker Mode'
+                  : 'Client Mode';
+
               showAlert(
                 'Switch Mode?',
-                'You are currently in Client Mode, and you are about to switch to Worker mode.\n\nIt Requires a Logout. Tap anywhere to cancel',
+                `You are currently in ${currentMode}, and you are about to switch to ${newMode}.\n\nIt requires you to sign in again. Tap anywhere to cancel.`,
                 () => {
                   handleUpdateUser();
                 },
               );
-            }} // Handle user role update
+            }}
           />
+
           <DynamicButton
             title="Logout"
             type="logout"

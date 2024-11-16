@@ -68,7 +68,7 @@ const CounterOfferModal = forwardRef<
               onPress={() => onClose()} // Decline action, close without value
               disabled={isSubmitting}
               type="secondary"
-              title="Decline"
+              title="Cancel"
             />
             <DynamicButton
               onPress={() => {

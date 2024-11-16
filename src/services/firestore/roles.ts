@@ -15,7 +15,9 @@ export const createRole = async (role: Role): Promise<void> => {
   }
 };
 
-export const getRole = async (roleId: string): Promise<Role | undefined> => {
+export const getRole = async (
+  roleId: string | undefined,
+): Promise<Role | undefined> => {
   try {
     const roleDoc = await rolesRef.doc(roleId).get();
     return roleDoc.exists ? (roleDoc.data() as Role) : undefined;

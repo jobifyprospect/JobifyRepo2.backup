@@ -10,23 +10,24 @@ import {
 } from 'react-native';
 import BackButton from '../../components/BackButton';
 import Colors from '../../styles/Colors';
-import { NavigationProp, Route } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
-import { User } from '../../services/interfaces/user';
-import { getUserDetailsByWorkerId } from '../../services/firestore/users';
-import { getJob, updateJobAssignedWorker } from '../../services/firestore/jobs';
-import { Job } from '../../services/interfaces/job';
-import { styles } from '../../styles/Globals';
-import { getAddress } from '../../services/firestore/addresses';
-import { Address } from '../../services/interfaces/address';
-import { updateApplication } from '../../services/firestore/applications';
-import { Application } from '../../services/interfaces/application';
+import {NavigationProp, Route} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {User} from '../../services/interfaces/user';
+import {getUserDetailsByWorkerId} from '../../services/firestore/users';
+import {getJob, updateJobAssignedWorker} from '../../services/firestore/jobs';
+import {Job} from '../../services/interfaces/job';
+import {styles} from '../../styles/Globals';
+import {getAddress} from '../../services/firestore/addresses';
+import {Address} from '../../services/interfaces/address';
+import {updateApplication} from '../../services/firestore/applications';
+import {Application} from '../../services/interfaces/application';
 import DynamicButton from '../../components/DynamicButton';
-import { applicationsRef, FIRESTORE_TIMESTAMP } from '../../config/firebase';
+import {applicationsRef, FIRESTORE_TIMESTAMP} from '../../config/firebase';
+import TextButton from '../../components/TextButton';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
-  route: Route<string, { worker_id: string; job_id: string; app_id: string }>;
+  route: Route<string, {worker_id: string; job_id: string; app_id: string}>;
 }
 
 export default function AcceptOrDeclineApplicant({
@@ -160,8 +161,9 @@ export default function AcceptOrDeclineApplicant({
     }
   }, [params_appId]);
 
-  const initials = `${worker?.firstName ?? ''}${worker?.lastName ?? ''
-    }`.toUpperCase();
+  const initials = `${worker?.firstName ?? ''}${
+    worker?.lastName ?? ''
+  }`.toUpperCase();
 
   // Check if any data is still loading
   if (loadingWorker || loadingJob || loadingAddress) {
@@ -185,14 +187,17 @@ export default function AcceptOrDeclineApplicant({
           <View style={localStyles.card}>
             <View style={localStyles.contentRow}>
               <Pressable
-                onPress={async () => navigation.navigate('WorkerReviews', {
-                  worker_id: params_workerId, app_id: application?.applicationId,
-                } )}
+                onPress={async () =>
+                  navigation.navigate('WorkerReviews', {
+                    worker_id: params_workerId,
+                    app_id: application?.applicationId,
+                  })
+                }
                 style={localStyles.contentItemRow}>
                 <View style={localStyles.profileContainer}>
                   {worker?.profilePicture ? (
                     <Image
-                      source={{ uri: worker?.profilePicture }}
+                      source={{uri: worker?.profilePicture}}
                       style={localStyles.profileImage}
                     />
                   ) : (
@@ -201,9 +206,20 @@ export default function AcceptOrDeclineApplicant({
                     </View>
                   )}
                 </View>
-                <Text style={localStyles.nameContainer}>
-                  {worker?.firstName} {worker?.lastName}
-                </Text>
+                <View>
+                  <Text style={localStyles.nameContainer}>
+                    {worker?.firstName} {worker?.lastName}
+                  </Text>
+                  <TextButton
+                    title="View Reviews"
+                    onPress={async () =>
+                      navigation.navigate('WorkerReviews', {
+                        worker_id: params_workerId,
+                        app_id: application?.applicationId,
+                      })
+                    }
+                  />
+                </View>
               </Pressable>
             </View>
 
@@ -310,7 +326,7 @@ const localStyles = StyleSheet.create({
     paddingTop: 25,
     flex: 1,
   },
-  nameContainer: { fontWeight: '600', fontSize: 24 },
+  nameContainer: {fontWeight: '600', fontSize: 24},
   screen: {
     flex: 1,
     paddingTop: 24,
@@ -410,7 +426,7 @@ const localStyles = StyleSheet.create({
     padding: 6,
     borderRadius: 10,
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   cardTitle: {
     fontSize: 20,
