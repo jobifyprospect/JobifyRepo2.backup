@@ -98,6 +98,19 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       }
     });
   }
+  const handleOpenMap = () => {
+    if (job?.mapLocation?.longitude && job?.mapLocation?.latitude) {
+      navigation.navigate('MapScreen', {
+        longitude: job.mapLocation.longitude,
+        latitude: job.mapLocation.latitude,
+      });
+    } else {
+      showAlert(
+        'Error',
+        'Location coordinates are not available for this job.',
+      );
+    }
+  };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true); // Start the refreshing spinner
@@ -212,10 +225,15 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                     <Text style={localStyles.contentTextRegular}>
                       {job?.location}
                     </Text>
+                    <DynamicButton
+                      title="View"
+                      type="primary"
+                      onPress={handleOpenMap}
+                    />
                   </View>
 
                   <View style={localStyles.contentRow}>
-                    <Text style={localStyles.cardContentHeader}>Schedule </Text>
+                    <Text style={localStyles.cardContentHeader}>Schedule</Text>
                     <Text style={localStyles.contentTextRegular}>
                       {job?.schedule}
                     </Text>

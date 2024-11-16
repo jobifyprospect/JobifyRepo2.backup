@@ -6,7 +6,7 @@ export type RootStackParamList = {
   Transaction: {_role: string};
   Home: undefined;
   JobDetailsClient: {id: string};
-  WorkerReviews: {worker_id: string };
+  WorkerReviews: {worker_id: string};
   AcceptOrDeclineApplicant: {worker_id: string; job_id: string; app_id: string};
   ApplyToJob: {id: string};
   PersonalDetails: {userType: 'client' | 'worker'};
@@ -94,4 +94,12 @@ export type RootStackParamList = {
   Loading: undefined;
   ChangePassword: undefined;
   Inside: {role: string | null};
+  MapScreen: {
+    latitude: number;
+    longitude: number;
+    onLocationSelect?: (location: {
+      latitude: number;
+      longitude: number;
+    }) => void;
+  };
 };

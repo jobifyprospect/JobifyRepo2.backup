@@ -7,6 +7,10 @@ export interface Job {
   status?: 'open' | 'closed' | 'pending'; // Possible statuses
   schedule: Date | any;
   location?: string;
+  mapLocation?: {
+    latitude: number;
+    longitude: number;
+  }; // Latitude and longitude for the job location
   description?: string;
   createdAt:
     | FirebaseFirestoreTypes.Timestamp

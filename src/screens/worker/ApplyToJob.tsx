@@ -248,6 +248,11 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
                       {job?.location}
                     </Text>
                   </View>
+                  <View style={localStyles.contentRow}>
+                    <Text style={localStyles.cardContentHeader}>
+                      Job Location
+                    </Text>
+                  </View>
 
                   <View style={localStyles.contentRow}>
                     <Text style={localStyles.cardContentHeader}>Schedule </Text>

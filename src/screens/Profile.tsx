@@ -8,7 +8,10 @@ import {
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {styles} from '../styles/Globals';
-import {FIREBASE_AUTH, FIRESTORE_TIMESTAMP} from '../config/firebase';
+import {
+  FIREBASE_AUTH,
+  // FIRESTORE_TIMESTAMP
+} from '../config/firebase';
 import {
   getCurrentUserUID,
   getUserDetails,
@@ -26,9 +29,9 @@ import {faCheckCircle} from '@fortawesome/free-solid-svg-icons';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {NavigationProp, useFocusEffect} from '@react-navigation/native';
-import {createNotification} from '../services/firestore/notifications';
-import uuid from 'react-native-uuid';
-import {useFCMToken} from '../config/FCMTokenContext';
+// import {createNotification} from '../services/firestore/notifications';
+// import uuid from 'react-native-uuid';
+// import {useFCMToken} from '../config/FCMTokenContext';
 
 library.add(faCheckCircle);
 interface RouterProps {
@@ -41,7 +44,7 @@ const Profile = ({navigation}: RouterProps) => {
   const [validation, setValidation] = useState<Validation | null>(null);
   const [loading, setLoading] = useState<boolean>(true); // Track loading state
   const [userId, setUserId] = useState<string>(''); // Track loading state
-  const fcmToken = useFCMToken();
+  // const fcmToken = useFCMToken();
 
   const fetchUserProfile = useCallback(async () => {
     try {
@@ -96,46 +99,46 @@ const Profile = ({navigation}: RouterProps) => {
     }
   }, []);
 
-  const handleCreateTestNotification = async () => {
-    try {
-      // Prepare the notification data for Firestore
-      const notificationData = {
-        id: uuid.v4().toString(), // Generate a unique notification ID
-        title: 'Test Notification',
-        subtitle: 'This is a test notification.',
-        senderId: userId,
-        receiverId: userId, // Assuming you're sending it to the same user for the test
-        isRead: false,
-        createdAt: FIRESTORE_TIMESTAMP,
-        updatedAt: FIRESTORE_TIMESTAMP,
-        from: `client-${userId}`, // The ID of the user sending the notification
-        to: fcmToken, // The recipient's ID
-        // messageId: `client-${userId}`,
-        // threadId: `client-${userId}`,
-        notification: {
-          title: 'Test Notification',
-          body: 'This is a test notification body',
-        },
-      };
+  // const handleCreateTestNotification = async () => {
+  //   try {
+  //     // Prepare the notification data for Firestore
+  //     const notificationData = {
+  //       id: uuid.v4().toString(), // Generate a unique notification ID
+  //       title: 'Test Notification',
+  //       subtitle: 'This is a test notification.',
+  //       senderId: userId,
+  //       receiverId: userId, // Assuming you're sending it to the same user for the test
+  //       isRead: false,
+  //       createdAt: FIRESTORE_TIMESTAMP,
+  //       updatedAt: FIRESTORE_TIMESTAMP,
+  //       from: `client-${userId}`, // The ID of the user sending the notification
+  //       to: fcmToken, // The recipient's ID
+  //       // messageId: `client-${userId}`,
+  //       // threadId: `client-${userId}`,
+  //       notification: {
+  //         title: 'Test Notification',
+  //         body: 'This is a test notification body',
+  //       },
+  //     };
 
-      // Create the notification in Firestore
-      const newNotification = await createNotification(notificationData);
+  //     // Create the notification in Firestore
+  //     const newNotification = await createNotification(notificationData);
 
-      if (newNotification) {
-        console.log('Test notification created in Firestore:', newNotification);
+  //     if (newNotification) {
+  //       console.log('Test notification created in Firestore:', newNotification);
 
-        // Show success message
-      } else {
-        showAlert('Error', 'Failed to create test notification.');
-      }
-    } catch (error) {
-      console.error('Error creating and sending test notification:', error);
-      showAlert(
-        'Error',
-        'An error occurred while creating or sending the test notification.',
-      );
-    }
-  };
+  //       // Show success message
+  //     } else {
+  //       showAlert('Error', 'Failed to create test notification.');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error creating and sending test notification:', error);
+  //     showAlert(
+  //       'Error',
+  //       'An error occurred while creating or sending the test notification.',
+  //     );
+  //   }
+  // };
   const logOutUser = async () => {
     await removeFcmToken(userId); // Remove token on logout
     FIREBASE_AUTH.signOut();
@@ -281,11 +284,11 @@ const Profile = ({navigation}: RouterProps) => {
               );
             }} // Handle user role update
           />
-          <DynamicButton
+          {/* <DynamicButton
             title="Create and Send Notification"
             type="secondary"
             onPress={handleCreateTestNotification} // Handle user role update
-          />
+          /> */}
         </View>
       </View>
     </View>
