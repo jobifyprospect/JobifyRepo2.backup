@@ -45,6 +45,7 @@ import messaging, {firebase} from '@react-native-firebase/messaging';
 import {FCMTokenProvider} from './src/config/FCMTokenContext';
 import WorkerReviews from './src/screens/WorkerReviews';
 import MapScreen from './src/screens/MapScreen';
+import WriteReviewScreen from './src/screens/client/WriteReview';
 
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
@@ -319,6 +320,11 @@ export default function App() {
                 name="WorkerReviews"
                 component={WorkerReviews}
                 options={{title: 'WorkerReviews', headerShown: false}} // Worker Reviews
+              />
+              <Stack.Screen
+                name="WriteReview"
+                component={WriteReviewScreen}
+                options={{title: 'Write a Review', headerShown: false}} // Custom header title
               />
             </>
           ) : (

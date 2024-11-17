@@ -12,12 +12,12 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {styles} from '../../styles/Globals';
 import Colors from '../../styles/Colors';
 import {Job} from '../../services/interfaces/job';
-import {getJob} from '../../services/firestore/jobs';
+import {getJob, updateJob} from '../../services/firestore/jobs';
 import {NavigationProp, Route, useFocusEffect} from '@react-navigation/native';
 import RefreshButton from '../../components/RefreshComponent';
 import DynamicButton from '../../components/DynamicButton';
 import BackButton from '../../components/BackButton';
-import {formatDateToReadable} from '../../utils/Utils';
+import {formatCurrency, formatDateToReadable} from '../../utils/Utils';
 import {Application} from '../../services/interfaces/application';
 import {applicationsRef} from '../../config/firebase';
 import {
@@ -27,7 +27,8 @@ import {
 } from '../../services/firestore/users';
 import {deleteJob} from '../../services/firestore/jobs';
 import {showAlert} from '../../components/AlertDialog';
-import WorkerItem from '../../components/GetWorkerFullName';
+import GetFullName from '../../components/GetFullName';
+import {getReviewForJob} from '../../services/firestore/reviews';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -45,8 +46,10 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
   );
   const [currentUserId, setCurrentUserId] = useState<any>(null);
   const [currentRole, setCurrentRole] = useState<any>('worker');
+  const [isDone, setIsDone] = useState<Boolean>(false);
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
   const [deleting, setDeleting] = useState(false); // State to track refreshing
+  const [reviewExists, setReviewExists] = useState(false);
 
   async function fetchMyRoleId() {
     try {
@@ -72,6 +75,13 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
 
         // Update states with fetched data
         jobData && setJob(jobData);
+        setIsDone(job?.status === 'closed');
+
+        const reviewStatus = await checkReviewExists(
+          job?.title ?? '',
+          job?.clientId ?? '',
+        );
+        setReviewExists(reviewStatus);
       }
     } catch (error) {
       console.error('Error fetching job or applicants:', error);
@@ -79,7 +89,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       setIsLoading(false); // Set loading to false after both fetches are completed
       setRefreshing(false); // Stop refreshing if applicable
     }
-  }, [id]);
+  }, [id, job?.clientId, job?.status, job?.title]);
 
   function handleDeleteJob(iid: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
@@ -114,7 +124,15 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       );
     }
   };
-
+  const checkReviewExists = async (jobId: string, workerId: string) => {
+    try {
+      const review = await getReviewForJob(jobId, workerId); // Implement this service to fetch a review for the specific job and worker
+      return review ? true : false; // If review exists, return true
+    } catch (error) {
+      console.error('Error checking for review:', error);
+      return false; // If there's an error, assume no review exists
+    }
+  };
   const onRefresh = useCallback(() => {
     setRefreshing(true); // Start the refreshing spinner
     fetchJobAndApplicants(); // Refresh both job and applicants
@@ -165,9 +183,24 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       <SafeAreaView style={localStyles.btnContainerBetween}>
         <BackButton onPress={async () => navigation.goBack()} />
 
-        {/* {currentScreen === 'Listing' && (
-          <DynamicButton onPress={() => undefined} title="Edit" />
-        )} */}
+        {job?.assignedWorker &&
+          !isDone &&
+          currentScreen === 'Listing' &&
+          currentRole !== 'worker' && (
+            <DynamicButton
+              onPress={async () => {
+                try {
+                  // Call the updateJob function to change the status to 'closed'
+                  await updateJob(job.jobId, {status: 'closed'});
+                  setIsDone(true);
+                } catch (error) {
+                  // Handle any errors if needed
+                  console.error('Failed to update job status:', error);
+                }
+              }}
+              title="Mark as Done"
+            />
+          )}
 
         {currentScreen === 'Applicants' && (
           <RefreshButton
@@ -179,7 +212,12 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       </SafeAreaView>
 
       <View>
-        <Text style={localStyles.pageHeader}>{job?.title}</Text>
+        <View style={localStyles.row}>
+          <Text style={localStyles.pageHeader}>
+            {job?.title} - {job?.status === 'closed' ? 'Done' : job?.status}
+          </Text>
+        </View>
+
         {currentRole !== 'worker' ? (
           <View style={localStyles.containTab}>
             <Pressable
@@ -249,26 +287,47 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                 <View style={localStyles.cardFooter}>
                   <Text style={localStyles.cardContentHeader}>Rate / hr </Text>
                   <Text style={localStyles.footerTextXL}>
-                    PHP {job?.pay}.00
+                    {formatCurrency(job?.pay ?? 0)}
                   </Text>
-                  {currentRole !== 'worker' ? (
-                    <DynamicButton
-                      type="destructive"
-                      onPress={() => {
-                        showAlert(
-                          'Delete Job Entry?',
-                          'You are about to delete a job entry. Tap anywhere to cancel',
-                          () => {
-                            handleDeleteJob(job?.jobId as string);
-                          },
-                        );
-                      }}
-                      title="Delete"
-                      disabled={deleting}
-                    />
-                  ) : (
-                    <></>
-                  )}
+                  <View>
+                    {isDone && currentRole !== 'worker' && (
+                      <DynamicButton
+                        type="primary"
+                        onPress={() =>
+                          navigation.navigate('WriteReview', {
+                            job: {
+                              jobId: job?.jobId || '',
+                              title: job?.title || '',
+                              clientId: job?.clientId || '',
+                              createdAt: job?.createdAt || new Date(),
+                              updatedAt: job?.updatedAt || new Date(),
+                              assignedWorker: job?.assignedWorker || '',
+                            },
+                          })
+                        }
+                        title={
+                          reviewExists ? 'Review Submitted' : 'Write a Review'
+                        }
+                        disabled={reviewExists}
+                      />
+                    )}
+                    {currentRole !== 'worker' && (
+                      <DynamicButton
+                        type="destructive"
+                        onPress={() => {
+                          showAlert(
+                            'Delete Job Entry?',
+                            'You are about to delete a job entry. Tap anywhere to cancel',
+                            () => {
+                              handleDeleteJob(job?.jobId as string);
+                            },
+                          );
+                        }}
+                        title="Delete"
+                        disabled={deleting}
+                      />
+                    )}
+                  </View>
                 </View>
               </View>
             </ScrollView>
@@ -357,7 +416,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                         style={[localStyles.jobCard, getCardStyle()]}>
                         <View style={localStyles.containItems}>
                           <View style={localStyles.column}>
-                            <WorkerItem workerId={item.workerId} />
+                            <GetFullName uuId={item.workerId} type={'worker'} />
 
                             <View style={localStyles.row}>
                               <Text style={[styles.smallText]}>
@@ -365,7 +424,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                               </Text>
                               <Text style={styles.smallText}> - </Text>
                               <Text style={[styles.smallText]}>
-                                PHP {job?.pay}
+                                {formatCurrency(job?.pay ?? 0)}
                               </Text>
                             </View>
                           </View>
@@ -373,7 +432,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                           <View style={localStyles.containText}>
                             <Text style={[styles.mediumText]}>Offer</Text>
                             <Text style={[styles.mediumTextBlue]}>
-                              PHP {item.offer ? item.offer : null}
+                              {formatCurrency(item?.offer ?? 0)}
                             </Text>
                           </View>
                         </View>

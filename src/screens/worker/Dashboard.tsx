@@ -19,7 +19,7 @@ import {
 import NotificationsButton from '../../components/NotificationsButton';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
-import {formatDateToReadable} from '../../utils/Utils';
+import {formatCurrency, formatDateToReadable} from '../../utils/Utils';
 import {styles} from '../../styles/Globals';
 import {onAuthStateChanged} from '@react-native-firebase/auth';
 import {
@@ -325,7 +325,7 @@ const Dashboard = ({navigation}: RouterProps) => {
                               styles.mediumTextBlue,
                               localStyles.containText,
                             ]}>
-                            Php {item?.job?.pay}
+                            {formatCurrency(item?.job?.pay ?? 0)}
                           </Text>
                         </View>
                       </Pressable>

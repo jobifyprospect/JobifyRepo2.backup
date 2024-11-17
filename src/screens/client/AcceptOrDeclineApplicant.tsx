@@ -24,6 +24,7 @@ import {Application} from '../../services/interfaces/application';
 import DynamicButton from '../../components/DynamicButton';
 import {applicationsRef, FIRESTORE_TIMESTAMP} from '../../config/firebase';
 import TextButton from '../../components/TextButton';
+import {formatCurrency} from '../../utils/Utils';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -262,7 +263,7 @@ export default function AcceptOrDeclineApplicant({
                 Asking Rate / hr
               </Text>
               <Text style={localStyles.footerTextXL}>
-                PHP {application?.offer}.00
+                {formatCurrency(application?.offer ?? 0)}
               </Text>
 
               <View style={localStyles.actionBtnGroup}>

@@ -8,7 +8,7 @@ import {
   getJobsByWorker,
   queryJob,
 } from '../services/firestore/jobs';
-import {formatDateToReadable} from '../utils/Utils';
+import {formatCurrency, formatDateToReadable} from '../utils/Utils';
 import DynamicTextInput from '../components/DynamicTextInput';
 import {useFocusEffect} from '@react-navigation/native';
 import RefreshButton from '../components/RefreshComponent';
@@ -19,8 +19,8 @@ import {
   getUserDefaultRole,
   getUserDefaultUserUid,
 } from '../services/firestore/users';
-import WorkerItem from '../components/GetWorkerFullName';
-import ProfilePicture from '../components/GetWorkerProfilePicture';
+import GetFullName from '../components/GetFullName';
+import ProfilePicture from '../components/GetProfilePicture';
 // import {getApplicationsByWorkerId} from '../services/firestore/applications';
 // import {Application} from '../services/interfaces/application';
 
@@ -218,34 +218,42 @@ export default function Transaction({navigation, route}: TransactionProps) {
                 key={item.jobId}
                 style={[localStyles.jobCard, getCardStyle()]}>
                 <View style={localStyles.containCard}>
-                  <ProfilePicture workerId={item.assignedWorker} />
+                  <ProfilePicture
+                    uuId={item.assignedWorker ?? ''}
+                    type={'worker'}
+                  />
                   <View style={localStyles.jobInfoContainer}>
-                    {item.assignedWorker ? (
-                      <WorkerItem workerId={item.assignedWorker} />
-                    ) : (
-                      <Text
-                        style={[styles.regularText, styles.bold]}
-                        numberOfLines={1}>
-                        Unassigned
-                      </Text>
-                    )}
+                    <View style={localStyles.row}>
+                      {item.assignedWorker ? (
+                        <GetFullName
+                          uuId={item.assignedWorker}
+                          type={'worker'}
+                        />
+                      ) : (
+                        <Text
+                          style={[styles.regularText, styles.bold]}
+                          numberOfLines={1}>
+                          Unassigned
+                        </Text>
+                      )}
+                      <Text>{formatCurrency(item.pay ?? 0)}</Text>
+                    </View>
 
                     <View style={localStyles.row}>
-                      <Text style={styles.regularText} numberOfLines={1}>
+                      <Text
+                        style={[styles.regularText, localStyles.containText]}
+                        numberOfLines={1}>
                         {item.title}
                       </Text>
-                      <Text>
-                        {' - PHP'} {item.pay}
+                      <Text style={[{color: returnJobStatus(item.status)}]}>
+                        {item.assignedWorker
+                          ? item.status === 'closed'
+                            ? 'Done'
+                            : item.status
+                          : 'Pending'}
                       </Text>
                     </View>
                   </View>
-                  <Text
-                    style={[
-                      {color: returnJobStatus(item.status)},
-                      localStyles.containText,
-                    ]}>
-                    {item.assignedWorker ? item.status : 'Pending'}
-                  </Text>
                 </View>
               </Pressable>
             </>
@@ -263,8 +271,9 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   row: {
+    flex: 1,
     flexDirection: 'row',
-    width: 140,
+    justifyContent: 'space-between',
   },
   containCard: {
     flex: 1,
@@ -276,7 +285,7 @@ const localStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end', // Align items to the bottom
     alignSelf: 'flex-end', // Center align items horizontally
-    textAlign: 'center', // Center align text within each item
+    width: 160,
   },
   flatList: {
     marginBottom: 100,
@@ -334,6 +343,7 @@ const localStyles = StyleSheet.create({
   },
   jobInfoContainer: {
     flex: 1,
-    marginRight: 10,
+    flexDirection: 'column',
+    // marginRight: 10,
   },
 });

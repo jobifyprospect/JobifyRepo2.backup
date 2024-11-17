@@ -1,5 +1,10 @@
 import {showAlert} from '../../components/AlertDialog';
-import {FIRESTORE_DB, usersRef, workersRef} from '../../config/firebase';
+import {
+  clientsRef,
+  FIRESTORE_DB,
+  usersRef,
+  workersRef,
+} from '../../config/firebase';
 import {Role} from '../interfaces/role';
 import {User} from '../interfaces/user';
 import {Worker} from '../interfaces/worker';
@@ -53,6 +58,31 @@ export const getWorkerFullName = async (
   }
 };
 
+export const getClientFullName = async (
+  clientId: string,
+): Promise<string | undefined> => {
+  try {
+    const clientDoc = await clientsRef.doc(clientId).get();
+    if (clientDoc.exists) {
+      const clientData = clientDoc.data() as Worker;
+      const userId = clientData.userId;
+      const userDoc = await usersRef.doc(userId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data() as User;
+        const fullName = `${userData.firstName ?? ''} ${
+          userData.lastName ?? ''
+        }`.trim();
+        return fullName || undefined;
+      }
+    }
+    return undefined;
+  } catch (error) {
+    showAlert('Error', "Failed to retrieve worker's full name.");
+    console.error(error);
+    return undefined;
+  }
+};
+
 export const getWorkerProfilePicture = async (
   workerId: string,
 ): Promise<string | undefined> => {
@@ -61,6 +91,35 @@ export const getWorkerProfilePicture = async (
     if (workerDoc.exists) {
       const workerData = workerDoc.data() as Worker;
       const userId = workerData.userId;
+      const userDoc = await usersRef.doc(userId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data() as User;
+        const profilePicture = userData.profilePicture ?? undefined;
+        if (!profilePicture) {
+          const firstInitial =
+            userData.firstName?.charAt(0).toUpperCase() ?? '';
+          const lastInitial = userData.lastName?.charAt(0).toUpperCase() ?? '';
+          return `${firstInitial}${lastInitial}` || undefined;
+        }
+        return profilePicture;
+      }
+    }
+    return undefined;
+  } catch (error) {
+    showAlert('Error', "Failed to retrieve worker's profile picture.");
+    console.error(error);
+    return undefined;
+  }
+};
+
+export const getClientProfilePicture = async (
+  clientId: string,
+): Promise<string | undefined> => {
+  try {
+    const clientDoc = await clientsRef.doc(clientId).get();
+    if (clientDoc.exists) {
+      const clientData = clientDoc.data() as Worker;
+      const userId = clientData.userId;
       const userDoc = await usersRef.doc(userId).get();
       if (userDoc.exists) {
         const userData = userDoc.data() as User;

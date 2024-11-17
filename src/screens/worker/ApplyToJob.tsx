@@ -35,6 +35,7 @@ import uuid from 'react-native-uuid';
 import {showAlert} from '../../components/AlertDialog';
 import {RootStackParamList} from '../interfaces/RouterStackInterfaceParams';
 import CounterOfferModal from '../../components/Modal';
+import {formatCurrency} from '../../utils/Utils';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -289,7 +290,7 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
                 <View style={localStyles.cardFooter}>
                   <Text style={localStyles.cardContentHeader}>Rate / hr </Text>
                   <Text style={localStyles.footerTextXL}>
-                    PHP {job?.pay}.00
+                    {formatCurrency(job?.pay ?? 0)}
                   </Text>
                 </View>
                 <View style={localStyles.actionBtnGroup}>

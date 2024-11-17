@@ -1,3 +1,5 @@
+import {FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
+
 export type RootStackParamList = {
   UserTypeSelection: undefined;
   Notification: undefined;
@@ -101,5 +103,19 @@ export type RootStackParamList = {
       latitude: number;
       longitude: number;
     }) => void;
+  };
+  WriteReview: {
+    job: {
+      jobId: string;
+      title: string;
+      clientId: string;
+      createdAt:
+        | FirebaseFirestoreTypes.Timestamp
+        | FirebaseFirestoreTypes.FieldValue;
+      updatedAt:
+        | FirebaseFirestoreTypes.Timestamp
+        | FirebaseFirestoreTypes.FieldValue;
+      assignedWorker: string;
+    };
   };
 };

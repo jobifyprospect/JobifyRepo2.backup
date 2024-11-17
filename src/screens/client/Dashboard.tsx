@@ -18,7 +18,7 @@ import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
 import {faPlusSquare} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {formatDateToReadable} from '../../utils/Utils';
+import {formatCurrency, formatDateToReadable} from '../../utils/Utils';
 import {styles} from '../../styles/Globals';
 import {onAuthStateChanged} from '@react-native-firebase/auth';
 import {getCurrentUserUID, storeFcmToken} from '../../services/firestore/users';
@@ -270,7 +270,7 @@ const Dashboard = ({navigation}: RouterProps) => {
                               styles.regularText,
                               localStyles.containText,
                             ]}>
-                            Php {item.pay}
+                            {formatCurrency(item?.pay ?? 0)}
                           </Text>
                         </View>
                       </Pressable>

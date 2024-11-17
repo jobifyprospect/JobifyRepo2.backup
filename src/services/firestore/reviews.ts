@@ -1,7 +1,7 @@
-import { showAlert } from '../../components/AlertDialog';
-import { FIRESTORE_DB } from '../../config/firebase';
-import { Review } from '../interfaces/review';
-import { collection, getDocs, query, where } from '@react-native-firebase/firestore';
+import {showAlert} from '../../components/AlertDialog';
+import {FIRESTORE_DB} from '../../config/firebase';
+import {Review} from '../interfaces/review';
+import {getDocs, query, where} from '@react-native-firebase/firestore';
 
 const reviewsRef = FIRESTORE_DB.collection('reviews');
 
@@ -48,17 +48,22 @@ export const deleteReview = async (reviewId: string): Promise<void> => {
   }
 };
 
-export async function getReviewsByAppId(applicationId: string[]): Promise<Review[]> {
+export async function getReviewsByAppId(
+  applicationId: string[],
+): Promise<Review[]> {
   try {
     // Create an empty array to store fetched reviews
     const reviews: Review[] = [];
     // Loop through each application ID and fetch reviews
     for (const appId of applicationId) {
-      const reviewsQuery = query(reviewsRef, where("applicationId", "==", appId));
+      const reviewsQuery = query(
+        reviewsRef,
+        where('applicationId', '==', appId),
+      );
       const querySnapshot = await getDocs(reviewsQuery);
 
       // Process fetched reviews (optional)
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach(doc => {
         const reviewData = doc.data() as Review;
         // You can add optional processing/formatting here
         reviews.push(reviewData);
@@ -67,12 +72,58 @@ export async function getReviewsByAppId(applicationId: string[]): Promise<Review
 
     return reviews; // Return the combined reviews
   } catch (error) {
-    console.error("Error fetching reviews:", error);
+    console.error('Error fetching reviews:', error);
     throw error; // Re-throw the error for proper handling
   }
 }
+export const getReviewsByWorkerId = async (
+  workerId: string,
+): Promise<Review[]> => {
+  try {
+    const reviewsSnapshot = await reviewsRef
+      .where('workerId', '==', workerId)
+      .get();
 
+    if (reviewsSnapshot.empty) {
+      console.log(`No reviews found for workerId: ${workerId}`);
+      return [];
+    }
 
+    const reviews: Review[] = reviewsSnapshot.docs.map(doc => ({
+      reviewId: doc.id,
+      ...doc.data(),
+    })) as Review[];
+
+    return reviews;
+  } catch (error) {
+    console.error(`Error fetching reviews for workerId ${workerId}:`, error);
+    throw error;
+  }
+};
+export async function getReviewForJob(
+  jobTitle: string,
+  clientId: string,
+): Promise<boolean> {
+  try {
+    console.log(`AAA ${jobTitle}`);
+    console.log(`AAA ${clientId}`);
+
+    const reviewSnapshot = await reviewsRef // Name of your collection
+      .where('jobTitle', '==', jobTitle)
+      .where('clientId', '==', clientId) // Ensure to match clientId
+      .get();
+
+    // If the snapshot has any documents, return true
+    if (!reviewSnapshot.empty) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error('Error checking review existence: ', error);
+    return false; // Return false in case of any error
+  }
+}
 // export function getReviewsByWorker(applicationId: string[]): Promise<Review[]> {
 //   return new Promise((resolve, reject) => {
 //     const unsubscribe = reviewsRef
