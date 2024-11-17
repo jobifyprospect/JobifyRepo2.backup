@@ -82,6 +82,21 @@ export const validatePassword = (password: string) => {
   );
 };
 
+export const formatCurrency = (value: string | number): string => {
+  // Ensure the value is treated as a number
+  const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+
+  if (isNaN(numericValue)) {
+    return '₱ 0.00'; // Return '₱ 0.00' if the value is invalid
+  }
+
+  // Format the number as a currency string
+  return `₱ ${numericValue.toLocaleString('en-PH', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
 export const convertImageToBase64 = async (
   uri: string,
 ): Promise<string | null> => {

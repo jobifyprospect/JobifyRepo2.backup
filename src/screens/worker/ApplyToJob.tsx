@@ -35,6 +35,7 @@ import uuid from 'react-native-uuid';
 import {showAlert} from '../../components/AlertDialog';
 import {RootStackParamList} from '../interfaces/RouterStackInterfaceParams';
 import CounterOfferModal from '../../components/Modal';
+import {formatCurrency} from '../../utils/Utils';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -166,7 +167,19 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
     },
     [job_id],
   );
-
+  const handleOpenMap = () => {
+    if (job?.mapLocation?.longitude && job?.mapLocation?.latitude) {
+      navigation.navigate('MapScreen', {
+        longitude: job.mapLocation.longitude,
+        latitude: job.mapLocation.latitude,
+      });
+    } else {
+      showAlert(
+        'Error',
+        'Location coordinates are not available for this job.',
+      );
+    }
+  };
   const onRefresh = useCallback(() => {
     setRefreshing(true); // Start the refreshing spinner
     fetchJob(currentUserId); // Refresh the job data
@@ -243,12 +256,18 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
                   </View>
 
                   <View style={localStyles.contentRow}>
-                    <Text style={localStyles.cardContentHeader}>Address </Text>
+                    <Text style={localStyles.cardContentHeader}>
+                      Full Job Address{' '}
+                    </Text>
                     <Text style={localStyles.contentTextRegular}>
                       {job?.location}
                     </Text>
+                    <DynamicButton
+                      title="View"
+                      type="primary"
+                      onPress={handleOpenMap}
+                    />
                   </View>
-
                   <View style={localStyles.contentRow}>
                     <Text style={localStyles.cardContentHeader}>Schedule </Text>
                     <Text style={localStyles.contentTextRegular}>
@@ -271,7 +290,7 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
                 <View style={localStyles.cardFooter}>
                   <Text style={localStyles.cardContentHeader}>Rate / hr </Text>
                   <Text style={localStyles.footerTextXL}>
-                    PHP {job?.pay}.00
+                    {formatCurrency(job?.pay ?? 0)}
                   </Text>
                 </View>
                 <View style={localStyles.actionBtnGroup}>

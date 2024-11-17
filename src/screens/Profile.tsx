@@ -5,10 +5,14 @@ import {
   SafeAreaView,
   Image,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {styles} from '../styles/Globals';
-import {FIREBASE_AUTH, FIRESTORE_TIMESTAMP} from '../config/firebase';
+import {
+  FIREBASE_AUTH,
+  // FIRESTORE_TIMESTAMP
+} from '../config/firebase';
 import {
   getCurrentUserUID,
   getUserDetails,
@@ -26,9 +30,13 @@ import {faCheckCircle} from '@fortawesome/free-solid-svg-icons';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {NavigationProp, useFocusEffect} from '@react-navigation/native';
-import {createNotification} from '../services/firestore/notifications';
-import uuid from 'react-native-uuid';
-import {useFCMToken} from '../config/FCMTokenContext';
+import TextButton from '../components/TextButton';
+import {getWorkerIdByRoleId} from '../services/firestore/roles';
+import {calculateAverageRating} from '../services/firestore/reviews';
+import Svg, {Path} from 'react-native-svg';
+// import {createNotification} from '../services/firestore/notifications';
+// import uuid from 'react-native-uuid';
+// import {useFCMToken} from '../config/FCMTokenContext';
 
 library.add(faCheckCircle);
 interface RouterProps {
@@ -41,8 +49,17 @@ const Profile = ({navigation}: RouterProps) => {
   const [validation, setValidation] = useState<Validation | null>(null);
   const [loading, setLoading] = useState<boolean>(true); // Track loading state
   const [userId, setUserId] = useState<string>(''); // Track loading state
-  const fcmToken = useFCMToken();
+  const [workerId, setWorkerId] = useState<string>(''); // Track loading state
+  // const fcmToken = useFCMToken();
+  const [averageRating, setAverageRating] = useState(0);
+  useEffect(() => {
+    const fetchRating = async () => {
+      const rating = await calculateAverageRating(workerId);
+      setAverageRating(rating);
+    };
 
+    fetchRating();
+  }, [workerId]);
   const fetchUserProfile = useCallback(async () => {
     try {
       const uid = await getCurrentUserUID();
@@ -56,6 +73,12 @@ const Profile = ({navigation}: RouterProps) => {
           setUser(user);
           setAddress(address);
           setValidation(validation);
+          if (user?.defaultRole) {
+            const fetchedWorkerId = await getWorkerIdByRoleId(user.defaultRole);
+            setWorkerId(fetchedWorkerId || '');
+          } else {
+            console.warn('User default role is not defined.');
+          }
         } else {
           console.error('No user details found.');
         }
@@ -88,7 +111,10 @@ const Profile = ({navigation}: RouterProps) => {
       } else {
         showAlert('Error', 'No user ID found.');
       }
-      showAlert('Success', 'User role changed successfully');
+      showAlert(
+        'Success',
+        'User role changed successfully\nLogin your account again.',
+      );
     } catch (error) {
       showAlert('Error', `Failed to Update: ${error}`);
     } finally {
@@ -96,52 +122,52 @@ const Profile = ({navigation}: RouterProps) => {
     }
   }, []);
 
-  const handleCreateTestNotification = async () => {
-    try {
-      // Prepare the notification data for Firestore
-      const notificationData = {
-        id: uuid.v4().toString(), // Generate a unique notification ID
-        title: 'Test Notification',
-        subtitle: 'This is a test notification.',
-        senderId: userId,
-        receiverId: userId, // Assuming you're sending it to the same user for the test
-        isRead: false,
-        createdAt: FIRESTORE_TIMESTAMP,
-        updatedAt: FIRESTORE_TIMESTAMP,
-        from: `client-${userId}`, // The ID of the user sending the notification
-        to: fcmToken, // The recipient's ID
-        // messageId: `client-${userId}`,
-        // threadId: `client-${userId}`,
-        notification: {
-          title: 'Test Notification',
-          body: 'This is a test notification body',
-        },
-      };
+  // const handleCreateTestNotification = async () => {
+  //   try {
+  //     // Prepare the notification data for Firestore
+  //     const notificationData = {
+  //       id: uuid.v4().toString(), // Generate a unique notification ID
+  //       title: 'Test Notification',
+  //       subtitle: 'This is a test notification.',
+  //       senderId: userId,
+  //       receiverId: userId, // Assuming you're sending it to the same user for the test
+  //       isRead: false,
+  //       createdAt: FIRESTORE_TIMESTAMP,
+  //       updatedAt: FIRESTORE_TIMESTAMP,
+  //       from: `client-${userId}`, // The ID of the user sending the notification
+  //       to: fcmToken, // The recipient's ID
+  //       // messageId: `client-${userId}`,
+  //       // threadId: `client-${userId}`,
+  //       notification: {
+  //         title: 'Test Notification',
+  //         body: 'This is a test notification body',
+  //       },
+  //     };
 
-      // Create the notification in Firestore
-      const newNotification = await createNotification(notificationData);
+  //     // Create the notification in Firestore
+  //     const newNotification = await createNotification(notificationData);
 
-      if (newNotification) {
-        console.log('Test notification created in Firestore:', newNotification);
+  //     if (newNotification) {
+  //       console.log('Test notification created in Firestore:', newNotification);
 
-        // Show success message
-      } else {
-        showAlert('Error', 'Failed to create test notification.');
-      }
-    } catch (error) {
-      console.error('Error creating and sending test notification:', error);
-      showAlert(
-        'Error',
-        'An error occurred while creating or sending the test notification.',
-      );
-    }
-  };
+  //       // Show success message
+  //     } else {
+  //       showAlert('Error', 'Failed to create test notification.');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error creating and sending test notification:', error);
+  //     showAlert(
+  //       'Error',
+  //       'An error occurred while creating or sending the test notification.',
+  //     );
+  //   }
+  // };
   const logOutUser = async () => {
     await removeFcmToken(userId); // Remove token on logout
     FIREBASE_AUTH.signOut();
   };
   return (
-    <View style={localStyles.container}>
+    <ScrollView style={localStyles.container}>
       <View style={localStyles.screen}>
         <SafeAreaView style={localStyles.btnContainerEnd}>
           <View style={localStyles.btnContainerEnd}>
@@ -201,7 +227,7 @@ const Profile = ({navigation}: RouterProps) => {
                         <FontAwesomeIcon
                           icon="check-circle"
                           size={24}
-                          color={Colors.primary} // Use primary color for verified badge
+                          color={Colors.primary}
                           style={localStyles.verifiedIcon}
                         />
                       </View>
@@ -230,6 +256,41 @@ const Profile = ({navigation}: RouterProps) => {
                 </View>
               </View>
               <View style={localStyles.divider} />
+              {/* Rating Details */}
+              {workerId && (
+                <View style={localStyles.contactDetails}>
+                  <Text style={styles.boldText}>Ratings</Text>
+                  <View style={localStyles.gap} />
+                  <View style={styles.starsContainer}>
+                    {Array.from({length: 5}, (_, index) => {
+                      const starValue = index + 1;
+                      return (
+                        <Svg
+                          key={index}
+                          width={24}
+                          height={24}
+                          viewBox="0 0 24 24"
+                          fill={
+                            averageRating >= starValue
+                              ? Colors.primary
+                              : Colors.placeholder
+                          }>
+                          <Path d="M12 .587l3.668 7.429 8.2 1.193-5.934 5.787 1.401 8.172L12 18.896l-7.335 3.872 1.4-8.172-5.933-5.787 8.2-1.193L12 .587z" />
+                        </Svg>
+                      );
+                    })}
+                  </View>
+                  <TextButton
+                    title="View My Reviews"
+                    onPress={async () =>
+                      navigation.navigate('WorkerReviews', {
+                        worker_id: workerId,
+                      })
+                    }
+                  />
+                  <View style={localStyles.divider} />
+                </View>
+              )}
               {/* Contact Details */}
               <View style={localStyles.contactDetails}>
                 <Text style={styles.boldText}>Contact Info</Text>
@@ -260,16 +321,27 @@ const Profile = ({navigation}: RouterProps) => {
           <DynamicButton
             title="Switch Mode"
             type="secondary"
-            onPress={() => {
+            onPress={async () => {
+              const currentMode =
+                user?.roleId?.[0]?.toString() === user?.defaultRole?.toString()
+                  ? 'Client Mode'
+                  : 'Worker Mode';
+
+              const newMode =
+                user?.roleId?.[0]?.toString() === user?.defaultRole?.toString()
+                  ? 'Worker Mode'
+                  : 'Client Mode';
+
               showAlert(
                 'Switch Mode?',
-                'You are currently in Client Mode, and you are about to switch to Worker mode.\n\nIt Requires a Logout. Tap anywhere to cancel',
+                `You are currently in ${currentMode}, and you are about to switch to ${newMode}.\n\nIt requires you to sign in again. Tap anywhere to cancel.`,
                 () => {
                   handleUpdateUser();
                 },
               );
-            }} // Handle user role update
+            }}
           />
+
           <DynamicButton
             title="Logout"
             type="logout"
@@ -281,14 +353,14 @@ const Profile = ({navigation}: RouterProps) => {
               );
             }} // Handle user role update
           />
-          <DynamicButton
+          {/* <DynamicButton
             title="Create and Send Notification"
             type="secondary"
             onPress={handleCreateTestNotification} // Handle user role update
-          />
+          /> */}
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -296,6 +368,7 @@ const localStyles = StyleSheet.create({
   container: {
     paddingHorizontal: 30,
     flex: 1,
+    marginBottom: 100,
   },
   gap: {
     height: 8,

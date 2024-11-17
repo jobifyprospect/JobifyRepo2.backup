@@ -22,6 +22,7 @@ import {
   getIdByRoleId,
   getUser,
 } from '../../services/firestore/users';
+import LocationPickerInput from '../../components/LocationPickerInput';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -38,6 +39,13 @@ export default function PostJob({navigation}: RouterProps) {
   >(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<any>(null);
+  const [selectedLocation, setSelectedLocation] = useState<
+    | {
+        latitude: number;
+        longitude: number;
+      }
+    | undefined
+  >(undefined);
 
   // Fetch the current user UID only once when the component mounts
   useEffect(() => {
@@ -68,7 +76,13 @@ export default function PostJob({navigation}: RouterProps) {
     setDescription('');
     setStatus(undefined);
   }
-
+  const handleLocationChange = (locationCoords: {
+    latitude: number;
+    longitude: number;
+  }) => {
+    console.log('New location:', locationCoords);
+    setSelectedLocation(locationCoords); // Update map location
+  };
   const post = useCallback(async () => {
     if (isSubmitting) {
       return; // Prevent double submission
@@ -91,6 +105,7 @@ export default function PostJob({navigation}: RouterProps) {
     try {
       const newJob: Job = {
         location: location.trim(),
+        mapLocation: selectedLocation,
         title: title.trim(),
         description: description.trim(),
         schedule: schedule.trim(),
@@ -115,15 +130,16 @@ export default function PostJob({navigation}: RouterProps) {
       showAlert('Success', 'Job posted.');
     }
   }, [
-    currentUserId,
+    isSubmitting,
     title,
     pay,
     schedule,
     location,
     description,
+    currentUserId,
+    selectedLocation,
     status,
     navigation,
-    isSubmitting,
   ]);
 
   return (
@@ -181,11 +197,15 @@ export default function PostJob({navigation}: RouterProps) {
             onChangeText={setLocation}
             isValid={isNotEmpty(location)}
             suffixIcon="location-dot"
-            label="Address"
+            label="Full Address"
             placeholder="Job Location"
             isRequired
           />
-
+          <LocationPickerInput
+            selectedLocation={selectedLocation}
+            onLocationChange={handleLocationChange}
+            navigation={navigation}
+          />
           <DynamicTextInput
             label="Description"
             value={description}

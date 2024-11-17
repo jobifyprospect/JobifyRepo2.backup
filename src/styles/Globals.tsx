@@ -12,6 +12,11 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     overflow: 'hidden',
   },
+  starsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
   w100: {maxWidth: 100, width: 100},
   bold: {fontWeight: Fonts.weights.bold},
   card: {

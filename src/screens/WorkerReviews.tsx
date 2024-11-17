@@ -1,273 +1,205 @@
-import { NavigationProp, Route } from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {View, Text, StyleSheet, SafeAreaView, ScrollView} from 'react-native';
+import {NavigationProp, Route} from '@react-navigation/native';
 import BackButton from '../components/BackButton';
-
-import {
-    View,
-    Text,
-    StyleSheet,
-    SafeAreaView,
-    ActivityIndicator,
-    Image,
-    ScrollView,
-    Pressable,
-} from 'react-native';
-import { styles } from '../styles/Globals';
 import Colors from '../styles/Colors';
-import { useCallback, useEffect, useState } from 'react';
-import { getUserDetailsByWorkerId } from '../services/firestore/users';
-import { User } from '../services/interfaces/user';
-import { Application } from '../services/interfaces/application';
-import { applicationsRef, FIRESTORE_TIMESTAMP } from '../config/firebase';
-import { Review } from '../services/interfaces/review';
-import { getReviewsByAppId } from '../services/firestore/reviews';
-import { getJobs, getJobsByClient } from '../services/firestore/jobs';
-import { Job } from '../services/interfaces/job';
-import { formatDateToReadable } from '../utils/Utils';
-import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import {styles} from '../styles/Globals';
+import {Review} from '../services/interfaces/review';
+import ProfilePicture from '../components/GetProfilePicture'; // Adapt to client usage
+import GetFullName from '../components/GetFullName';
+import {getReviewsByWorkerId} from '../services/firestore/reviews';
+import Svg, {Path} from 'react-native-svg';
+import {formatCurrency, formatDateToReadable} from '../utils/Utils';
 
 interface RouterProps {
-    navigation: NavigationProp<any, any>;
-    route: Route<string, { worker_id: string }>;
+  navigation: NavigationProp<any, any>;
+  route: Route<string, {worker_id: string}>;
 }
+const ratingDescriptions = [
+  'Poor Job',
+  'Somewhat Good',
+  'Good',
+  'Very Good',
+  'Excellent',
+];
+export default function WorkerReviews({navigation, route}: RouterProps) {
+  const params_workerId = route.params.worker_id;
 
-export default function WorkerReviews({
-    navigation,
-    route,
-}: RouterProps) {
-    const params_workerId = route.params.worker_id;
+  const [reviews, setReviews] = useState<Review[] | null>(null);
 
-    const [worker, setWorker] = useState<User | null>(null);
-    const [reviews, setReviews] = useState<Review[] | null>(null);
-    const [appIds, setAppIds] = useState<string[]>([])
-    const [applications, setApplications] = useState<any[]>([]);
-    const [jobIds, setJobIds] = useState<string[]>([]);
+  // Fetch reviews by worker ID
+  const fetchWorkerReviews = useCallback(async () => {
+    try {
+      if (params_workerId) {
+        const workerReviews = await getReviewsByWorkerId(params_workerId);
+        workerReviews && setReviews(workerReviews);
+      }
+    } catch (error) {
+      console.error('Failed to fetch worker reviews:', error);
+    }
+  }, [params_workerId]);
 
-    const [appJobs, setAppJobs] = useState<Job[]>([]);
+  useEffect(() => {
+    fetchWorkerReviews();
+  }, [fetchWorkerReviews]);
 
-    const fetchWorkerDetails = useCallback(async () => {
-        try {
-            if (params_workerId) {
-                const workerDetails = await getUserDetailsByWorkerId(params_workerId);
-                workerDetails && setWorker(workerDetails);
-            }
-        } catch (error) {
-            console.error('Failed to fetch worker details:', error);
-        }
-    }, [params_workerId]);
+  return (
+    <View style={localStyles.container}>
+      <SafeAreaView style={localStyles.btnContainerBetween}>
+        <BackButton onPress={async () => navigation.goBack()} />
+      </SafeAreaView>
 
-    const fetchWorkerReviews = useCallback(async (ids: string[]) => {
+      <View style={localStyles.screen}>
+        <Text style={styles.largeHeading}>
+          Worker Reviews ({reviews?.length ?? 0})
+        </Text>
+        <ScrollView>
+          {reviews && reviews.length === 0 ? (
+            <Text style={[styles.card, styles.gap]}>No reviews available.</Text>
+          ) : (
+            reviews?.map(review => (
+              <View key={review.reviewId} style={localStyles.reviewContainer}>
+                {/* Header with Client Profile */}
+                <View style={localStyles.row}>
+                  <ProfilePicture
+                    uuId={review.clientId}
+                    size={50}
+                    type={'client'}
+                  />
+                  <View style={localStyles.row}>
+                    <View>
+                      <GetFullName uuId={review.clientId} type={'client'} />
+                    </View>
+                    <Text style={styles.smallText}>
+                      {formatDateToReadable(review.createdAt)}
+                    </Text>
+                  </View>
+                </View>
 
-        if (!ids) {
-            console.error('no ids passed');
-            return;
-        }
+                {/* Separator */}
+                <View style={localStyles.separator} />
+                <View style={localStyles.row}>
+                  <Text style={[styles.boldText, localStyles.containInfo]}>
+                    {review.jobTitle}
+                  </Text>
+                  <Text style={[styles.boldText]}>
+                    {formatCurrency(review.amount)}
+                  </Text>
+                </View>
+                <View style={localStyles.row}>
+                  <Text style={styles.smallText}>
+                    Start: {formatDateToReadable(review.startDate)}
+                  </Text>
+                  <Text style={styles.smallText}>
+                    End: {formatDateToReadable(review.endDate)}
+                  </Text>
+                </View>
 
-        try {
-            const workerReviews = await getReviewsByAppId(ids);
-            workerReviews && setReviews(workerReviews);
-        } catch (error) {
-            console.error('Failed to fetch worker reviews:', error);
-        }
+                {/* Review Body */}
+                <View style={localStyles.reviewBody}>
+                  <Text style={[styles.smallText, localStyles.spaceContain]}>
+                    Additional Comment:
+                  </Text>
+                  <Text style={localStyles.regularText}>{review.comment}</Text>
+                </View>
 
-    }, [params_workerId]);
+                {/* Stars Display */}
+                <Text style={[styles.smallText, localStyles.spaceContain]}>
+                  Rating: {ratingDescriptions[review.rating - 1]}
+                </Text>
 
-    const fetchAppJobs = useCallback(async (ids: string[]) => {
-
-        if (!ids) {
-            console.error('no ids passed');
-            return;
-        }
-
-        try {
-            const appJobs = await getJobs(ids);
-            appJobs && setAppJobs(appJobs);
-        } catch (error) {
-            console.error('Failed to application jobs:', error);
-        }
-
-    }, [params_workerId]);
-
-    useEffect(() => {
-        fetchWorkerDetails();
-
-        if (appIds.length !== 0) {
-            fetchWorkerReviews(appIds);
-        }
-
-        if (jobIds.length !== 0) {
-            fetchAppJobs(jobIds)
-        }
-        // fetchAppJobs(jobIds);
-    }, [fetchWorkerDetails, fetchWorkerReviews, applications]);
-
-    //fetch application ids here.
-    useEffect(() => {
-        if (!params_workerId) {
-            console.error('Worker ID is undefined or null');
-            return;
-        }
-
-        try {
-            const unsubscribe = applicationsRef
-                .where('workerId', '==', params_workerId)
-                .onSnapshot(
-                    snapshot => {
-                        if (snapshot.empty) {
-                            return;
-                        }
-
-                        const applications = snapshot.docs;
-
-                        if (applications) {
-                            const jobIds = applications.map((application => application.data().jobId))
-                            const appIds = applications.map((application => application.data().applicationId))
-                            const apps = applications.map(application => ({
-                                appId: application.data().applicationId,
-                                jobId: application.data().jobId,
-                                offer: application.data().offer,
-                                status: application.data().status,
-                            }));
-                            setJobIds(jobIds);
-                            setAppIds(appIds);
-                            setApplications(apps);
-                        }
-                    },
-                    error => {
-                        console.error('Error getting documents in snapshot:', error);
-                    },
-                );
-
-            return () => unsubscribe();
-        } catch (error) {
-            console.error('Error setting up Firestore onSnapshot:', error);
-        }
-    }, [params_workerId]);
-
-    console.log('apps', applications)
-    console.log('appIds', appIds)
-
-    const initials = `${worker?.firstName ?? ''}${worker?.lastName ?? ''
-        }`.toUpperCase();
-
-    return (
-        <View style={localStyles.container}>
-            <SafeAreaView style={localStyles.btnContainerBetween}>
-                <BackButton onPress={async () => navigation.goBack()} />
-            </SafeAreaView>
-
-            <View style={localStyles.screen}>
-                <Text style={styles.largeHeading}> Worker Reviews </Text>
-                <ScrollView>
-                    {
-                        applications.map((application) => (
-                            <>
-                                {appJobs.map((appJob) => (
-                                    <>
-                                        {reviews?.map((review) => {
-
-                                            if (appJob.jobId === application.jobId) {
-                                                return (
-                                                    <>
-                                                        {/* header */}
-                                                        <View style={localStyles.reviewContainer}>
-                                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                                    <View style={localStyles.profileContainer}>
-                                                                        {worker?.profilePicture ? (
-                                                                            <Image
-                                                                                source={{ uri: worker?.profilePicture }}
-                                                                                style={localStyles.profileImage}
-                                                                            />
-                                                                        ) : (
-                                                                            <View style={localStyles.initialsContainer}>
-                                                                                <Text style={localStyles.initialsText}>{initials}</Text>
-                                                                            </View>
-                                                                        )}
-                                                                    </View>
-                                                                    <View style={{ flex: 0.99, flexDirection: 'row', justifyContent: 'space-between' }}>
-                                                                        <Text style={styles.boldText}> {worker?.firstName} {worker?.lastName} </Text>
-                                                                        <Text> {formatDateToReadable(appJob.updatedAt)} </Text>
-                                                                    </View>
-                                                                </View>
-                                                            </View>
-
-                                                            <View style={{ height: 1, marginVertical: 8, marginHorizontal: 12, backgroundColor: Colors.black }}> <Text> - </Text> </View>
-
-                                                            {/* body */}
-                                                            <View style={{ padding: 10, rowGap: 12 }}>
-                                                                <View style={localStyles.cardHeader}>
-                                                                    <Text style={styles.mediumText}> {appJob.title} </Text>
-                                                                    <Text style={styles.mediumText}> PHP {application.offer} </Text>
-                                                                </View>
-                                                                <View style={{ rowGap: 5 }}>
-                                                                    <Text style={styles.regularText}> {review.comment} </Text>
-                                                                    {/* TODO: svg not showing */}
-                                                                    {/* <Image style={localStyles.profileImage} source={{ uri: '../assets/star2.svg' }} /> */}
-                                                                    <Text style={styles.bold}> {review.rating} / 5 Stars </Text>
-                                                                </View>
-                                                            </View>
-                                                        </View>
-                                                    </>
-                                                )
-                                            }
-                                        })}
-                                    </>
-                                ))}
-                            </>
-                        ))
-                    }
-                </ScrollView>
-            </View>
-        </View>
-    )
+                <View style={localStyles.starsContainer}>
+                  {Array.from({length: 5}, (_, index) => {
+                    const starValue = index + 1;
+                    return (
+                      <Svg
+                        key={index}
+                        width={24}
+                        height={24}
+                        viewBox="0 0 24 24"
+                        fill={
+                          review.rating >= starValue
+                            ? Colors.primary
+                            : Colors.placeholder
+                        }>
+                        <Path d="M12 .587l3.668 7.429 8.2 1.193-5.934 5.787 1.401 8.172L12 18.896l-7.335 3.872 1.4-8.172-5.933-5.787 8.2-1.193L12 .587z" />
+                      </Svg>
+                    );
+                  })}
+                </View>
+              </View>
+            ))
+          )}
+        </ScrollView>
+      </View>
+    </View>
+  );
 }
 
 const localStyles = StyleSheet.create({
-    container: {
-        paddingHorizontal: 30,
-        paddingTop: 25,
-        flex: 1,
-    },
-    screen: {
-        flex: 1,
-        paddingTop: 24,
-        rowGap: 24,
-    },
-    btnContainerBetween: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    reviewContainer: {
-        backgroundColor: Colors.white,
-        borderRadius: 5,
-        borderWidth: 1,
-        padding: 12,
-        borderColor: Colors.placeholder
-    },
-    cardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between'
-    },
-    profileContainer: {
-        marginRight: 10,
-    },
-    profileImage: {
-        width: 60,
-        height: 60,
-        borderRadius: 9999,
-    },
-    initialsContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: Colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    initialsText: {
-        color: Colors.white,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-})
-
+  container: {
+    paddingHorizontal: 30,
+    paddingTop: 25,
+    flex: 1,
+  },
+  regularText: {
+    fontStyle: 'italic',
+  },
+  screen: {
+    flex: 1,
+    paddingTop: 24,
+    rowGap: 24,
+  },
+  btnContainerBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  spaceContain: {
+    paddingBottom: 4,
+  },
+  containRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexShrink: 0,
+    width: '100%',
+  },
+  row: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reviewContainer: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: 5,
+    borderWidth: 1,
+    padding: 12,
+    paddingBottom: 24,
+    borderColor: Colors.placeholder,
+    marginBottom: 15,
+  },
+  clientInfo: {
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    flex: 1,
+    // marginBottom: 10,
+  },
+  containInfo: {
+    width: '78%',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: Colors.placeholder,
+    marginVertical: 8,
+  },
+  reviewBody: {
+    paddingVertical: 8,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: 2,
+  },
+});
