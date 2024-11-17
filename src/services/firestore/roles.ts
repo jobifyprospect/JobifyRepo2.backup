@@ -161,3 +161,21 @@ export const deleteRole = async (roleId: string): Promise<void> => {
     console.error(error);
   }
 };
+
+export const getWorkerIdByRoleId = async (roleId: string) => {
+  try {
+    const roleDoc = await rolesRef // Replace 'roles' with your Firestore collection name
+      .doc(roleId)
+      .get();
+
+    if (roleDoc.exists) {
+      const roleData = roleDoc.data();
+      return roleData?.workerId;
+    } else {
+      throw new Error('Role not found');
+    }
+  } catch (error) {
+    showAlert('Error', 'Failed to find worker id.');
+    console.error(error);
+  }
+};

@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   Image,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {styles} from '../styles/Globals';
@@ -29,6 +30,10 @@ import {faCheckCircle} from '@fortawesome/free-solid-svg-icons';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {NavigationProp, useFocusEffect} from '@react-navigation/native';
+import TextButton from '../components/TextButton';
+import {getWorkerIdByRoleId} from '../services/firestore/roles';
+import {calculateAverageRating} from '../services/firestore/reviews';
+import Svg, {Path} from 'react-native-svg';
 // import {createNotification} from '../services/firestore/notifications';
 // import uuid from 'react-native-uuid';
 // import {useFCMToken} from '../config/FCMTokenContext';
@@ -44,8 +49,17 @@ const Profile = ({navigation}: RouterProps) => {
   const [validation, setValidation] = useState<Validation | null>(null);
   const [loading, setLoading] = useState<boolean>(true); // Track loading state
   const [userId, setUserId] = useState<string>(''); // Track loading state
+  const [workerId, setWorkerId] = useState<string>(''); // Track loading state
   // const fcmToken = useFCMToken();
+  const [averageRating, setAverageRating] = useState(0);
+  useEffect(() => {
+    const fetchRating = async () => {
+      const rating = await calculateAverageRating(workerId);
+      setAverageRating(rating);
+    };
 
+    fetchRating();
+  }, [workerId]);
   const fetchUserProfile = useCallback(async () => {
     try {
       const uid = await getCurrentUserUID();
@@ -59,6 +73,12 @@ const Profile = ({navigation}: RouterProps) => {
           setUser(user);
           setAddress(address);
           setValidation(validation);
+          if (user?.defaultRole) {
+            const fetchedWorkerId = await getWorkerIdByRoleId(user.defaultRole);
+            setWorkerId(fetchedWorkerId || '');
+          } else {
+            console.warn('User default role is not defined.');
+          }
         } else {
           console.error('No user details found.');
         }
@@ -147,7 +167,7 @@ const Profile = ({navigation}: RouterProps) => {
     FIREBASE_AUTH.signOut();
   };
   return (
-    <View style={localStyles.container}>
+    <ScrollView style={localStyles.container}>
       <View style={localStyles.screen}>
         <SafeAreaView style={localStyles.btnContainerEnd}>
           <View style={localStyles.btnContainerEnd}>
@@ -207,7 +227,7 @@ const Profile = ({navigation}: RouterProps) => {
                         <FontAwesomeIcon
                           icon="check-circle"
                           size={24}
-                          color={Colors.primary} // Use primary color for verified badge
+                          color={Colors.primary}
                           style={localStyles.verifiedIcon}
                         />
                       </View>
@@ -236,6 +256,41 @@ const Profile = ({navigation}: RouterProps) => {
                 </View>
               </View>
               <View style={localStyles.divider} />
+              {/* Rating Details */}
+              {workerId && (
+                <View style={localStyles.contactDetails}>
+                  <Text style={styles.boldText}>Ratings</Text>
+                  <View style={localStyles.gap} />
+                  <View style={styles.starsContainer}>
+                    {Array.from({length: 5}, (_, index) => {
+                      const starValue = index + 1;
+                      return (
+                        <Svg
+                          key={index}
+                          width={24}
+                          height={24}
+                          viewBox="0 0 24 24"
+                          fill={
+                            averageRating >= starValue
+                              ? Colors.primary
+                              : Colors.placeholder
+                          }>
+                          <Path d="M12 .587l3.668 7.429 8.2 1.193-5.934 5.787 1.401 8.172L12 18.896l-7.335 3.872 1.4-8.172-5.933-5.787 8.2-1.193L12 .587z" />
+                        </Svg>
+                      );
+                    })}
+                  </View>
+                  <TextButton
+                    title="View My Reviews"
+                    onPress={async () =>
+                      navigation.navigate('WorkerReviews', {
+                        worker_id: workerId,
+                      })
+                    }
+                  />
+                  <View style={localStyles.divider} />
+                </View>
+              )}
               {/* Contact Details */}
               <View style={localStyles.contactDetails}>
                 <Text style={styles.boldText}>Contact Info</Text>
@@ -305,7 +360,7 @@ const Profile = ({navigation}: RouterProps) => {
           /> */}
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -313,6 +368,7 @@ const localStyles = StyleSheet.create({
   container: {
     paddingHorizontal: 30,
     flex: 1,
+    marginBottom: 100,
   },
   gap: {
     height: 8,

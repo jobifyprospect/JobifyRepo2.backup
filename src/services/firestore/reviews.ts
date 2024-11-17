@@ -147,3 +147,15 @@ export async function getReviewForJob(
 //     return () => unsubscribe();
 //   });
 // }
+
+export const calculateAverageRating = async (workerId: string) => {
+  const reviewsSnapshot = await reviewsRef // Replace with your actual collection name
+    .where('workerId', '==', workerId)
+    .get();
+
+  const reviews = reviewsSnapshot.docs.map(doc => doc.data());
+  const totalRatings = reviews.reduce((sum, review) => sum + review.rating, 0);
+  const averageRating = reviews.length ? totalRatings / reviews.length : 0;
+
+  return averageRating;
+};

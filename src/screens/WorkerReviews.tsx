@@ -50,7 +50,9 @@ export default function WorkerReviews({navigation, route}: RouterProps) {
       </SafeAreaView>
 
       <View style={localStyles.screen}>
-        <Text style={styles.largeHeading}>Worker Reviews</Text>
+        <Text style={styles.largeHeading}>
+          Worker Reviews ({reviews?.length ?? 0})
+        </Text>
         <ScrollView>
           {reviews && reviews.length === 0 ? (
             <Text style={[styles.card, styles.gap]}>No reviews available.</Text>
