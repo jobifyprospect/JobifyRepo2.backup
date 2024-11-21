@@ -46,10 +46,11 @@ import {FCMTokenProvider} from './src/config/FCMTokenContext';
 import WorkerReviews from './src/screens/WorkerReviews';
 import MapScreen from './src/screens/MapScreen';
 import WriteReviewScreen from './src/screens/client/WriteReview';
+import {getIsNewUser, setIsNewUser} from './src/shared/AuthUtils';
 
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
-
+const DELAY_MS = 10000;
 // Register background handler
 firebase.messaging().setBackgroundMessageHandler(async remoteMessage => {
   // Check for the logged-in user
@@ -193,6 +194,7 @@ export default function App() {
       });
     return unsubscribe;
   }, []);
+
   useEffect(() => {
     const unsubscribe = firebase
       .messaging()
@@ -201,52 +203,62 @@ export default function App() {
       });
     return unsubscribe;
   }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
       FIREBASE_AUTH,
       async (authUser: any) => {
         if (authUser) {
-          try {
-            setUser(authUser);
-            const userDoc = await usersRef.doc(authUser.uid).get();
-            if (userDoc.exists) {
-              const userData = userDoc.data();
-              if (userData && userData.defaultRole) {
-                const foundRole = await getRole(userData.defaultRole);
-                if (foundRole) {
-                  if (userData.roleId[0] === foundRole.roleId) {
-                    setRole('client');
-                    const TOPIC = `client-${authUser.uid}`;
-                    messaging()
-                      .subscribeToTopic(TOPIC)
-                      .then(() => {
-                        console.log(`TOPIC: ${TOPIC} Subscribed`);
-                      });
-                  } else if (userData.roleId[1] === foundRole.roleId) {
-                    setRole('worker');
-                    const TOPIC = `worker-${authUser.uid}`;
-                    messaging()
-                      .subscribeToTopic(TOPIC)
-                      .then(() => {
-                        console.log(`TOPIC: ${TOPIC} Subscribed`);
-                      });
+          const isNewUser = await getIsNewUser();
+          // Assume you have logic to determine if it's a new account
+          const delay = isNewUser ? DELAY_MS : 0;
+          console.log(`isNewUser ${isNewUser}`);
+          console.log(`isNewUser ${delay}`);
+
+          setTimeout(async () => {
+            try {
+              setUser(authUser);
+              const userDoc = await usersRef.doc(authUser.uid).get();
+              if (userDoc.exists) {
+                const userData = userDoc.data();
+                if (userData && userData.defaultRole) {
+                  const foundRole = await getRole(userData.defaultRole);
+                  if (foundRole) {
+                    if (userData.roleId[0] === foundRole.roleId) {
+                      setRole('client');
+                      const TOPIC = `client-${authUser.uid}`;
+                      messaging()
+                        .subscribeToTopic(TOPIC)
+                        .then(() => {
+                          console.log(`TOPIC: ${TOPIC} Subscribed`);
+                        });
+                    } else if (userData.roleId[1] === foundRole.roleId) {
+                      setRole('worker');
+                      const TOPIC = `worker-${authUser.uid}`;
+                      messaging()
+                        .subscribeToTopic(TOPIC)
+                        .then(() => {
+                          console.log(`TOPIC: ${TOPIC} Subscribed`);
+                        });
+                    } else {
+                      setRole(null);
+                    }
+                    setIsNewUser(false);
                   } else {
+                    showAlert('Error', 'Role not found.');
                     setRole(null);
                   }
                 } else {
-                  showAlert('Error', 'Role not found.');
                   setRole(null);
                 }
               } else {
                 setRole(null);
               }
-            } else {
+            } catch (error) {
+              showAlert('Error', 'Failed to retrieve user data.');
               setRole(null);
             }
-          } catch (error) {
-            showAlert('Error', 'Failed to retrieve user data.');
-            setRole(null);
-          }
+          }, delay);
         } else {
           setUser(null);
           setRole(null);

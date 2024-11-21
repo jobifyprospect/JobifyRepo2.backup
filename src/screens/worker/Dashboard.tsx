@@ -16,7 +16,7 @@ import {
   getAllJobsWithUserDetails,
   queryJobWithUserDetails,
 } from '../../services/firestore/jobs';
-import NotificationsButton from '../../components/NotificationsButton';
+// import NotificationsButton from '../../components/NotificationsButton';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
 import {formatCurrency, formatDateToReadable} from '../../utils/Utils';
@@ -182,10 +182,10 @@ const Dashboard = ({navigation}: RouterProps) => {
     <View style={localStyles.container}>
       <View style={localStyles.screen}>
         <SafeAreaView style={localStyles.btnContainerEnd}>
-          <NotificationsButton
+          {/* <NotificationsButton
             type="primary"
             onPress={async () => navigation.navigate('Notification')}
-          />
+          /> */}
         </SafeAreaView>
 
         <>

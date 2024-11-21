@@ -74,23 +74,7 @@ export type RootStackParamList = {
     email: string;
     password: string;
   };
-  Success: {
-    userType: 'client' | 'worker';
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    address: {
-      country: string;
-      region: string;
-      province: string;
-      city: string;
-      postalCode: string;
-    };
-    email: string;
-    password: string;
-    idImage: string;
-    selfieImage: string;
-  };
+  Success: undefined;
   Login: undefined;
   Forgot: undefined;
   Loading: undefined;

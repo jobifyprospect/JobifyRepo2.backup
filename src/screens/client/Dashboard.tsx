@@ -12,7 +12,7 @@ import {NavigationProp, useFocusEffect} from '@react-navigation/native';
 import {FIREBASE_AUTH} from '../../config/firebase';
 import {getJobsByClient, queryJob} from '../../services/firestore/jobs';
 import {Job} from '../../services/interfaces/job';
-import NotificationsButton from '../../components/NotificationsButton';
+// import NotificationsButton from '../../components/NotificationsButton';
 import AddJobButton from '../../components/AddJobButton';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
@@ -155,10 +155,10 @@ const Dashboard = ({navigation}: RouterProps) => {
     <View style={localStyles.container}>
       <View style={localStyles.screen}>
         <SafeAreaView style={localStyles.btnContainerEnd}>
-          <NotificationsButton
+          {/* <NotificationsButton
             type="primary"
             onPress={async () => navigation.navigate('Notification')}
-          />
+          /> */}
         </SafeAreaView>
 
         <>

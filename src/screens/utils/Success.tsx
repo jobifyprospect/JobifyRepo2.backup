@@ -1,22 +1,18 @@
-import {View, Text, Button, StyleSheet} from 'react-native';
+import {View, Text, StyleSheet} from 'react-native';
 import React from 'react';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../interfaces/RouterStackInterfaceParams';
 
-type SuccessProps = NativeStackScreenProps<RootStackParamList, 'Success'>;
-
-const Success = ({navigation}: SuccessProps) => {
+const Success = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Account Created Successfully!</Text>
       <Text style={styles.message}>
-        Your account has been created successfully. You can now log in and start
-        using the app.
+        Your account has been created successfully. Please wait you are being
+        logged in.
       </Text>
-      <Button
+      {/* <Button
         title="Go to Login"
         onPress={() => navigation.navigate('Login')} // Replace with your actual login screen name
-      />
+      /> */}
     </View>
   );
 };

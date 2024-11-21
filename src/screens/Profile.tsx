@@ -34,6 +34,7 @@ import TextButton from '../components/TextButton';
 import {getWorkerIdByRoleId} from '../services/firestore/roles';
 import {calculateAverageRating} from '../services/firestore/reviews';
 import Svg, {Path} from 'react-native-svg';
+import { removeIsNewUser } from '../shared/AuthUtils';
 // import {createNotification} from '../services/firestore/notifications';
 // import uuid from 'react-native-uuid';
 // import {useFCMToken} from '../config/FCMTokenContext';
@@ -108,6 +109,7 @@ const Profile = ({navigation}: RouterProps) => {
       const uid: string | null = await getCurrentUserUID();
       if (uid) {
         await updateUserRole(uid, {}); // Update with necessary data if needed
+        await removeIsNewUser();
       } else {
         showAlert('Error', 'No user ID found.');
       }

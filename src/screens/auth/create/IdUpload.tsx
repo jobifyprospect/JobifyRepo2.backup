@@ -35,6 +35,7 @@ import {createClient} from '../../../services/firestore/clients';
 import {createWorker} from '../../../services/firestore/workers';
 import {Client} from '../../../services/interfaces/client';
 import {Worker} from '../../../services/interfaces/worker';
+import {setIsNewUser} from '../../../shared/AuthUtils';
 
 type IDUploadProps = NativeStackScreenProps<RootStackParamList, 'IDUpload'>;
 
@@ -73,7 +74,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
 
   const handleCreateAccount = async () => {
     setIsSubmitting(true);
-
+    await setIsNewUser(true);
     let userId: string | null = null;
     let userEmail: string | null = null;
     let frontImageUrl: string | null = null;
@@ -194,8 +195,8 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
       await createNotification(newNotification); // Call the function to create the notification
       showAlert('Success', 'Account created successfully!');
     } catch (error) {
+      setIsNewUser(false);
       console.error('Error during account creation:', error);
-
       // Rollback logic
       if (userId) {
         await firebase.auth().currentUser?.delete();
@@ -213,6 +214,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
       Alert.alert('Error', 'Failed to create account. Please try again.');
     } finally {
       setIsSubmitting(false);
+      navigation.navigate('Success');
     }
   };
 
