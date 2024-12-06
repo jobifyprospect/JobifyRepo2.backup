@@ -15,11 +15,11 @@ export const createRecord = async (time_record: TimeRecord): Promise<void> => {
 };
 
 export const updateRecord = async (
-  time_record_id: string,
   updates: Partial<TimeRecord>,
+  id?: string,
 ): Promise<void> => {
   try {
-    await timeRecordsRef.doc(time_record_id).update(updates);
+    await timeRecordsRef.doc(id).update(updates);
   } catch (error) {
     showAlert('Error', 'Failed to update time record.');
     console.error(error);

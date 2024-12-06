@@ -20,6 +20,7 @@ export const addressesRef = FIRESTORE_DB.collection('addresses');
 export const validationsRef = FIRESTORE_DB.collection('validations');
 export const notificationsRef = FIRESTORE_DB.collection('notifications');
 export const applicationsRef = FIRESTORE_DB.collection('applications');
+export const timeRecordsRef = FIRESTORE_DB.collection('time_records');
 export const clientsRef = FIRESTORE_DB.collection('clients');
 
 // Export Firestore collections

@@ -18,11 +18,12 @@ import DynamicButton from '../../components/DynamicButton';
 import BackButton from '../../components/BackButton';
 import { formatCurrency } from '../../utils/Utils';
 import { Application } from '../../services/interfaces/application';
-import { applicationsRef, FIRESTORE_TIMESTAMP } from '../../config/firebase';
+import { applicationsRef, FIRESTORE_TIMESTAMP, timeRecordsRef } from '../../config/firebase';
 import { showAlert } from '../../components/AlertDialog';
 import { getClientFullName, getClientDetails } from '../../services/firestore/roles';
-import { createRecord, getTimeRecord, getAll } from '../../services/firestore/time_records';
+import { createRecord, getTimeRecord, getAll, updateRecord } from '../../services/firestore/time_records';
 import uuid from 'react-native-uuid';
+import { formatDateToReadable, formatDate } from '../../utils/Utils';
 import moment from 'moment';
 import { TimeRecord } from '../../services/interfaces/time_records';
 import { getCurrentUserUID, getIdByRoleId, getUser } from '../../services/firestore/users';
@@ -45,10 +46,12 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     const [currentScreen, setCurrentScreen] = useState<'Listing' | 'Actions'>(
         'Listing',
     );
-    const [isConfirming, setIsConfirming] = useState<boolean>(false);
+    const [isConfirmingTimeIn, setIsConfirmingTimeIn] = useState<boolean>(false);
+    const [isConfirmingTimeOut, setIsConfirmingTimeOut] = useState<boolean>(false);
     const [currentUserId, setCurrentUserId] = useState<any>(null);
     const [application, setApplication] = useState<Application>();
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const [record, setRecord] = useState<TimeRecord>();
     const [hasRecord, setHasRecord] = useState<boolean>(false)
     const [isAccepted, setIsAccepted] = useState<boolean>(false)
 
@@ -56,6 +59,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
 
         const res = job && await getTimeRecord(job.jobId, job.assignedWorker)
         if (res !== null) {
+            setRecord(res)
             setHasRecord(true)
             if (res?.acceptedBy !== "") {
                 setIsAccepted(true)
@@ -119,10 +123,24 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             acceptedBy: '',
             time_in: FIRESTORE_TIMESTAMP,
         }
+
+        console.log('payload to send: ', payload)
         await createRecord(payload)
         setIsSubmitting(false);
-        setIsConfirming(false)
-        showAlert('Success', 'Time in request sent for approval.')
+        setIsConfirmingTimeIn(false)
+        showAlert('Success', 'Timed in.')
+    }
+
+    async function timeOut() {
+        setIsSubmitting(true)
+        const payload: Partial<TimeRecord> = {
+
+            time_out: FIRESTORE_TIMESTAMP,
+        }
+        await updateRecord(payload, record?.id)
+        setIsSubmitting(false);
+        setIsConfirmingTimeOut(false)
+        showAlert('Success', 'Time out request sent for client approval.')
     }
 
     useEffect(() => {
@@ -182,6 +200,29 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             return () => unsubscribe();
         }
     }, [job?.jobId]);
+
+    useEffect(() => {
+        if (job?.jobId) {
+            const unsubscribe = timeRecordsRef
+                .where('jobId', '==', job.jobId)
+                .where('workerId', '==', currentUserId)
+                .onSnapshot(
+                    snapshot => {
+                        const timeRecordsData = snapshot.docs.map(doc =>
+                            doc.data(),
+                        ) as TimeRecord[];
+                        setRecord(timeRecordsData[0]);
+                        setIsLoading(false);
+                    },
+                    error => {
+                        console.error('Error getting documents:', error);
+                    },
+                );
+            return () => unsubscribe();
+        }
+    }, [job?.jobId]);
+
+
 
     if (loading && !refreshing) {
         return (
@@ -292,19 +333,29 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                 :
                 <View style={localStyles.sectionContainer}>
                     <ScrollView>
-                        {hasRecord && !isAccepted ? <Text> You have sent a time in request, but it has not yet been accepted by the client. </Text> : null}
-                        <DynamicButton disabled={hasRecord} type='primary' title='Time in' onPress={() => setIsConfirming(true)} />
-                        {hasRecord && isAccepted ? <DynamicButton type='primary' title='Time out' onPress={() => setIsConfirming(true)} /> : null}
+                        {record && record?.time_in ? <Text style={styles.bold}> You timed in at: {formatDate(record.time_in)}</Text> : null}
+                        {record && record?.time_out ? <Text style={styles.bold}> You timed out at: {formatDate(record.time_out)}</Text> : null}
+                        <DynamicButton disabled={record?.time_in ? true : false} type='primary' title='Time in' onPress={() => setIsConfirmingTimeIn(true)} />
+                        <DynamicButton disabled={record?.time_in && !record?.time_out ? false : true} type='primary' title='Time out' onPress={() => setIsConfirmingTimeOut(true)} />
+
+                        {record?.time_out ?
+                            <>
+                                {record?.acceptedBy !== "" ? <Text> Your time has been approved by the client. </Text> : <Text> You have sent a time-out request but it has not yet been approved by your client. </Text>}
+                            </>
+                            :
+                            null
+                        }
                     </ScrollView>
                 </View>
             }
 
-            <ConfirmDialog setIsConfirming={setIsConfirming} isConfirming={isConfirming} onConfirm={timeIn} />
+            <ConfirmTimeInDialog setIsConfirming={setIsConfirmingTimeIn} isConfirming={isConfirmingTimeIn} onConfirmTimeIn={timeIn} />
+            <ConfirmTimeOutDialog setIsConfirming={setIsConfirmingTimeOut} isConfirming={isConfirmingTimeOut} onConfirmTimeOut={timeOut} />
         </View>
     );
 }
 
-function ConfirmDialog({ setIsConfirming, isConfirming, onConfirm }: { setIsConfirming: SetStateAction<any>, isConfirming: boolean, onConfirm: () => any }) {
+function ConfirmTimeInDialog({ setIsConfirming, isConfirming, onConfirmTimeIn }: { setIsConfirming: SetStateAction<any>, isConfirming: boolean, onConfirmTimeIn: () => any }) {
 
     return (
         <Modal
@@ -326,7 +377,38 @@ function ConfirmDialog({ setIsConfirming, isConfirming, onConfirm }: { setIsConf
                     </View>
 
                     <View style={{ width: 240 }}>
-                        <DynamicButton title="Confirm" type="secondary" onPress={async () => onConfirm()} />
+                        <DynamicButton title="Confirm" type="secondary" onPress={async () => onConfirmTimeIn()} />
+                        <DynamicButton title="Cancel" type="destructive" onPress={() => setIsConfirming(false)} />
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    )
+}
+
+function ConfirmTimeOutDialog({ setIsConfirming, isConfirming, onConfirmTimeOut }: { setIsConfirming: SetStateAction<any>, isConfirming: boolean, onConfirmTimeOut: () => any }) {
+
+    return (
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={isConfirming}
+            onRequestClose={() => {
+                setIsConfirming(false);
+            }}>
+            <View style={{ display: 'flex', flexDirection: 'column', flex: 0.3, marginVertical: 'auto', padding: 12 }}>
+                <View style={{ backgroundColor: 'white', flex: 1, justifyContent: 'space-around', alignItems: 'center', borderRadius: 12 }}>
+                    <View>
+                        <Text style={styles.mediumTextBlue}>Confirm Action</Text>
+                    </View>
+
+                    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={styles.regularText}> Time out at </Text>
+                        <Text style={styles.mediumTextBlue}> {moment().format('hh:mm A')}? </Text>
+                    </View>
+
+                    <View style={{ width: 240 }}>
+                        <DynamicButton title="Confirm" type="secondary" onPress={async () => onConfirmTimeOut()} />
                         <DynamicButton title="Cancel" type="destructive" onPress={() => setIsConfirming(false)} />
                     </View>
                 </View>
