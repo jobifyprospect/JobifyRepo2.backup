@@ -6,22 +6,23 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import {styles} from '../../styles/Globals';
+import React, { useCallback, useEffect, useState } from 'react';
+import { styles } from '../../styles/Globals';
 import Colors from '../../styles/Colors';
-import {Job} from '../../services/interfaces/job';
+import { Job } from '../../services/interfaces/job';
 import {
   getCurrentUserUID,
   getIdByRoleId,
   getUser,
 } from '../../services/firestore/users';
-import {FIRESTORE_TIMESTAMP} from '../../config/firebase';
-import {getUserDetailsByClientId} from '../../services/firestore/users';
+import { FIRESTORE_TIMESTAMP } from '../../config/firebase';
+import { getUserDetailsByClientId } from '../../services/firestore/users';
 import {
   createApplication,
+  deleteApplication,
   hasWorkerApplied,
 } from '../../services/firestore/applications';
-import {getJob} from '../../services/firestore/jobs';
+import { getJob } from '../../services/firestore/jobs';
 import {
   NavigationProp,
   RouteProp,
@@ -29,24 +30,26 @@ import {
 } from '@react-navigation/native';
 import DynamicButton from '../../components/DynamicButton';
 import BackButton from '../../components/BackButton';
-import {User} from '../../services/interfaces/user';
-import {Application} from '../../services/interfaces/application';
+import { User } from '../../services/interfaces/user';
+import { Application } from '../../services/interfaces/application';
 import uuid from 'react-native-uuid';
-import {showAlert} from '../../components/AlertDialog';
-import {RootStackParamList} from '../interfaces/RouterStackInterfaceParams';
+import { showAlert } from '../../components/AlertDialog';
+import { RootStackParamList } from '../interfaces/RouterStackInterfaceParams';
 import CounterOfferModal from '../../components/Modal';
-import {formatCurrency} from '../../utils/Utils';
+import { formatCurrency } from '../../utils/Utils';
+import { DocumentData } from 'firebase-admin/firestore';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
   route: RouteProp<RootStackParamList, 'ApplyToJob'>;
 }
 
-export default function ApplyToJob({navigation, route}: RouterProps) {
+export default function ApplyToJob({ navigation, route }: RouterProps) {
   const [job, setJob] = useState<Job>();
   const [loading, setIsLoading] = useState<boolean>(false);
   const [client, setClient] = useState<User>();
   const [hasApplied, setHasApplied] = useState<boolean>(false);
+  const [app, setApp] = useState<DocumentData | undefined>(undefined)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -76,6 +79,16 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
 
     fetchCurrentUserId();
   }, []);
+
+  async function cancelApplication() {
+    setIsSubmitting(true)
+    const appId = app && app[0]._data.applicationId;
+
+    deleteApplication(appId)
+
+    showAlert('Success', 'Application rescinded.');
+    onRefresh();
+  }
 
   async function handleSubmitApplication() {
     try {
@@ -153,7 +166,8 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
               workerId: currentUserIdProp,
             });
             if (appliedStatus) {
-              appliedStatus && setHasApplied(appliedStatus);
+              appliedStatus && setHasApplied(appliedStatus.result);
+              appliedStatus && setApp(appliedStatus.application);
             }
           }
           jobs && setJob(jobs);
@@ -224,7 +238,7 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
                       <View style={localStyles.profileContainer}>
                         {client?.profilePicture ? (
                           <Image
-                            source={{uri: client?.profilePicture}}
+                            source={{ uri: client?.profilePicture }}
                             style={localStyles.profileImage}
                           />
                         ) : (
@@ -296,10 +310,9 @@ export default function ApplyToJob({navigation, route}: RouterProps) {
                 <View style={localStyles.actionBtnGroup}>
                   {hasApplied ? (
                     <DynamicButton
-                      disabled
-                      type="primary"
-                      onPress={() => undefined}
-                      title="You have already applied to this listing."
+                      type="destructive"
+                      onPress={async () => cancelApplication()}
+                      title="Cancel application"
                     />
                   ) : (
                     <>
@@ -340,7 +353,7 @@ const localStyles = StyleSheet.create({
     paddingTop: 25,
     flex: 1,
   },
-  nameContainer: {fontWeight: '600', fontSize: 24},
+  nameContainer: { fontWeight: '600', fontSize: 24 },
   screen: {
     flex: 1,
     paddingTop: 24,
@@ -433,7 +446,7 @@ const localStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.placeholder,
   },
-  contentItemRow: {flexDirection: 'row', alignItems: 'center'},
+  contentItemRow: { flexDirection: 'row', alignItems: 'center' },
   cardTitle: {
     fontSize: 20,
     fontWeight: '600',
