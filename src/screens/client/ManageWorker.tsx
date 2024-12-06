@@ -22,11 +22,12 @@ import { Address } from '../../services/interfaces/address';
 import { updateApplication } from '../../services/firestore/applications';
 import { Application } from '../../services/interfaces/application';
 import DynamicButton from '../../components/DynamicButton';
-import { applicationsRef, FIRESTORE_TIMESTAMP } from '../../config/firebase';
+import { applicationsRef, FIRESTORE_TIMESTAMP, timeRecordsRef } from '../../config/firebase';
 import TextButton from '../../components/TextButton';
-import { formatCurrency } from '../../utils/Utils';
+import { formatCurrency, formatDate } from '../../utils/Utils';
 
-import { getTimeRecordsByApplications, getAllTimeRecords } from '../../services/firestore/time_records'
+import { getTimeRecordsByApplications, getAllTimeRecords, getTimeRecord, updateRecord } from '../../services/firestore/time_records'
+import { TimeRecord } from '../../services/interfaces/time_records';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -50,8 +51,27 @@ export default function ManageWorker({
   const [loadingJob, setLoadingJob] = useState<boolean>(true);
   const [loadingAddress, setLoadingAddress] = useState<boolean>(true);
 
-  const [clockedIn, setClockedIn] = useState();
+  const [workerTimeRecord, setWorkerTimeRecord] = useState<TimeRecord>();
 
+  async function getWorkerTimeRecords() {
+    const res = await getTimeRecord(params_jobId, params_workerId)
+    if (res) {
+      setWorkerTimeRecord(res)
+    }
+  }
+
+  async function approveWorkerTimeLogs() {
+    const payload: Partial<TimeRecord> = {
+      acceptedBy: '123'
+    }
+    const res = await updateRecord(payload, workerTimeRecord?.id)
+  }
+
+  useEffect(() => {
+    getWorkerTimeRecords()
+
+    console.log('time record: ', workerTimeRecord)
+  }, [])
   // Fetch worker details
   const fetchWorkerDetails = useCallback(async () => {
     setLoadingWorker(true);
@@ -112,23 +132,24 @@ export default function ManageWorker({
   }, [fetchAddress, worker]);
 
   useEffect(() => {
-    if (!params_appId) {
-      console.error('params_appId is undefined or null');
+    if (!params_jobId) {
+      console.error('params_jobId is undefined or null');
       return;
     }
 
     try {
-      const unsubscribe = applicationsRef
-        .where('applicationId', '==', params_appId)
+      const unsubscribe = timeRecordsRef
+        .where('jobId', '==', params_jobId)
+        .where('workerId', '==', params_workerId)
         .onSnapshot(
           snapshot => {
             if (snapshot.empty) {
               return;
             }
 
-            const applicationData = snapshot.docs[0]?.data() as Application;
+            const timeRecordsData = snapshot.docs[0]?.data() as TimeRecord;
 
-            setApplication(applicationData);
+            setWorkerTimeRecord(timeRecordsData);
           },
           error => {
             console.error('Error getting documents in snapshot:', error);
@@ -200,33 +221,25 @@ export default function ManageWorker({
             </View>
           </Pressable>
 
-          <View>
-            <Text style={styles.mediumText}> History </Text>
-            <View style={{ backgroundColor: 'white', flex: 1 }}>
-              <View style={{ flex: 1, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, alignItems: 'center' }}>
-                <View>
-                  <Text style={styles.mediumText}> 12:23 PM  </Text>
-                </View>
-                <View>
-                  <DynamicButton type='secondary' title='Accept' onPress={() => undefined} />
-                  <DynamicButton type='destructive' title='X' onPress={() => undefined} />
-                </View>
+          <View style={{ rowGap: 12 }}>
+            <Text style={styles.mediumTextBlue}> History </Text>
+            <View style={{ rowGap: 4 }}>
+              <View style={{ backgroundColor: 'white', height: 36, alignItems: 'center', justifyContent: 'center' }}>
+                {workerTimeRecord?.time_in ? <Text style={styles.boldText}> Time in: {formatDate(workerTimeRecord?.time_in)} </Text> : <Text> No time logs yet. </Text>}
+              </View>
+
+              <View style={{ backgroundColor: 'white', height: 36, alignItems: 'center', justifyContent: 'center' }}>
+                {workerTimeRecord?.time_out ? <Text style={styles.boldText}> Time out: {formatDate(workerTimeRecord?.time_out)} </Text> : <Text> No time out request yet. </Text>}
               </View>
             </View>
-          </View>
 
-          <View>
-            <Text style={styles.mediumText}> Time in request </Text>
-            <View style={{ backgroundColor: 'white', flex: 1 }}>
-              <View style={{ flex: 1, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, alignItems: 'center' }}>
-                <View>
-                  <Text style={styles.mediumText}> 12:23 PM  </Text>
-                </View>
-                <View>
-                  <DynamicButton type='secondary' title='Accept' onPress={() => undefined} />
-                  <DynamicButton type='destructive' title='X' onPress={() => undefined} />
-                </View>
-              </View>
+            <Text style={styles.mediumTextBlue}> Actions </Text>
+            <View style={{ rowGap: 4 }}>
+              {workerTimeRecord?.acceptedBy !== "" ? 
+              <Text style={styles.boldText}> You have already approved this worker's time logs. </Text>
+            :
+                <DynamicButton disabled={workerTimeRecord?.time_in && workerTimeRecord.time_out ? false : true} title="Approve worker time logs" onPress={async () => approveWorkerTimeLogs()} />
+              }
             </View>
           </View>
 

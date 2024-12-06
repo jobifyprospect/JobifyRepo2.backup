@@ -114,7 +114,7 @@ interface FirebaseTimeStampT extends FirebaseFirestoreTypes.Timestamp {
   nanoseconds: number;
 }
 
-export function formatDate(date: FirebaseTimeStampT) {
+export function formatDate(date: FirebaseTimeStampT | any) {
   const newDate = new Date(date.seconds * 1000 + date.nanoseconds / 1000000);
 
   const formattedDate = newDate.toLocaleString('en-US', {
