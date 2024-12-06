@@ -10,6 +10,7 @@ export type RootStackParamList = {
   JobDetailsClient: {id: string};
   WorkerReviews: {worker_id: string};
   AcceptOrDeclineApplicant: {worker_id: string; job_id: string; app_id: string};
+  ManageWorker: {worker_id: string; job_id: string; app_id: string};
   ApplyToJob: {id: string};
   PersonalDetails: {userType: 'client' | 'worker'};
   Profile: undefined;

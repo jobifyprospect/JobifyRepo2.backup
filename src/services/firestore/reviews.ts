@@ -105,8 +105,6 @@ export async function getReviewForJob(
   clientId: string,
 ): Promise<boolean> {
   try {
-    console.log(`AAA ${jobTitle}`);
-    console.log(`AAA ${clientId}`);
 
     const reviewSnapshot = await reviewsRef // Name of your collection
       .where('jobTitle', '==', jobTitle)

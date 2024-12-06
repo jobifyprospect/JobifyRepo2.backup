@@ -38,6 +38,7 @@ import SplashScreen from './src/screens/Splashscreen';
 import LoadingScreen from './src/screens/utils/LoadingScreen';
 import JobDetailsClient from './src/screens/client/JobDetailsClient';
 import AcceptOrDeclineApplicant from './src/screens/client/AcceptOrDeclineApplicant';
+import ManageWorker from './src/screens/client/ManageWorker';
 import ApplyToJob from './src/screens/worker/ApplyToJob';
 import ChangePassword from './src/screens/auth/ChangePassword';
 import EditUserDetails from './src/screens/EditUserDetails';
@@ -320,6 +321,14 @@ export default function App() {
                 component={AcceptOrDeclineApplicant}
                 options={{
                   title: 'AcceptOrDeclineApplicant',
+                  headerShown: false,
+                }} // View Job Applicants, Client View Screen
+              />
+                            <Stack.Screen
+                name="ManageWorker"
+                component={ManageWorker}
+                options={{
+                  title: 'ManageWorker',
                   headerShown: false,
                 }} // View Job Applicants, Client View Screen
               />

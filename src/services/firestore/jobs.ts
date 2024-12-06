@@ -1,9 +1,9 @@
-import {showAlert} from '../../components/AlertDialog';
-import {applicationsRef, clientsRef, jobsRef} from '../../config/firebase';
-import {Application} from '../interfaces/application';
-import {Job} from '../interfaces/job';
-import {User} from '../interfaces/user';
-import {getCurrentUserUID, getUserDetailsByClientId} from './users';
+import { showAlert } from '../../components/AlertDialog';
+import { applicationsRef, clientsRef, jobsRef } from '../../config/firebase';
+import { Application } from '../interfaces/application';
+import { Job } from '../interfaces/job';
+import { User } from '../interfaces/user';
+import { getCurrentUserUID, getUserDetailsByClientId } from './users';
 
 export const createJob = async (job: Job): Promise<void> => {
   try {
@@ -40,7 +40,7 @@ export const queryJob = async (query: any): Promise<Job | any> => {
 
 export const queryJobWithUserDetails = async (
   query: string,
-): Promise<Array<{job: Job; user: User | null}>> => {
+): Promise<Array<{ job: Job; user: User | null }>> => {
   // Query Firestore for matching jobs
   try {
     const snapshot = await jobsRef
@@ -50,7 +50,7 @@ export const queryJobWithUserDetails = async (
 
     if (!snapshot.empty) {
       const currentUserId = await getCurrentUserUID(); // Get the current user ID
-      const jobsWithUserDetails: Array<{job: Job; user: User | null}> = [];
+      const jobsWithUserDetails: Array<{ job: Job; user: User | null }> = [];
 
       const jobPromises = snapshot.docs.map(async doc => {
         const jobData = doc.data() as Job;
@@ -58,7 +58,7 @@ export const queryJobWithUserDetails = async (
 
         // Only include jobs where the userId does not match the current user's ID
         if (userData && userData.userId !== currentUserId) {
-          return {job: jobData, user: userData}; // Return job and user data if they match
+          return { job: jobData, user: userData }; // Return job and user data if they match
         }
         return null; // Return null for non-matching jobs
       });
@@ -133,10 +133,17 @@ export const updateJob = async (
 export const updateJobAssignedWorker = async (
   jobId: string,
   workerId: string | undefined, // Worker ID to assign or undefined to remove
+  status: 'rejected' | 'accepted',
+  pay?: number
 ): Promise<void> => {
+
+  const newStatus = status === 'rejected' ? status : 'ongoing'
+
   try {
     await jobsRef.doc(jobId).update({
       assignedWorker: workerId, // Update assignedWorker field
+      status: newStatus,
+      pay
     });
   } catch (error) {
     showAlert('Error', 'Failed to update job.');
@@ -207,7 +214,7 @@ export function getJobsByWorker(workerId: string | null): Promise<Job[]> {
         // Step 2: Collect all jobIds from the applications
         applicationsSnapshot.forEach(doc => {
           const applicationData = doc.data() as Application;
-          const {jobId} = applicationData;
+          const { jobId } = applicationData;
 
           // Collect jobId from application data
           if (jobId) {
@@ -273,9 +280,9 @@ export function getAllJobs(): Promise<Job[]> {
 
 // Main function to get all jobs with client user details
 export async function getAllJobsWithUserDetails(): Promise<
-  Array<{job: Job; user: User | null}>
+  Array<{ job: Job; user: User | null }>
 > {
-  const jobsWithUserDetails: Array<{job: Job; user: User | null}> = [];
+  const jobsWithUserDetails: Array<{ job: Job; user: User | null }> = [];
 
   try {
     // Get the current user's UID
@@ -289,7 +296,7 @@ export async function getAllJobsWithUserDetails(): Promise<
 
       // Filter jobs where userData's userId doesn't matches the current user's ID
       if (userData && userData.userId !== currentUserId) {
-        return {job: jobData, user: userData}; // Return job and user data if they match
+        return { job: jobData, user: userData }; // Return job and user data if they match
       }
       return null; // Return null for non-matching jobs
     });

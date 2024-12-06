@@ -57,7 +57,6 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       if (uid) {
         const currentRoleA = await getUser(uid);
         const currentRoleValue = await getUserDefaultRole();
-        console.log(`AWESOME ${currentRoleValue}`);
         setCurrentRole(currentRoleValue);
         setCurrentUserId(currentRoleA?.defaultRole);
       }

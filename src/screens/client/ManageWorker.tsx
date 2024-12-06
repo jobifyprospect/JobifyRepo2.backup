@@ -14,7 +14,7 @@ import { NavigationProp, Route } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { User } from '../../services/interfaces/user';
 import { getUserDetailsByWorkerId } from '../../services/firestore/users';
-import { getJob, updateJobAssignedWorker, updateJob } from '../../services/firestore/jobs';
+import { getJob, updateJobAssignedWorker } from '../../services/firestore/jobs';
 import { Job } from '../../services/interfaces/job';
 import { styles } from '../../styles/Globals';
 import { getAddress } from '../../services/firestore/addresses';
@@ -26,12 +26,14 @@ import { applicationsRef, FIRESTORE_TIMESTAMP } from '../../config/firebase';
 import TextButton from '../../components/TextButton';
 import { formatCurrency } from '../../utils/Utils';
 
+import { getTimeRecordsByApplications, getAllTimeRecords } from '../../services/firestore/time_records'
+
 interface RouterProps {
   navigation: NavigationProp<any, any>;
   route: Route<string, { worker_id: string; job_id: string; app_id: string }>;
 }
 
-export default function AcceptOrDeclineApplicant({
+export default function ManageWorker({
   navigation,
   route,
 }: RouterProps) {
@@ -47,6 +49,8 @@ export default function AcceptOrDeclineApplicant({
   const [loadingWorker, setLoadingWorker] = useState<boolean>(true);
   const [loadingJob, setLoadingJob] = useState<boolean>(true);
   const [loadingAddress, setLoadingAddress] = useState<boolean>(true);
+
+  const [clockedIn, setClockedIn] = useState();
 
   // Fetch worker details
   const fetchWorkerDetails = useCallback(async () => {
@@ -95,31 +99,6 @@ export default function AcceptOrDeclineApplicant({
       setLoadingAddress(false);
     }
   }, [worker]);
-
-  // Update application status
-  async function handleApplicationStatusUpdate(
-    type: 'rejected' | 'accepted',
-    jobId: string,
-    workerId: string | undefined,
-  ) {
-    setIsSubmitting(true);
-    try {
-      const payload: Partial<Application> = {
-        status: type,
-        updatedAt: FIRESTORE_TIMESTAMP,
-      };
-      if (params_appId) {
-        await updateApplication(params_appId, payload);
-        if (jobId) {
-          await updateJobAssignedWorker(jobId, workerId, type, application?.offer);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to update application status:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
 
   // Fetch worker and job details on component mount
   useEffect(() => {
@@ -182,137 +161,89 @@ export default function AcceptOrDeclineApplicant({
       </SafeAreaView>
 
       <View style={localStyles.screen}>
-        <Text style={styles.largeHeading}> {job?.title} </Text>
+        <Text style={styles.largeHeading}> Manage Worker </Text>
         <ScrollView>
-          <View style={localStyles.card}>
-            <View style={localStyles.contentRow}>
-              <Pressable
+
+          <Pressable
+            onPress={async () =>
+              navigation.navigate('WorkerReviews', {
+                worker_id: params_workerId,
+                app_id: application?.applicationId,
+              })
+            }
+            style={localStyles.card}>
+            <View style={localStyles.profileContainer}>
+              {worker?.profilePicture ? (
+                <Image
+                  source={{ uri: worker?.profilePicture }}
+                  style={localStyles.profileImage}
+                />
+              ) : (
+                <View style={localStyles.initialsContainer}>
+                  <Text style={localStyles.initialsText}>{initials}</Text>
+                </View>
+              )}
+            </View>
+            <View>
+              <Text style={localStyles.nameContainer}>
+                {worker?.firstName} {worker?.lastName}
+              </Text>
+              <TextButton
+                title="View Reviews"
                 onPress={async () =>
                   navigation.navigate('WorkerReviews', {
                     worker_id: params_workerId,
                     app_id: application?.applicationId,
                   })
                 }
-                style={localStyles.contentItemRow}>
-                <View style={localStyles.profileContainer}>
-                  {worker?.profilePicture ? (
-                    <Image
-                      source={{ uri: worker?.profilePicture }}
-                      style={localStyles.profileImage}
-                    />
-                  ) : (
-                    <View style={localStyles.initialsContainer}>
-                      <Text style={localStyles.initialsText}>{initials}</Text>
-                    </View>
-                  )}
-                </View>
-                <View>
-                  <Text style={localStyles.nameContainer}>
-                    {worker?.firstName} {worker?.lastName}
-                  </Text>
-                  <TextButton
-                    title="View Reviews"
-                    onPress={async () =>
-                      navigation.navigate('WorkerReviews', {
-                        worker_id: params_workerId,
-                        app_id: application?.applicationId,
-                      })
-                    }
-                  />
-                </View>
-              </Pressable>
+              />
             </View>
+          </Pressable>
 
-            <View style={localStyles.cardContent}>
-              <View style={localStyles.contentRow}>
-                <Text style={localStyles.cardContentHeader}>Contact Info</Text>
+          <View>
+            <Text style={styles.mediumText}> History </Text>
+            <View style={{ backgroundColor: 'white', flex: 1 }}>
+              <View style={{ flex: 1, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, alignItems: 'center' }}>
                 <View>
-                  <Text style={localStyles.contentTextRegular}>
-                    Email: {worker?.email}
-                  </Text>
-                  <Text style={localStyles.contentTextRegular}>
-                    Phone: {worker?.phoneNumber}
-                  </Text>
+                  <Text style={styles.mediumText}> 12:23 PM  </Text>
                 </View>
-              </View>
-              <View style={localStyles.contentRow}>
                 <View>
-                  <Text style={localStyles.cardContentHeader}>Address </Text>
-                  <Text style={localStyles.contentTextRegular}>
-                    {workerAddress?.city}, {workerAddress?.postalCode}
-                    {workerAddress?.province}, {workerAddress?.region},
-                    {workerAddress?.country}.
-                  </Text>
+                  <DynamicButton type='secondary' title='Accept' onPress={() => undefined} />
+                  <DynamicButton type='destructive' title='X' onPress={() => undefined} />
                 </View>
-              </View>
-
-              <View style={localStyles.contentRow}>
-                <View>
-                  <Text style={localStyles.cardContentHeader}>About Me </Text>
-                  <Text style={localStyles.contentTextRegular}>
-                    Hardworking individual willing to go above and beyond within
-                    the given job description.
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={localStyles.cardFooter}>
-              <Text style={localStyles.cardContentHeader}>
-                Asking Rate / hr
-              </Text>
-              <Text style={localStyles.footerTextXL}>
-                {formatCurrency(application?.offer ?? 0)}
-              </Text>
-
-              <View style={localStyles.actionBtnGroup}>
-                {application && (
-                  <>
-                    {application.status === 'pending' && (
-                      <>
-                        <DynamicButton
-                          onPress={() =>
-                            handleApplicationStatusUpdate(
-                              'accepted',
-                              application.jobId,
-                              params_workerId,
-                            )
-                          }
-                          disabled={isSubmitting}
-                          type="primary"
-                          title="Accept Application"
-                        />
-                        <DynamicButton
-                          onPress={() =>
-                            handleApplicationStatusUpdate('rejected', '', '')
-                          }
-                          disabled={isSubmitting}
-                          type="secondary"
-                          title="Decline"
-                        />
-                      </>
-                    )}
-                    {application.status === 'accepted' && (
-                      <>
-                        <Text style={styles.mediumTextBlue}> Application accepted </Text>
-                        <DynamicButton
-                          onPress={async () => navigation.navigate('ManageWorker', { worker_id: params_workerId, job_id: params_jobId, app_id: params_appId })}
-                          title="Manage Worker"
-                        />
-                      </>
-                    )}
-                    {application.status === 'rejected' && (
-                      <DynamicButton
-                        onPress={() => undefined}
-                        title="Application rejected."
-                        disabled
-                      />
-                    )}
-                  </>
-                )}
               </View>
             </View>
           </View>
+
+          <View>
+            <Text style={styles.mediumText}> Time in request </Text>
+            <View style={{ backgroundColor: 'white', flex: 1 }}>
+              <View style={{ flex: 1, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, alignItems: 'center' }}>
+                <View>
+                  <Text style={styles.mediumText}> 12:23 PM  </Text>
+                </View>
+                <View>
+                  <DynamicButton type='secondary' title='Accept' onPress={() => undefined} />
+                  <DynamicButton type='destructive' title='X' onPress={() => undefined} />
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* <View>
+            <Text style={styles.mediumText}> Time out request </Text>
+            <View style={{ backgroundColor: 'white', flex: 1 }}>
+              <View style={{ flex: 1, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, alignItems: 'center' }}>
+                <View>
+                  <Text style={styles.mediumText}> 12:23 PM  </Text>
+                </View>
+                <View>
+                  <DynamicButton type='secondary' title='Accept' onPress={() => undefined} />
+                  <DynamicButton type='destructive' title='X' onPress={() => undefined} />
+                </View>
+              </View>
+            </View>
+          </View> */}
         </ScrollView>
       </View>
     </View>
@@ -368,12 +299,12 @@ const localStyles = StyleSheet.create({
     shadowOpacity: 1,
     borderColor: Colors.primaryWithOpacity10,
     shadowColor: Colors.primaryWithOpacity10,
-    flexDirection: 'column',
+    flexDirection: 'row',
     backgroundColor: Colors.white,
-    borderRadius: 5,
+    borderRadius: 99,
     padding: 24,
     rowGap: 12,
-    marginBottom: 60,
+    marginBottom: 40,
   },
   sectionTitle: {
     fontSize: 16,
