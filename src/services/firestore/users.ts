@@ -1,5 +1,5 @@
-import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {showAlert} from '../../components/AlertDialog';
+import { onAuthStateChanged } from '@react-native-firebase/auth';
+import { showAlert } from '../../components/AlertDialog';
 import {
   addressesRef,
   FIREBASE_AUTH,
@@ -7,11 +7,11 @@ import {
   usersRef,
   validationsRef,
 } from '../../config/firebase';
-import {Address} from '../interfaces/address';
-import {Role} from '../interfaces/role';
-import {User} from '../interfaces/user';
-import {UserDetails} from '../interfaces/userDetails';
-import {Validation} from '../interfaces/validation';
+import { Address } from '../interfaces/address';
+import { Role } from '../interfaces/role';
+import { User } from '../interfaces/user';
+import { UserDetails } from '../interfaces/userDetails';
+import { Validation } from '../interfaces/validation';
 import firestore from '@react-native-firebase/firestore';
 import messaging from '@react-native-firebase/messaging';
 
@@ -28,6 +28,21 @@ export const getUser = async (userId: string): Promise<User | undefined> => {
   try {
     const userDoc = await usersRef.doc(userId).get();
     return userDoc.exists ? (userDoc.data() as User) : undefined;
+  } catch (error) {
+    showAlert('Error', 'Failed to retrieve user.');
+    console.error(error);
+    return undefined;
+  }
+};
+
+export const getUser2 = async (clientId: string): Promise<User | undefined> => {
+  try {
+    const user = await usersRef
+      .where('roleId', '==', clientId) // Query using clientId directly
+      .limit(1)
+      .get();
+
+    return user.docs as unknown as User;
   } catch (error) {
     showAlert('Error', 'Failed to retrieve user.');
     console.error(error);
@@ -281,7 +296,7 @@ export const storeFcmToken = async (
       {
         fcmToken: token,
       },
-      {merge: true}, // This will update the existing document or create a new one
+      { merge: true }, // This will update the existing document or create a new one
     );
     console.log('FCM token stored successfully');
   } catch (error) {
@@ -333,7 +348,7 @@ export const getCurrentUserUID = () => {
 
 export async function getIdByRoleId(
   roleId: string,
-): Promise<{clientId?: string; workerId?: string} | null> {
+): Promise<{ clientId?: string; workerId?: string } | null> {
   try {
     // Fetch the user document that matches the given roleId
     const userSnapshot = await rolesRef.where('roleId', '==', roleId).get();
@@ -352,6 +367,31 @@ export async function getIdByRoleId(
     };
   } catch (error) {
     console.error('Error fetching ID by roleId:', error);
+    throw error; // Throw error for further handling
+  }
+}
+
+export async function getIdByRoleId2(
+  id: string,
+): Promise<string | null> {
+  try {
+    // Create a query that checks if 'roleId' array contains the passed 'id'
+    const userQuery = usersRef.where('roleId', 'array-contains', id);
+
+    // Fetch the first matching user document
+    const userSnapshot = await userQuery.get();
+
+    if (userSnapshot.empty) {
+      console.log('No user found for the given id');
+      return null; // No user found, return null
+    }
+
+    const userData = userSnapshot.docs[0].data() as User;
+
+    // Return userId
+    return userData.userId;
+  } catch (error) {
+    console.error('Error fetching ID by id:', error);
     throw error; // Throw error for further handling
   }
 }

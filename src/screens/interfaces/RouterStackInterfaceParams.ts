@@ -8,6 +8,7 @@ export type RootStackParamList = {
   Transaction: {_role: string};
   Home: undefined;
   JobDetailsClient: {id: string};
+  JobDetailsWorker: {id: string};
   WorkerReviews: {worker_id: string};
   AcceptOrDeclineApplicant: {worker_id: string; job_id: string; app_id: string};
   ManageWorker: {worker_id: string; job_id: string; app_id: string};

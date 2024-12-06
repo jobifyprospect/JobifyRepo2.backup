@@ -1,13 +1,13 @@
-import {showAlert} from '../../components/AlertDialog';
+import { showAlert } from '../../components/AlertDialog';
 import {
   clientsRef,
   FIRESTORE_DB,
   usersRef,
   workersRef,
 } from '../../config/firebase';
-import {Role} from '../interfaces/role';
-import {User} from '../interfaces/user';
-import {Worker} from '../interfaces/worker';
+import { Role } from '../interfaces/role';
+import { User } from '../interfaces/user';
+import { Worker } from '../interfaces/worker';
 
 const rolesRef = FIRESTORE_DB.collection('roles');
 
@@ -44,9 +44,8 @@ export const getWorkerFullName = async (
       const userDoc = await usersRef.doc(userId).get();
       if (userDoc.exists) {
         const userData = userDoc.data() as User;
-        const fullName = `${userData.firstName ?? ''} ${
-          userData.lastName ?? ''
-        }`.trim();
+        const fullName = `${userData.firstName ?? ''} ${userData.lastName ?? ''
+          }`.trim();
         return fullName || undefined;
       }
     }
@@ -69,9 +68,8 @@ export const getClientFullName = async (
       const userDoc = await usersRef.doc(userId).get();
       if (userDoc.exists) {
         const userData = userDoc.data() as User;
-        const fullName = `${userData.firstName ?? ''} ${
-          userData.lastName ?? ''
-        }`.trim();
+        const fullName = `${userData.firstName ?? ''} ${userData.lastName ?? ''
+          }`.trim();
         return fullName || undefined;
       }
     }
@@ -80,6 +78,32 @@ export const getClientFullName = async (
     showAlert('Error', "Failed to retrieve worker's full name.");
     console.error(error);
     return undefined;
+  }
+};
+
+export const getClientDetails = async (
+  clientId: string,
+): Promise<{ fullName?: string; phoneNumber?: string; email?: string }> => {
+  try {
+    const clientDoc = await clientsRef.doc(clientId).get();
+    if (clientDoc.exists) {
+      const clientData = clientDoc.data() as Worker;
+      const userId = clientData.userId;
+      const userDoc = await usersRef.doc(userId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data() as User;
+        const fullName = `${userData.firstName ?? ''} ${userData.lastName ?? ''
+          }`.trim();
+        const phoneNumber = userData.phoneNumber;
+        const email = userData.email as string;
+        return { fullName, phoneNumber, email };
+      }
+    }
+    return {}; // Return empty object if client or user not found
+  } catch (error) {
+    showAlert('Error', "Failed to retrieve client's details.");
+    console.error(error);
+    return {}; // Return empty object on error
   }
 };
 

@@ -5,7 +5,7 @@ import { TimeRecord } from '../interfaces/time_records';
 const timeRecordsRef = FIRESTORE_DB.collection('time_records');
 
 // Create a time record
-export const createAddress = async (time_record: TimeRecord): Promise<void> => {
+export const createRecord = async (time_record: TimeRecord): Promise<void> => {
   try {
     await timeRecordsRef.doc(time_record.id).set(time_record);
   } catch (error) {
@@ -14,17 +14,42 @@ export const createAddress = async (time_record: TimeRecord): Promise<void> => {
   }
 };
 
+export const updateRecord = async (
+  time_record_id: string,
+  updates: Partial<TimeRecord>,
+): Promise<void> => {
+  try {
+    await timeRecordsRef.doc(time_record_id).update(updates);
+  } catch (error) {
+    showAlert('Error', 'Failed to update time record.');
+    console.error(error);
+  }
+};
+
 // Read a time record
 export const getTimeRecord = async (
-  id: string,
+  jobId: string,
+  workerId?: string
 ): Promise<TimeRecord | null> => {
   try {
-    const doc = await timeRecordsRef.doc(id).get();
-    return doc.exists ? (doc.data() as TimeRecord) : null;
+    const querySnapshot = await timeRecordsRef
+      .where('jobId', '==', jobId)
+      .where('workerId', '==', workerId)
+      .get();
+
+    // Check if any documents were found
+    if (querySnapshot.empty) {
+      console.log('no results')
+      return null; // Return empty array if no documents found
+    }
+
+    // Loop through documents and extract data
+    const timeRecord = querySnapshot.docs.map((doc) => doc.data() as TimeRecord);
+    return timeRecord[0];
   } catch (error) {
-    showAlert('Error', 'Failed to fetch time record.');
+    showAlert('Error', 'Failed to search time records.');
     console.error(error);
-    return null;
+    return null; // Return empty array on error
   }
 };
 
@@ -38,6 +63,26 @@ export const getAllTimeRecords = async (
       .where('workerId', '==', workerId)
       .where('jobId', '==', jobId)
       .get();
+
+    // Check if any documents were found
+    if (querySnapshot.empty) {
+      return []; // Return empty array if no documents found
+    }
+
+    // Loop through documents and extract data
+    const timeRecords = querySnapshot.docs.map((doc) => doc.data() as TimeRecord);
+    return timeRecords;
+  } catch (error) {
+    showAlert('Error', 'Failed to search time records.');
+    console.error(error);
+    return []; // Return empty array on error
+  }
+};
+
+export const getAll = async (
+): Promise<TimeRecord[]> => {
+  try {
+    const querySnapshot = await timeRecordsRef.get();
 
     // Check if any documents were found
     if (querySnapshot.empty) {

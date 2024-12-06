@@ -309,11 +309,18 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
                 </View>
                 <View style={localStyles.actionBtnGroup}>
                   {hasApplied ? (
-                    <DynamicButton
-                      type="destructive"
-                      onPress={async () => cancelApplication()}
-                      title="Cancel application"
-                    />
+                    <View>
+                      <View>
+                      <Text style={localStyles.cardContentHeader}> Your rate: </Text>
+                        <Text style={localStyles.footerTextXL}> {formatCurrency(app && app[0]._data.offer)} </Text>
+                      </View>
+
+                      <DynamicButton
+                        type="destructive"
+                        onPress={async () => cancelApplication()}
+                        title="Cancel application"
+                      />
+                    </View>
                   ) : (
                     <>
                       <DynamicButton

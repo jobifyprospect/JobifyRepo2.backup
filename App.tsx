@@ -49,6 +49,7 @@ import MapScreen from './src/screens/MapScreen';
 import WriteReviewScreen from './src/screens/client/WriteReview';
 import {getIsNewUser, setIsNewUser} from './src/shared/AuthUtils';
 
+import JobDetailsWorker from './src/screens/worker/JobDetailsWorker';
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
 const DELAY_MS = 10000;
@@ -315,6 +316,11 @@ export default function App() {
                 name="JobDetailsClient"
                 component={JobDetailsClient}
                 options={{title: 'JobDetailsClient', headerShown: false}} // Job Details, Client View Screen
+              />
+              <Stack.Screen
+                name="JobDetailsWorker"
+                component={JobDetailsWorker}
+                options={{title: 'JobDetailsWorker', headerShown: false}} // Job Details, Worker View Screen
               />
               <Stack.Screen
                 name="AcceptOrDeclineApplicant"

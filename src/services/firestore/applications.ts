@@ -52,12 +52,10 @@ export const getApplicationsByWorkerId = async (
   }
 };
 
-type hasAppliedT = {
+export async function hasWorkerApplied(props: {
   workerId: string;
   jobId: string;
-};
-
-export async function hasWorkerApplied(props: hasAppliedT): Promise<{ result: boolean, application?: FirebaseFirestoreTypes.DocumentData | undefined }> {
+}): Promise<{ result: boolean, application?: FirebaseFirestoreTypes.DocumentData | undefined }> {
   const { workerId, jobId } = props;
 
   try {

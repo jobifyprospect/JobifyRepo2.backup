@@ -1,19 +1,19 @@
-import {View, Text, StyleSheet, FlatList, Pressable} from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import {styles} from '../styles/Globals';
+import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { styles } from '../styles/Globals';
 import Colors from '../styles/Colors';
-import {Job} from '../services/interfaces/job';
+import { Job } from '../services/interfaces/job';
 import {
   getJobsByClient,
   getJobsByWorker,
   queryJob,
 } from '../services/firestore/jobs';
-import {formatCurrency, formatDateToReadable} from '../utils/Utils';
+import { formatCurrency, formatDateToReadable } from '../utils/Utils';
 import DynamicTextInput from '../components/DynamicTextInput';
-import {useFocusEffect} from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import RefreshButton from '../components/RefreshComponent';
-import {RootStackParamList} from './interfaces/RouterStackInterfaceParams';
-import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import { RootStackParamList } from './interfaces/RouterStackInterfaceParams';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import {
   getCurrentUserUID,
   getUserDefaultRole,
@@ -26,13 +26,14 @@ import ProfilePicture from '../components/GetProfilePicture';
 
 type TransactionProps = BottomTabScreenProps<RootStackParamList, 'Transaction'>;
 
-export default function Transaction({navigation, route}: TransactionProps) {
+export default function Transaction({ navigation, route }: TransactionProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   // const [myApplications, setMyApplications] = useState<Application[]>([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [role, setRole] = useState<string | null>(route.params._role || null);
+
 
   const fetchDefaultRole = useCallback(async () => {
     if (!role) {
@@ -122,7 +123,7 @@ export default function Transaction({navigation, route}: TransactionProps) {
 
   function returnJobStatus(status: string | undefined) {
     switch (status) {
-      case 'on going':
+      case 'ongoing':
         return Colors.primary;
       default:
         return Colors.placeholder;
@@ -157,7 +158,7 @@ export default function Transaction({navigation, route}: TransactionProps) {
           )
         }
         data={searchResults} // Display searchResults
-        renderItem={({item, index}) => {
+        renderItem={({ item, index }) => {
           const currentItemDate = formatDateToReadable(item.createdAt);
           const previousItemDate =
             index > 0
@@ -213,7 +214,7 @@ export default function Transaction({navigation, route}: TransactionProps) {
               )}
               <Pressable
                 onPress={() =>
-                  navigation.navigate('JobDetailsClient', {id: item.jobId})
+                  navigation.navigate(role === 'worker' ? 'JobDetailsWorker' : 'JobDetailsClient', { id: item.jobId })
                 }
                 key={item.jobId}
                 style={[localStyles.jobCard, getCardStyle()]}>
@@ -245,12 +246,11 @@ export default function Transaction({navigation, route}: TransactionProps) {
                         numberOfLines={1}>
                         {item.title}
                       </Text>
-                      <Text style={[{color: returnJobStatus(item.status)}]}>
-                        {item.assignedWorker
-                          ? item.status === 'closed'
-                            ? 'Done'
-                            : item.status
-                          : 'Pending'}
+                      <Text style={[{ color: returnJobStatus(item.status) }]}>
+                        {item.assignedWorker ? item.status === 'closed' ? 'Done'
+                          : item.status
+                          : 'Pending'
+                        }
                       </Text>
                     </View>
                   </View>
