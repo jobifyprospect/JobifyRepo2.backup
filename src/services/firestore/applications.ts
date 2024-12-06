@@ -1,6 +1,7 @@
-import {showAlert} from '../../components/AlertDialog';
-import {FIRESTORE_DB} from '../../config/firebase';
-import {Application} from '../interfaces/application';
+import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { showAlert } from '../../components/AlertDialog';
+import { FIRESTORE_DB } from '../../config/firebase';
+import { Application } from '../interfaces/application';
 
 const applicationsRef = FIRESTORE_DB.collection('applications');
 
@@ -56,8 +57,8 @@ type hasAppliedT = {
   jobId: string;
 };
 
-export async function hasWorkerApplied(props: hasAppliedT): Promise<boolean> {
-  const {workerId, jobId} = props;
+export async function hasWorkerApplied(props: hasAppliedT): Promise<{ result: boolean, application?: FirebaseFirestoreTypes.DocumentData | undefined }> {
+  const { workerId, jobId } = props;
 
   try {
     var result;
@@ -67,14 +68,22 @@ export async function hasWorkerApplied(props: hasAppliedT): Promise<boolean> {
       .get();
 
     if (snapShot.empty) {
-      result = false;
-      return result;
+      return { result: false };
     }
 
+    const app = snapShot.docs;
     result = true;
-    return result;
+
+    const results = {
+      result,
+      application: app
+    }
+
+    return results;
   } catch (error) {
-    return false;
+    return {
+      result: false
+    };
   }
 }
 
