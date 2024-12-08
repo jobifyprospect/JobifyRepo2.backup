@@ -17,6 +17,7 @@ import { FIRESTORE_TIMESTAMP } from '../config/firebase';
 import { useFCMToken } from '../config/FCMTokenContext';
 import uuid from 'react-native-uuid';
 import { Timestamp } from '@react-native-firebase/firestore';
+import { notificationsRef } from '../config/firebase';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -27,35 +28,64 @@ const NotificationScreen = ({ navigation }: RouterProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
 
+  // useEffect(() => {
+  //   const unsubscribe = messaging().onMessage(async remoteMessage => {
+  //     console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
+
+  //     const newNotification: Notification = {
+  //       id: remoteMessage.messageId || uuid.v4(), // Use uuid to generate a unique id
+  //       title: remoteMessage.notification?.title || '',
+  //       subtitle: remoteMessage.notification?.body || '',
+  //       senderId: remoteMessage.data?.senderId?.toString() || '',
+  //       receiverId: remoteMessage.data?.receiverId?.toString() || '',
+  //       createdAt: FIRESTORE_TIMESTAMP,
+  //       updatedAt: FIRESTORE_TIMESTAMP,
+  //       isRead: false,
+  //     };
+
+  //     try {
+  //       // Update the local state
+  //       setNotifications(prevNotifications => [newNotification, ...prevNotifications]);
+  //     } catch (error) {
+  //       console.error('Error creating notification in Firestore:', error);
+  //     }
+  //   });
+
+  //   return unsubscribe;
+  // }, []);
+
   useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
-      console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
+    const fetchAndSubscribe = async () => {
+      const uid = await getCurrentUserUID();
 
-      const newNotification: Notification = {
-        id: remoteMessage.messageId || uuid.v4(), // Use uuid to generate a unique id
-        title: remoteMessage.notification?.title || '',
-        subtitle: remoteMessage.notification?.body || '',
-        senderId: remoteMessage.data?.senderId?.toString() || '',
-        receiverId: remoteMessage.data?.receiverId?.toString() || '',
-        createdAt: FIRESTORE_TIMESTAMP,
-        updatedAt: FIRESTORE_TIMESTAMP,
-        isRead: false,
-      };
+      const unsubscribe = notificationsRef
+        .where('receiverId', '==', uid)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot(
+          snapshot => {
+            const newNotifications: Notification[] = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+            } as Notification));
+            setNotifications(newNotifications);
+            setLoading(false);
+            setRefreshing(false);
+          },
+          error => {
+            console.error("Error fetching notifications: ", error);
+            setLoading(false);
+            setRefreshing(false);
+          }
+        );
 
-      try {
-        // Insert the new notification into Firestore
-        await createNotification(newNotification);
+      return unsubscribe;
+    };
 
-        // Update the local state
-        setNotifications(prevNotifications => [newNotification, ...prevNotifications]);
-      } catch (error) {
-        console.error('Error creating notification in Firestore:', error);
-      }
-    });
-
-    return unsubscribe;
+    const unsubscribe = fetchAndSubscribe();
+    return () => {
+      unsubscribe.then(unsub => unsub && unsub());
+    };
   }, []);
-
 
   const getNotifications = async () => {
     try {
@@ -121,56 +151,6 @@ const NotificationScreen = ({ navigation }: RouterProps) => {
     </TouchableOpacity>
   );
 
-  const TestNotificationButton = () => {
-    const fcmToken = useFCMToken();
-
-    const handleSendTestNotification = async () => {
-      const currentUserUID = await getCurrentUserUID();
-      if (fcmToken && currentUserUID) {
-        try {
-          const newNotification: Notification = {
-            id: uuid.v4().toString(),
-            title: 'Test Notification',
-            subtitle: 'This is a test notification sent from within the app.',
-            senderId: currentUserUID,
-            receiverId: 'c22e4068-f1ea-426e-bb64-4328c97ef771', // Sending to self for testing
-            createdAt: FIRESTORE_TIMESTAMP,
-            updatedAt: FIRESTORE_TIMESTAMP,
-            isRead: false,
-          };
-
-          // First, create the notification in Firestore
-          await createNotification(newNotification);
-
-          // Then, send the FCM message
-          if (fcmToken) {
-            await sendNotification(
-              fcmToken,
-              newNotification.title,
-              newNotification.subtitle,
-              { notificationId: newNotification.id }
-            );
-          } else {
-            console.error('FCM token not available');
-          }
-
-
-          console.log('Test notification sent successfully');
-
-          // Update local state
-          setNotifications(prevNotifications => [newNotification, ...prevNotifications]);
-        } catch (error) {
-          console.error('Error sending test notification:', error);
-        }
-      } else {
-        console.error('FCM token or current user UID not available');
-      }
-    };
-
-    return (
-      <Button title="Send Test Notification" onPress={handleSendTestNotification} />
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -182,17 +162,18 @@ const NotificationScreen = ({ navigation }: RouterProps) => {
             <BackButton onPress={async () => navigation.goBack()} />
             <RefreshButton
               type="primary"
-              onPress={onRefresh} // Trigger the refresh function
-              disabled={refreshing} // Disable button when refreshing
+              onPress={onRefresh}
+              disabled={refreshing}
             />
           </View>
-          <TestNotificationButton />
           <FlatList
             data={notifications}
             renderItem={renderNotificationItem}
             keyExtractor={item => item.id}
             removeClippedSubviews={false}
             ListEmptyComponent={<Text>No notifications available.</Text>}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         </View>
       )}

@@ -89,11 +89,11 @@ export const updateNotificationReadStatus = async (notificationId: string) => {
 
 export const createNotification = async (
   notificationData: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> & {
-    from?: string; // Nullable parameter for sender ID
-    to?: string | null; // Nullable parameter for receiver ID
-    messageId?: string; // Nullable parameter for receiver ID
-    threadId?: string; // Nullable parameter for receiver ID
-    notification?: { title: string; body: string }; // Nullable notification object
+    from?: string;
+    to?: string | null;
+    messageId?: string;
+    threadId?: string;
+    notification?: { title: string; body: string };
   },
 ): Promise<Notification | null> => {
   try {
@@ -110,36 +110,33 @@ export const createNotification = async (
       updatedAt: newNotificationSnapshot.data()?.updatedAt,
     };
 
-    // Send a message after creating the notification
-    const { from, to, notification, messageId, threadId } = notificationData; // Destructure params
+    // Send FCM message after creating the notification
+    const { from, to, notification, messageId, threadId } = notificationData;
 
     if (from && to && notification) {
-      await firebase
-        .messaging()
-        .sendMessage({
-          messageId: messageId,
-          threadId: threadId,
-          from: from, // Sender ID
-          to: to, // Receiver ID
-          notification: {
-            title: notification.title,
-            body: notification.body,
-          },
-          fcmOptions: {},
-        })
-        .then(() => {
-          showAlert(
-            'Success',
-            'Test notification created and sent to devices.',
-          );
-        })
-        .catch((error: any) => {
-          console.error(`${error} notifications not sent`);
-        });
+      await firebase.messaging().sendMessage({
+        messageId: messageId,
+        threadId: threadId,
+        from: from,
+        to: to,
+        notification: {
+          title: notification.title,
+          body: notification.body,
+        },
+        data: {
+          notificationId: newNotification.id, // Include the Firestore document ID
+        },
+        fcmOptions: {},
+      });
+      console.log('FCM message sent successfully');
+    } else {
+      console.error('From, To, and Notification parameters are required to send an FCM message.');
     }
-    return newNotification; // Return the newly created notification
+
+    return newNotification;
   } catch (error) {
     console.error('Error creating notification:', error);
-    return null; // Return null if an error occurred
+    return null;
   }
 };
+

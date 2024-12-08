@@ -128,7 +128,7 @@ export function formatDate(date: FirebaseTimeStampT | any) {
   return formattedDate;
 }
 
-export const formatDateToReadable = (date: Timestamp | Date | null): string => {
+export const formatDateToReadable = (date: Timestamp | FieldValue | Date | null): string => {
   if (!date) return 'N/A';
 
   let jsDate: Date;
