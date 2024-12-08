@@ -13,7 +13,7 @@ import Colors from '../../styles/Colors';
 import { NavigationProp, Route } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { User } from '../../services/interfaces/user';
-import { getUserDetailsByWorkerId } from '../../services/firestore/users';
+import { getCurrentUserUID, getIdByRoleId, getUser, getUserDetailsByWorkerId } from '../../services/firestore/users';
 import { getJob, updateJobAssignedWorker, updateJob } from '../../services/firestore/jobs';
 import { Job } from '../../services/interfaces/job';
 import { styles } from '../../styles/Globals';
@@ -25,6 +25,10 @@ import DynamicButton from '../../components/DynamicButton';
 import { applicationsRef, FIRESTORE_TIMESTAMP } from '../../config/firebase';
 import TextButton from '../../components/TextButton';
 import { formatCurrency } from '../../utils/Utils';
+import { Notification } from '../../services/interfaces/notification';
+import uuid from 'react-native-uuid';
+import { showAlert } from '../../components/AlertDialog';
+import { createNotification } from '../../services/firestore/notifications';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -47,6 +51,29 @@ export default function AcceptOrDeclineApplicant({
   const [loadingWorker, setLoadingWorker] = useState<boolean>(true);
   const [loadingJob, setLoadingJob] = useState<boolean>(true);
   const [loadingAddress, setLoadingAddress] = useState<boolean>(true);
+  const [currentUserId, setCurrentUserId] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchCurrentUserId = async () => {
+      try {
+        const uid: string | null = await getCurrentUserUID();
+        if (uid) {
+          const currentUserData = await getUser(uid);
+
+          if (currentUserData && currentUserData.defaultRole) {
+            const clientIdByRole = await getIdByRoleId(
+              currentUserData.defaultRole,
+            );
+            setCurrentUserId(clientIdByRole?.workerId || null);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user ID:', error);
+      }
+    };
+
+    fetchCurrentUserId();
+  }, []);
 
   // Fetch worker details
   const fetchWorkerDetails = useCallback(async () => {
@@ -109,6 +136,22 @@ export default function AcceptOrDeclineApplicant({
         updatedAt: FIRESTORE_TIMESTAMP,
       };
       if (params_appId) {
+        const receiverDetails = await getUserDetailsByWorkerId(application?.workerId as string);
+        const receiverId = receiverDetails?.userId as string;
+
+        // Create and send notification
+        const notificationData: Notification = {
+          id: uuid.v4().toString(), // Generate a unique notification ID
+          title: 'New Job Application',
+          subtitle: `Your application has been ${type} for ${job?.title}`,
+          senderId: currentUserId,
+          receiverId: receiverId,
+          isRead: false,
+          createdAt: FIRESTORE_TIMESTAMP,
+          updatedAt: FIRESTORE_TIMESTAMP
+        };
+
+        await createNotification(notificationData);
         await updateApplication(params_appId, payload);
         if (jobId) {
           await updateJobAssignedWorker(jobId, workerId, type, application?.offer);

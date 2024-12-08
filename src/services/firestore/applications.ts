@@ -16,6 +16,26 @@ export const createApplication = async (
   }
 };
 
+export const getApplication = async (
+  appId: string,
+): Promise<Application | null> => {
+  try {
+    const snapshot = await applicationsRef.where('applicationId', '==', appId).limit(1).get();
+    if (snapshot.empty) {
+      return null;
+    }
+    const doc = snapshot.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data()
+    } as unknown as Application;
+  } catch (error) {
+    console.error('Failed to retrieve application:', error);
+    return null;
+  }
+};
+
+
 export const getApplicationsByJobId = async (
   jobId: string,
 ): Promise<Application[] | undefined> => {

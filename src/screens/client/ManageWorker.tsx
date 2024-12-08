@@ -13,21 +13,23 @@ import Colors from '../../styles/Colors';
 import { NavigationProp, Route } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { User } from '../../services/interfaces/user';
-import { getUserDetailsByWorkerId } from '../../services/firestore/users';
-import { getJob, updateJobAssignedWorker } from '../../services/firestore/jobs';
+import { getCurrentUserUID, getIdByRoleId, getUser, getUserDetailsByWorkerId } from '../../services/firestore/users';
+import { getJob } from '../../services/firestore/jobs';
 import { Job } from '../../services/interfaces/job';
 import { styles } from '../../styles/Globals';
 import { getAddress } from '../../services/firestore/addresses';
 import { Address } from '../../services/interfaces/address';
-import { updateApplication } from '../../services/firestore/applications';
 import { Application } from '../../services/interfaces/application';
 import DynamicButton from '../../components/DynamicButton';
-import { applicationsRef, FIRESTORE_TIMESTAMP, timeRecordsRef } from '../../config/firebase';
+import { FIRESTORE_TIMESTAMP, timeRecordsRef } from '../../config/firebase';
 import TextButton from '../../components/TextButton';
-import { formatCurrency, formatDate } from '../../utils/Utils';
-
-import { getTimeRecordsByApplications, getAllTimeRecords, getTimeRecord, updateRecord } from '../../services/firestore/time_records'
+import { formatDate } from '../../utils/Utils';
+import uuid from 'react-native-uuid';
+import { getTimeRecord, updateRecord } from '../../services/firestore/time_records'
 import { TimeRecord } from '../../services/interfaces/time_records';
+import { Notification } from '../../services/interfaces/notification';
+import { createNotification } from '../../services/firestore/notifications';
+import { getApplication } from '../../services/firestore/applications';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -45,10 +47,10 @@ export default function ManageWorker({
   const [worker, setWorker] = useState<User | null>(null);
   const [workerAddress, setWorkerAddress] = useState<Address | null>(null);
   const [application, setApplication] = useState<Application | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [job, setJob] = useState<Job | null>(null);
   const [loadingWorker, setLoadingWorker] = useState<boolean>(true);
   const [loadingJob, setLoadingJob] = useState<boolean>(true);
+  const [currentUserId, setCurrentUserId] = useState<any>(null);
   const [loadingAddress, setLoadingAddress] = useState<boolean>(true);
 
   const [workerTimeRecord, setWorkerTimeRecord] = useState<TimeRecord>();
@@ -61,16 +63,33 @@ export default function ManageWorker({
   }
 
   async function approveWorkerTimeLogs() {
+
+    const receiverDetails = await getUserDetailsByWorkerId(application?.workerId as string);
+    const receiverId = receiverDetails?.userId as string;
+
+    // Create and send notification
+    const notificationData: Notification = {
+      id: uuid.v4().toString(), // Generate a unique notification ID
+      title: 'Timelogs Approved.',
+      subtitle: `Your timelogs have been approved for ${job?.title}`,
+      senderId: currentUserId,
+      receiverId: receiverId,
+      isRead: false,
+      createdAt: FIRESTORE_TIMESTAMP,
+      updatedAt: FIRESTORE_TIMESTAMP
+    };
+
+    console.log('paylod to send: ', notificationData)
+    await createNotification(notificationData);
     const payload: Partial<TimeRecord> = {
-      acceptedBy: '123'
+      acceptedBy: currentUserId
     }
+
     const res = await updateRecord(payload, workerTimeRecord?.id)
   }
 
   useEffect(() => {
     getWorkerTimeRecords()
-
-    console.log('time record: ', workerTimeRecord)
   }, [])
   // Fetch worker details
   const fetchWorkerDetails = useCallback(async () => {
@@ -86,6 +105,34 @@ export default function ManageWorker({
       setLoadingWorker(false);
     }
   }, [params_workerId]);
+
+  useEffect(() => {
+    const fetchCurrentUserId = async () => {
+      try {
+        const uid: string | null = await getCurrentUserUID();
+        if (uid) {
+          const currentUserData = await getUser(uid);
+
+          if (currentUserData && currentUserData.defaultRole) {
+            const clientIdByRole = await getIdByRoleId(
+              currentUserData.defaultRole,
+            );
+            setCurrentUserId(clientIdByRole?.workerId || null);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user ID:', error);
+      }
+    };
+
+    async function fetchApplicationDetails() {
+      const res = await getApplication(params_appId)
+      setApplication(res)
+    }
+    
+    fetchApplicationDetails()
+    fetchCurrentUserId();
+  }, []);
 
   // Fetch job details
   const fetchJob = useCallback(async () => {
@@ -235,9 +282,9 @@ export default function ManageWorker({
 
             <Text style={styles.mediumTextBlue}> Actions </Text>
             <View style={{ rowGap: 4 }}>
-              {workerTimeRecord?.acceptedBy !== "" ? 
-              <Text style={styles.boldText}> You have already approved this worker's time logs. </Text>
-            :
+              {workerTimeRecord && workerTimeRecord?.acceptedBy !== "" ?
+                <Text style={styles.boldText}> You have already approved this worker's time logs. </Text>
+                :
                 <DynamicButton disabled={workerTimeRecord?.time_in && workerTimeRecord.time_out ? false : true} title="Approve worker time logs" onPress={async () => approveWorkerTimeLogs()} />
               }
             </View>
