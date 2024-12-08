@@ -1,21 +1,15 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import messaging from '@react-native-firebase/messaging';
 import { View, FlatList, Text, TouchableOpacity, StyleSheet, Button } from 'react-native';
 import { formatDateToReadable } from '../utils/Utils';
 import { Notification } from '../services/interfaces/notification';
 import {
-  createNotification,
   fetchNotifications,
-  sendNotification,
   updateNotificationReadStatus,
 } from '../services/firestore/notifications';
 import BackButton from '../components/BackButton';
 import { NavigationProp, useFocusEffect } from '@react-navigation/native';
 import RefreshButton from '../components/RefreshComponent';
 import { getCurrentUserUID } from '../services/firestore/users';
-import { FIRESTORE_TIMESTAMP } from '../config/firebase';
-import { useFCMToken } from '../config/FCMTokenContext';
-import uuid from 'react-native-uuid';
 import { Timestamp } from '@react-native-firebase/firestore';
 import { notificationsRef } from '../config/firebase';
 
@@ -27,32 +21,6 @@ const NotificationScreen = ({ navigation }: RouterProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
-
-  // useEffect(() => {
-  //   const unsubscribe = messaging().onMessage(async remoteMessage => {
-  //     console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
-
-  //     const newNotification: Notification = {
-  //       id: remoteMessage.messageId || uuid.v4(), // Use uuid to generate a unique id
-  //       title: remoteMessage.notification?.title || '',
-  //       subtitle: remoteMessage.notification?.body || '',
-  //       senderId: remoteMessage.data?.senderId?.toString() || '',
-  //       receiverId: remoteMessage.data?.receiverId?.toString() || '',
-  //       createdAt: FIRESTORE_TIMESTAMP,
-  //       updatedAt: FIRESTORE_TIMESTAMP,
-  //       isRead: false,
-  //     };
-
-  //     try {
-  //       // Update the local state
-  //       setNotifications(prevNotifications => [newNotification, ...prevNotifications]);
-  //     } catch (error) {
-  //       console.error('Error creating notification in Firestore:', error);
-  //     }
-  //   });
-
-  //   return unsubscribe;
-  // }, []);
 
   useEffect(() => {
     const fetchAndSubscribe = async () => {

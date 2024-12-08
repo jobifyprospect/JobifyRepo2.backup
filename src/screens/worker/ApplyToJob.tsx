@@ -16,7 +16,6 @@ import {
   getUser,
 } from '../../services/firestore/users';
 import { FIRESTORE_TIMESTAMP } from '../../config/firebase';
-import { getUserDetailsByClientId } from '../../services/firestore/users';
 import {
   createApplication,
   deleteApplication,
@@ -38,6 +37,9 @@ import { RootStackParamList } from '../interfaces/RouterStackInterfaceParams';
 import CounterOfferModal from '../../components/Modal';
 import { formatCurrency } from '../../utils/Utils';
 import { DocumentData } from 'firebase-admin/firestore';
+import { createNotification, sendNotification } from '../../services/firestore/notifications';
+import { Notification } from '../../services/interfaces/notification';
+import { getUserDetailsByClientId } from '../../services/firestore/users';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -105,6 +107,32 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
       };
 
       await createApplication(newApplication);
+      const receiverDetails = await getUserDetailsByClientId(job?.clientId as string);
+      const receiverId = receiverDetails?.userId as string;
+      // Create and send notification
+      const notificationData: Notification = {
+        id: uuid.v4().toString(), // Generate a unique notification ID
+        title: 'New Job Application',
+        subtitle: `A new application has been submitted for ${job?.title}`,
+        senderId: currentUserId,
+        receiverId: receiverId,
+        isRead: false,
+        createdAt: FIRESTORE_TIMESTAMP,
+        updatedAt: FIRESTORE_TIMESTAMP
+      };
+
+      await createNotification(notificationData);
+
+      // Send FCM notification
+      if (client?.fcmToken) {
+        await sendNotification(
+          client.fcmToken,
+          'New Job Application',
+          `A new application has been submitted for ${job?.title}`,
+          { jobId: job?.jobId as string }
+        );
+      }
+
       showAlert('Success', 'Your profile has been sent to the client.');
       onRefresh();
     } catch (e) {
@@ -113,6 +141,7 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
       setIsSubmitting(false);
     }
   }
+
   async function handleSubmitApplicationWithOffer(
     newOffer: number | undefined,
   ) {
@@ -133,6 +162,32 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
         createdAt: FIRESTORE_TIMESTAMP, // Type this appropriately
         updatedAt: FIRESTORE_TIMESTAMP, // Type this appropriately
       };
+
+      const receiverDetails = await getUserDetailsByClientId(job?.clientId as string);
+      const receiverId = receiverDetails?.userId as string;
+      // Create and send notification
+      const notificationData: Notification = {
+        id: uuid.v4().toString(), // Generate a unique notification ID
+        title: 'New Job Application',
+        subtitle: `A new application has been submitted for ${job?.title}`,
+        senderId: currentUserId,
+        receiverId: receiverId,
+        isRead: false,
+        createdAt: FIRESTORE_TIMESTAMP,
+        updatedAt: FIRESTORE_TIMESTAMP
+      };
+
+      await createNotification(notificationData);
+
+      // Send FCM notification
+      if (client?.fcmToken) {
+        await sendNotification(
+          client.fcmToken,
+          'New Job Application',
+          `A new application has been submitted for ${job?.title}`,
+          { jobId: job?.jobId as string }
+        );
+      }
 
       await createApplication(newApplication);
       showAlert('Success', 'Your profile has been sent to the client.');
@@ -311,7 +366,7 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
                   {hasApplied ? (
                     <View>
                       <View>
-                      <Text style={localStyles.cardContentHeader}> Your rate: </Text>
+                        <Text style={localStyles.cardContentHeader}> Your rate: </Text>
                         <Text style={localStyles.footerTextXL}> {formatCurrency(app && app[0]._data.offer)} </Text>
                       </View>
 
