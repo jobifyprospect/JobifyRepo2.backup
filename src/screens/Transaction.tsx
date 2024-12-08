@@ -33,6 +33,7 @@ export default function Transaction({ navigation, route }: TransactionProps) {
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [role, setRole] = useState<string | null>(route.params._role || null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
 
   const fetchDefaultRole = useCallback(async () => {
@@ -43,6 +44,7 @@ export default function Transaction({ navigation, route }: TransactionProps) {
       }
     }
   }, [role]);
+
   useEffect(() => {
     if (role === null) {
       fetchDefaultRole(); // Fetch default role if necessary
@@ -96,6 +98,7 @@ export default function Transaction({ navigation, route }: TransactionProps) {
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
     } finally {
+      setIsLoading(false); // Stop the loading spinner
       setRefreshing(false); // Stop the refreshing spinner
     }
   }, [role]);
@@ -117,6 +120,7 @@ export default function Transaction({ navigation, route }: TransactionProps) {
   useFocusEffect(
     useCallback(() => {
       fetchJobs();
+      
       // fetchApplications();
     }, [fetchJobs]),
   );
@@ -130,6 +134,8 @@ export default function Transaction({ navigation, route }: TransactionProps) {
     }
   }
 
+  isLoading && <Text> Loading ... </Text>;
+  
   return (
     <View style={localStyles.container}>
       <View style={localStyles.btnContainerEnd}>

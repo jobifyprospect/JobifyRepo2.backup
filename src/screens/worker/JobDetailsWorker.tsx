@@ -30,6 +30,7 @@ import { getCurrentUserUID, getIdByRoleId, getUser, getUserDetailsByClientId } f
 import { Notification } from '../../services/interfaces/notification';
 import { createNotification } from '../../services/firestore/notifications';
 import { serverTimestamp } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore'
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -58,6 +59,15 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     const [record, setRecord] = useState<TimeRecord>();
     const [hasRecord, setHasRecord] = useState<boolean>(false)
     const [isAccepted, setIsAccepted] = useState<boolean>(false)
+
+    function getValidTimestamp() {
+        const timestamp = firestore.FieldValue.serverTimestamp();
+        if (timestamp && typeof timestamp === 'object' && '_methodName' in timestamp) {
+          return timestamp;
+        }
+        // Fallback to current date if serverTimestamp() doesn't work as expected
+        return firestore.Timestamp.now();
+      }
 
     async function fetchTimeRecords() {
 
@@ -118,16 +128,16 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
 
     async function timeIn() {
         setIsSubmitting(true)
+        const currentTimestamp = getValidTimestamp();
+
         const payload: TimeRecord = {
             id: uuid.v4().toString(),
             jobId: id,
             workerId: job?.assignedWorker,
             clientId: job?.clientId,
             applicationId: application?.applicationId,
-            acceptedBy: '',
-            time_in: serverTimestamp(),
+            time_in: currentTimestamp,
         }
-
         await createRecord(payload)
 
         const receiverDetails = await getUserDetailsByClientId(job?.clientId as string);
@@ -142,11 +152,9 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             senderId: currentUserId,
             receiverId: receiverId,
             isRead: false,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
+            createdAt: currentTimestamp,
+            updatedAt: currentTimestamp
         };
-
-        console.log(notificationData)
         await createNotification(notificationData);
         setIsSubmitting(false);
         setIsConfirmingTimeIn(false)
@@ -155,8 +163,11 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
 
     async function timeOut() {
         setIsSubmitting(true)
+
+        const currentTimestamp = getValidTimestamp();
+
         const payload: Partial<TimeRecord> = {
-            time_out: serverTimestamp(),
+            time_out: firestore.FieldValue.serverTimestamp(),
         }
         await updateRecord(payload, record?.id)
 
@@ -172,8 +183,8 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             senderId: currentUserId,
             receiverId: receiverId,
             isRead: false,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
+            createdAt: currentTimestamp,
+            updatedAt: currentTimestamp,
         };
 
         await createNotification(notificationData);

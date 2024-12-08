@@ -7,13 +7,17 @@ const timeRecordsRef = FIRESTORE_DB.collection('time_records');
 // Create a time record
 export const createRecord = async (time_record: TimeRecord): Promise<void> => {
   try {
-    await timeRecordsRef.doc(time_record.id).set(time_record);
+    // Filter out undefined values
+    const filteredRecord = Object.fromEntries(
+      Object.entries(time_record).filter(([_, v]) => v !== undefined)
+    );
+    
+    await timeRecordsRef.doc(filteredRecord.id).set(filteredRecord);
   } catch (error) {
-    showAlert('Error', 'Failed to create time record.');
-    console.error(error);
+    showAlert('Error', 'failed to create time record');
+    console.error(error, time_record);
   }
 };
-
 export const updateRecord = async (
   updates: Partial<TimeRecord>,
   id?: string,
