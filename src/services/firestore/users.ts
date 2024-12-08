@@ -216,9 +216,9 @@ export async function getUserDetailsByWorkerId(
   workerId: string,
 ): Promise<User | null> {
   try {
-    // Step 1: Find the role associated with the clientId
+    // Step 1: Find the role associated with the workerId
     const roleSnapshot = await rolesRef
-      .where('workerId', '==', workerId) // Query using clientId directly
+      .where('workerId', '==', workerId) // Query using workerId directly
       .limit(1)
       .get();
 
