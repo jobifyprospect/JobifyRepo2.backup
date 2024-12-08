@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "reset-cache": "rm -rf node_modules/ && npm cache clean --force && watchman watch-del-all && rm -rf ios/build/ && cd android && ./gradlew clean && cd .."
+    "reset-cache": "rm -rf node_modules/ && npm cache clean --force && watchman watch-del-all && rm -rf ios/build/ && cd android && ./gradlew clean && cd ..",
+    "build-release": "cd android && ./gradlew assembleRelease"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
