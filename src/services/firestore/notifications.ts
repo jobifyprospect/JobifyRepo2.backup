@@ -1,8 +1,31 @@
-// services/notificationService.ts
-import {showAlert} from '../../components/AlertDialog';
-import {FIRESTORE_TIMESTAMP, notificationsRef} from '../../config/firebase';
-import {Notification} from '../interfaces/notification';
-import {firebase} from '@react-native-firebase/messaging';
+export const sendNotification = async (
+  to: string,
+  title: string,
+  body: string,
+  data?: { [key: string]: string }
+) => {
+  try {
+    const message = {
+      token: to,
+      notification: {
+        title,
+        body,
+      },
+      data: data || {},
+      fcmOptions: {},
+    };
+
+    await firebase.messaging().sendMessage(message);
+    console.log('Notification sent successfully');
+  } catch (error) {
+    console.error('Error sending notification:', error);
+  }
+};
+
+import { showAlert } from '../../components/AlertDialog';
+import { FIRESTORE_TIMESTAMP, notificationsRef } from '../../config/firebase';
+import { Notification } from '../interfaces/notification';
+import { firebase } from '@react-native-firebase/messaging';
 
 export const fetchNotifications = async (
   userId: string | null,
@@ -70,7 +93,7 @@ export const createNotification = async (
     to?: string | null; // Nullable parameter for receiver ID
     messageId?: string; // Nullable parameter for receiver ID
     threadId?: string; // Nullable parameter for receiver ID
-    notification?: {title: string; body: string}; // Nullable notification object
+    notification?: { title: string; body: string }; // Nullable notification object
   },
 ): Promise<Notification | null> => {
   try {
@@ -88,7 +111,7 @@ export const createNotification = async (
     };
 
     // Send a message after creating the notification
-    const {from, to, notification, messageId, threadId} = notificationData; // Destructure params
+    const { from, to, notification, messageId, threadId } = notificationData; // Destructure params
 
     if (from && to && notification) {
       await firebase

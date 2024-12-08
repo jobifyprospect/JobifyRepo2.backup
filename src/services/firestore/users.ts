@@ -317,11 +317,11 @@ export const removeFcmToken = async (userId: string) => {
 };
 
 // Function to handle token refresh
-export const handleTokenRefresh = async (userId: string | null) => {
+export const handleTokenRefresh = async (userId: string | null, token: string | null) => {
   if (!userId) {
     return;
   }
-  const token = await messaging().getToken();
+
   await storeFcmToken(userId, token); // Update the token in Firestore
 };
 
