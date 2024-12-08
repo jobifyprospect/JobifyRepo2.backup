@@ -19,6 +19,7 @@ import BackButton from '../../components/BackButton';
 import { formatCurrency } from '../../utils/Utils';
 import { Application } from '../../services/interfaces/application';
 import { applicationsRef, FIRESTORE_TIMESTAMP, timeRecordsRef } from '../../config/firebase';
+import { Timestamp } from '@react-native-firebase/firestore';
 import { showAlert } from '../../components/AlertDialog';
 import { getClientDetails } from '../../services/firestore/roles';
 import { createRecord, getTimeRecord, getAll, updateRecord } from '../../services/firestore/time_records';
@@ -124,7 +125,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             clientId: job?.clientId,
             applicationId: application?.applicationId,
             acceptedBy: '',
-            time_in: FIRESTORE_TIMESTAMP,
+            time_in: FIRESTORE_TIMESTAMP as Timestamp,
         }
 
         await createRecord(payload)
@@ -141,10 +142,11 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             senderId: currentUserId,
             receiverId: receiverId,
             isRead: false,
-            createdAt: FIRESTORE_TIMESTAMP,
-            updatedAt: FIRESTORE_TIMESTAMP
+            createdAt: FIRESTORE_TIMESTAMP as Timestamp,
+            updatedAt: FIRESTORE_TIMESTAMP as Timestamp
         };
 
+        console.log(notificationData)
         await createNotification(notificationData);
         setIsSubmitting(false);
         setIsConfirmingTimeIn(false)
