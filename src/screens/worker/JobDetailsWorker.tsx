@@ -12,21 +12,25 @@ import React, { SetStateAction, useCallback, useEffect, useState } from 'react';
 import { styles } from '../../styles/Globals';
 import Colors from '../../styles/Colors';
 import { Job } from '../../services/interfaces/job';
-import { getJob, updateJob } from '../../services/firestore/jobs';
-import { NavigationProp, Route, useFocusEffect } from '@react-navigation/native';
+import { getJob } from '../../services/firestore/jobs';
+import { NavigationProp, Route } from '@react-navigation/native';
 import DynamicButton from '../../components/DynamicButton';
 import BackButton from '../../components/BackButton';
 import { formatCurrency } from '../../utils/Utils';
 import { Application } from '../../services/interfaces/application';
 import { applicationsRef, FIRESTORE_TIMESTAMP, timeRecordsRef } from '../../config/firebase';
+import { Timestamp } from '@react-native-firebase/firestore';
 import { showAlert } from '../../components/AlertDialog';
-import { getClientFullName, getClientDetails } from '../../services/firestore/roles';
+import { getClientDetails } from '../../services/firestore/roles';
 import { createRecord, getTimeRecord, getAll, updateRecord } from '../../services/firestore/time_records';
 import uuid from 'react-native-uuid';
 import { formatDateToReadable, formatDate } from '../../utils/Utils';
 import moment from 'moment';
 import { TimeRecord } from '../../services/interfaces/time_records';
-import { getCurrentUserUID, getIdByRoleId, getUser } from '../../services/firestore/users';
+import { getCurrentUserUID, getIdByRoleId, getUser, getUserDetailsByClientId, getUserDetailsByWorkerId } from '../../services/firestore/users';
+import { Notification } from '../../services/interfaces/notification';
+import { createNotification } from '../../services/firestore/notifications';
+
 interface RouterProps {
     navigation: NavigationProp<any, any>;
     route: Route<string, { id: string }>;
@@ -121,11 +125,29 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             clientId: job?.clientId,
             applicationId: application?.applicationId,
             acceptedBy: '',
-            time_in: FIRESTORE_TIMESTAMP,
+            time_in: FIRESTORE_TIMESTAMP as Timestamp,
         }
 
-        console.log('payload to send: ', payload)
         await createRecord(payload)
+
+        const receiverDetails = await getUserDetailsByClientId(job?.clientId as string);
+        const receiverId = receiverDetails?.userId as string;
+        const name = `${receiverDetails?.firstName} ${receiverDetails?.lastName}`
+
+        // Create and send notification
+        const notificationData: Notification = {
+            id: uuid.v4().toString(), // Generate a unique notification ID
+            title: 'Worker Time in',
+            subtitle: `${name} has timed in for ${job?.title}`,
+            senderId: currentUserId,
+            receiverId: receiverId,
+            isRead: false,
+            createdAt: FIRESTORE_TIMESTAMP as Timestamp,
+            updatedAt: FIRESTORE_TIMESTAMP as Timestamp
+        };
+
+        console.log(notificationData)
+        await createNotification(notificationData);
         setIsSubmitting(false);
         setIsConfirmingTimeIn(false)
         showAlert('Success', 'Timed in.')
@@ -138,6 +160,24 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             time_out: FIRESTORE_TIMESTAMP,
         }
         await updateRecord(payload, record?.id)
+
+        const receiverDetails = await getUserDetailsByClientId(job?.clientId as string);
+        const receiverId = receiverDetails?.userId as string;
+        const name = `${receiverDetails?.firstName} ${receiverDetails?.lastName}`
+
+        // Create and send notification
+        const notificationData: Notification = {
+            id: uuid.v4().toString(), // Generate a unique notification ID
+            title: 'Time Out Request',
+            subtitle: `${name} has requested to time out for ${job?.title}`,
+            senderId: currentUserId,
+            receiverId: receiverId,
+            isRead: false,
+            createdAt: FIRESTORE_TIMESTAMP,
+            updatedAt: FIRESTORE_TIMESTAMP
+        };
+
+        await createNotification(notificationData);
         setIsSubmitting(false);
         setIsConfirmingTimeOut(false)
         showAlert('Success', 'Time out request sent for client approval.')
