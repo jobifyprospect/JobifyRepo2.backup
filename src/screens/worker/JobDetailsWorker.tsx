@@ -18,18 +18,18 @@ import DynamicButton from '../../components/DynamicButton';
 import BackButton from '../../components/BackButton';
 import { formatCurrency } from '../../utils/Utils';
 import { Application } from '../../services/interfaces/application';
-import { applicationsRef, FIRESTORE_TIMESTAMP, timeRecordsRef } from '../../config/firebase';
-import { Timestamp } from '@react-native-firebase/firestore';
+import { applicationsRef, timeRecordsRef } from '../../config/firebase';
 import { showAlert } from '../../components/AlertDialog';
 import { getClientDetails } from '../../services/firestore/roles';
-import { createRecord, getTimeRecord, getAll, updateRecord } from '../../services/firestore/time_records';
+import { createRecord, getTimeRecord, updateRecord } from '../../services/firestore/time_records';
 import uuid from 'react-native-uuid';
-import { formatDateToReadable, formatDate } from '../../utils/Utils';
+import { formatDate } from '../../utils/Utils';
 import moment from 'moment';
 import { TimeRecord } from '../../services/interfaces/time_records';
-import { getCurrentUserUID, getIdByRoleId, getUser, getUserDetailsByClientId, getUserDetailsByWorkerId } from '../../services/firestore/users';
+import { getCurrentUserUID, getIdByRoleId, getUser, getUserDetailsByClientId } from '../../services/firestore/users';
 import { Notification } from '../../services/interfaces/notification';
 import { createNotification } from '../../services/firestore/notifications';
+import { serverTimestamp } from '@react-native-firebase/firestore';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -125,7 +125,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             clientId: job?.clientId,
             applicationId: application?.applicationId,
             acceptedBy: '',
-            time_in: FIRESTORE_TIMESTAMP as Timestamp,
+            time_in: serverTimestamp(),
         }
 
         await createRecord(payload)
@@ -142,8 +142,8 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             senderId: currentUserId,
             receiverId: receiverId,
             isRead: false,
-            createdAt: FIRESTORE_TIMESTAMP as Timestamp,
-            updatedAt: FIRESTORE_TIMESTAMP as Timestamp
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
         };
 
         console.log(notificationData)
@@ -156,8 +156,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     async function timeOut() {
         setIsSubmitting(true)
         const payload: Partial<TimeRecord> = {
-
-            time_out: FIRESTORE_TIMESTAMP,
+            time_out: serverTimestamp(),
         }
         await updateRecord(payload, record?.id)
 
@@ -173,8 +172,8 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             senderId: currentUserId,
             receiverId: receiverId,
             isRead: false,
-            createdAt: FIRESTORE_TIMESTAMP,
-            updatedAt: FIRESTORE_TIMESTAMP
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
         };
 
         await createNotification(notificationData);
