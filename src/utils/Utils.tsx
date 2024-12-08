@@ -128,19 +128,25 @@ export function formatDate(date: FirebaseTimeStampT | any) {
   return formattedDate;
 }
 
-// Helper function to format the date
-export const formatDateToReadable = (
-  date: Timestamp | FieldValue | undefined,
-) => {
-  if (!date) {
-    return;
-  }
-  const dateStr = date?.toString();
-  const dateObj = date instanceof Timestamp ? date.toDate() : new Date(dateStr);
+export const formatDateToReadable = (date: Timestamp | Date | null): string => {
+  if (!date) return 'N/A';
 
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
+  let jsDate: Date;
+  if (date instanceof Timestamp) {
+    jsDate = date.toDate();
+  } else if (date instanceof Date) {
+    jsDate = date;
+  } else {
+    return 'Invalid Date';
+  }
+
+  return jsDate.toLocaleString('en-PH', {
     year: 'numeric',
-  }).format(dateObj);
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
 };
+

@@ -136,12 +136,7 @@ export const createNotification = async (
         .catch((error: any) => {
           console.error(`${error} notifications not sent`);
         });
-    } else {
-      console.error(
-        'From, To, and Notification parameters are required to send a message.',
-      );
     }
-
     return newNotification; // Return the newly created notification
   } catch (error) {
     console.error('Error creating notification:', error);

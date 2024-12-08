@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import messaging from '@react-native-firebase/messaging';
 import { View, FlatList, Text, TouchableOpacity, StyleSheet, Button } from 'react-native';
-import { formatDateToReadable } from '../utils/Utils'; // Assuming this function exists
+import { formatDateToReadable } from '../utils/Utils';
 import { Notification } from '../services/interfaces/notification';
 import {
   createNotification,
@@ -16,6 +16,7 @@ import { getCurrentUserUID } from '../services/firestore/users';
 import { FIRESTORE_TIMESTAMP } from '../config/firebase';
 import { useFCMToken } from '../config/FCMTokenContext';
 import uuid from 'react-native-uuid';
+import { Timestamp } from '@react-native-firebase/firestore';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -114,7 +115,9 @@ const NotificationScreen = ({ navigation }: RouterProps) => {
           <Text style={styles.subtitle}>{item.subtitle}</Text>
         </View>
       </View>
-      <Text style={styles.date}>{formatDateToReadable(item.createdAt)}</Text>
+      <Text style={styles.date}>
+        {item.createdAt ? formatDateToReadable(item.createdAt as Timestamp) : 'N/A'}
+      </Text>
     </TouchableOpacity>
   );
 
@@ -122,15 +125,45 @@ const NotificationScreen = ({ navigation }: RouterProps) => {
     const fcmToken = useFCMToken();
 
     const handleSendTestNotification = async () => {
-      if (fcmToken) {
-        await sendNotification(
-          fcmToken,
-          'Test Notification',
-          'This is a test notification sent from within the app.',
-          { customData: 'Some custom data' }
-        );
+      const currentUserUID = await getCurrentUserUID();
+      if (fcmToken && currentUserUID) {
+        try {
+          const newNotification: Notification = {
+            id: uuid.v4().toString(),
+            title: 'Test Notification',
+            subtitle: 'This is a test notification sent from within the app.',
+            senderId: currentUserUID,
+            receiverId: 'c22e4068-f1ea-426e-bb64-4328c97ef771', // Sending to self for testing
+            createdAt: FIRESTORE_TIMESTAMP,
+            updatedAt: FIRESTORE_TIMESTAMP,
+            isRead: false,
+          };
+
+          // First, create the notification in Firestore
+          await createNotification(newNotification);
+
+          // Then, send the FCM message
+          if (fcmToken) {
+            await sendNotification(
+              fcmToken,
+              newNotification.title,
+              newNotification.subtitle,
+              { notificationId: newNotification.id }
+            );
+          } else {
+            console.error('FCM token not available');
+          }
+
+
+          console.log('Test notification sent successfully');
+
+          // Update local state
+          setNotifications(prevNotifications => [newNotification, ...prevNotifications]);
+        } catch (error) {
+          console.error('Error sending test notification:', error);
+        }
       } else {
-        console.error('FCM token not available');
+        console.error('FCM token or current user UID not available');
       }
     };
 
@@ -138,6 +171,7 @@ const NotificationScreen = ({ navigation }: RouterProps) => {
       <Button title="Send Test Notification" onPress={handleSendTestNotification} />
     );
   };
+
   return (
     <View style={styles.container}>
       {loading ? (
