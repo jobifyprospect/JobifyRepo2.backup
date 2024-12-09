@@ -98,6 +98,22 @@ const NotificationScreen = ({ navigation }: RouterProps) => {
       }
     } catch (error) {
       console.error('Error updating notification read status:', error);
+    } finally {
+      if (notification.params?.component) {
+        if (notification.params.id1 && notification.params.id2 && notification.params.id3) {
+          // Case for multiple ids
+          navigation.navigate(notification.params.component, {
+            worker_id: notification.params.id1,
+            job_id: notification.params.id2,
+            app_id: notification.params.id3
+          });
+        } else if (notification.params.id1) {
+          // Case for single id
+          navigation.navigate(notification.params.component, { id: notification.params.id1 });
+        } else {
+          navigation.navigate(notification.params.component);
+        }
+      }
     }
   };
 

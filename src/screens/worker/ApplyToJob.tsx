@@ -118,7 +118,11 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
         receiverId: receiverId,
         isRead: false,
         createdAt: FIRESTORE_TIMESTAMP,
-        updatedAt: FIRESTORE_TIMESTAMP
+        updatedAt: FIRESTORE_TIMESTAMP,
+        params: {
+          component: 'JobDetailsClient',
+          id1: job?.jobId
+        }
       };
 
       await createNotification(notificationData);
@@ -174,7 +178,11 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
         receiverId: receiverId,
         isRead: false,
         createdAt: FIRESTORE_TIMESTAMP,
-        updatedAt: FIRESTORE_TIMESTAMP
+        updatedAt: FIRESTORE_TIMESTAMP,
+        params: {
+          component: 'JobDetailsClient',
+          id1: job?.jobId
+        }
       };
 
       await createNotification(notificationData);
@@ -304,9 +312,11 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
                           </View>
                         )}
                       </View>
-                      <Text style={localStyles.nameContainer}>
-                        {client?.firstName} {client?.lastName}
-                      </Text>
+                      <View style={{ flex: 1, justifyContent: 'center' }}>
+                        <Text style={localStyles.nameContainer}>
+                          {client?.firstName} {client?.lastName}
+                        </Text>
+                      </View>
                     </View>
                   </View>
 
@@ -357,15 +367,26 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
                 </View>
 
                 <View style={localStyles.cardFooter}>
-                  <Text style={localStyles.cardContentHeader}>Rate / hr </Text>
-                  <Text style={localStyles.footerTextXL}>
-                    {formatCurrency(job?.pay ?? 0)}
-                  </Text>
+                  <View>
+                    <View style={{ alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                      <Text style={{ textAlign: 'right' }}> Payment Type: </Text>
+                      <Text style={localStyles.footerTextXL}>
+                        {job?.rateType ? job.rateType : 'Daily'}
+                      </Text>
+                    </View>
+
+                    <View>
+                      <Text style={{ textAlign: 'right' }}> Rate </Text>
+                      <Text style={localStyles.footerTextXL}>
+                        {formatCurrency(job?.pay ?? 0)}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
                 <View style={localStyles.actionBtnGroup}>
                   {hasApplied ? (
-                    <View>
-                      <View>
+                    <View style={{ rowGap: 18 }}>
+                      <View style={{ borderWidth: 2, padding: 8, borderColor: Colors.primary, borderRadius: 10 }}>
                         <Text style={localStyles.cardContentHeader}> Your rate: </Text>
                         <Text style={localStyles.footerTextXL}> {formatCurrency(app && app[0]._data.offer)} </Text>
                       </View>
@@ -396,8 +417,8 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
               </View>
             </View>
           </ScrollView>
-        </View>
-      </View>
+        </View >
+      </View >
       <CounterOfferModal
         isVisible={isModalVisible}
         onClose={value => handleSubmitApplicationWithOffer(value)}
@@ -415,7 +436,7 @@ const localStyles = StyleSheet.create({
     paddingTop: 25,
     flex: 1,
   },
-  nameContainer: { fontWeight: '600', fontSize: 24 },
+  nameContainer: { fontWeight: '600', fontSize: 22, flex: 1, textAlign: 'left', justifyContent: 'center', paddingVertical: 10 },
   screen: {
     flex: 1,
     paddingTop: 24,

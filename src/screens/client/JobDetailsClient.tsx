@@ -8,67 +8,58 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import {styles} from '../../styles/Globals';
+import React, { useCallback, useEffect, useState } from 'react';
+import { styles } from '../../styles/Globals';
 import Colors from '../../styles/Colors';
-import {Job} from '../../services/interfaces/job';
-import {getJob, updateJob} from '../../services/firestore/jobs';
-import {NavigationProp, Route, useFocusEffect} from '@react-navigation/native';
+import { Job } from '../../services/interfaces/job';
+import { getJob, updateJob } from '../../services/firestore/jobs';
+import { NavigationProp, Route } from '@react-navigation/native';
 import RefreshButton from '../../components/RefreshComponent';
 import DynamicButton from '../../components/DynamicButton';
 import BackButton from '../../components/BackButton';
-import {formatCurrency, formatDateToReadable} from '../../utils/Utils';
-import {Application} from '../../services/interfaces/application';
-import {applicationsRef} from '../../config/firebase';
+import { formatCurrency, formatDateToReadable } from '../../utils/Utils';
+import { Application } from '../../services/interfaces/application';
+import { applicationsRef } from '../../config/firebase';
 import {
   getCurrentUserUID,
-  getUser,
   getUserDefaultRole,
 } from '../../services/firestore/users';
-import {deleteJob} from '../../services/firestore/jobs';
-import {showAlert} from '../../components/AlertDialog';
+import { deleteJob } from '../../services/firestore/jobs';
+import { showAlert } from '../../components/AlertDialog';
 import GetFullName from '../../components/GetFullName';
-import {getReviewForJob} from '../../services/firestore/reviews';
+import { getReviewForJob } from '../../services/firestore/reviews';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
-  route: Route<string, {id: string}>;
+  route: Route<string, { id: string }>;
 }
 
-export default function JobDetailsClient({navigation, route}: RouterProps) {
+export default function JobDetailsClient({ navigation, route }: RouterProps) {
   const id = route.params.id;
 
   const [job, setJob] = useState<Job>();
   const [applicants, setApplicants] = useState<Application[]>();
-  const [loading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentScreen, setCurrentScreen] = useState<'Listing' | 'Applicants'>(
     'Listing',
   );
-  const [currentUserId, setCurrentUserId] = useState<any>(null);
+
   const [currentRole, setCurrentRole] = useState<any>('worker');
   const [isDone, setIsDone] = useState<Boolean>(false);
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
   const [deleting, setDeleting] = useState(false); // State to track refreshing
   const [reviewExists, setReviewExists] = useState(false);
 
-  async function fetchMyRoleId() {
+
+  const fetchJobAndApplicants = useCallback(async () => {
+    setIsLoading(true); // Set isLoading to true at the start
     try {
       const uid = await getCurrentUserUID();
       if (uid) {
-        const currentRoleA = await getUser(uid);
         const currentRoleValue = await getUserDefaultRole();
-        console.log(`AWESOME ${currentRoleValue}`);
-        setCurrentRole(currentRoleValue);
-        setCurrentUserId(currentRoleA?.defaultRole);
-      }
-    } catch (err) {
-      console.error('something went wrong while fetching user');
-    }
-  }
 
-  const fetchJobAndApplicants = useCallback(async () => {
-    setIsLoading(true); // Set loading to true at the start
-    try {
+        setCurrentRole(currentRoleValue);
+      }
       if (id) {
         // Fetch job and applicants simultaneously
         const [jobData] = await Promise.all([getJob(id)]);
@@ -111,6 +102,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       }
     });
   }
+
   const handleOpenMap = () => {
     if (job?.mapLocation?.longitude && job?.mapLocation?.latitude) {
       navigation.navigate('MapScreen', {
@@ -124,6 +116,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       );
     }
   };
+
   const checkReviewExists = async (jobId: string, workerId: string) => {
     try {
       const review = await getReviewForJob(jobId, workerId); // Implement this service to fetch a review for the specific job and worker
@@ -133,6 +126,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
       return false; // If there's an error, assume no review exists
     }
   };
+
   const onRefresh = useCallback(() => {
     setRefreshing(true); // Start the refreshing spinner
     fetchJobAndApplicants(); // Refresh both job and applicants
@@ -142,13 +136,6 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
     fetchJobAndApplicants(); // Initial fetch when the component mounts
   }, [fetchJobAndApplicants]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (currentUserId === null) {
-        fetchMyRoleId();
-      }
-    }, [currentUserId]),
-  );
 
   useEffect(() => {
     if (job?.jobId) {
@@ -170,7 +157,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
     }
   }, [job?.jobId]);
 
-  if (loading && !refreshing) {
+  if (isLoading && !refreshing) {
     return (
       <View style={localStyles.contentLoading}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -191,7 +178,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
               onPress={async () => {
                 try {
                   // Call the updateJob function to change the status to 'closed'
-                  await updateJob(job.jobId, {status: 'closed'});
+                  await updateJob(job.jobId, { status: 'closed' });
                   setIsDone(true);
                 } catch (error) {
                   // Handle any errors if needed
@@ -226,7 +213,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                 localStyles.tabStyle,
                 currentScreen === 'Listing'
                   ? {}
-                  : {backgroundColor: Colors.placeholder},
+                  : { backgroundColor: Colors.placeholder },
               ]}
               onPress={() => setCurrentScreen('Listing')}>
               <Text style={localStyles.centerText}>Job Listing</Text>
@@ -238,7 +225,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                 localStyles.tabStyle,
                 currentScreen === 'Applicants'
                   ? {}
-                  : {backgroundColor: Colors.placeholder},
+                  : { backgroundColor: Colors.placeholder },
               ]}
               onPress={() => setCurrentScreen('Applicants')}>
               <Text style={localStyles.centerText}>Applicants</Text>
@@ -285,10 +272,21 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                 </View>
 
                 <View style={localStyles.cardFooter}>
-                  <Text style={localStyles.cardContentHeader}>Rate / hr </Text>
-                  <Text style={localStyles.footerTextXL}>
-                    {formatCurrency(job?.pay ?? 0)}
-                  </Text>
+                  <View>
+                    <View style={{ alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                      <Text style={{ textAlign: 'right' }}> Payment Type: </Text>
+                      <Text style={localStyles.footerTextXL}>
+                        {job?.rateType ? job.rateType : 'Daily'}
+                      </Text>
+                    </View>
+
+                    <View>
+                      <Text style={{ textAlign: 'right' }}> Rate </Text>
+                      <Text style={localStyles.footerTextXL}>
+                        {formatCurrency(job?.pay ?? 0)}
+                      </Text>
+                    </View>
+                  </View>
                   <View>
                     {isDone && currentRole !== 'worker' && (
                       <DynamicButton
@@ -349,7 +347,7 @@ export default function JobDetailsClient({navigation, route}: RouterProps) {
                   </Text>
                 }
                 data={applicants} // Display searchResults instead of myListings
-                renderItem={({item, index}) => {
+                renderItem={({ item, index }) => {
                   const currentItemDate = formatDateToReadable(item.createdAt);
                   const previousItemDate =
                     index > 0
@@ -464,7 +462,7 @@ const localStyles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 150,
   },
-  centerText: {textAlign: 'center'},
+  centerText: { textAlign: 'center' },
   tabStyle: {
     paddingVertical: 12,
     alignItems: 'center',
@@ -515,8 +513,8 @@ const localStyles = StyleSheet.create({
     alignItems: 'center',
     columnGap: 18,
   },
-  row: {flexDirection: 'row'},
-  column: {flexDirection: 'column'},
+  row: { flexDirection: 'row' },
+  column: { flexDirection: 'column' },
   statusText: {
     marginLeft: 'auto',
   },

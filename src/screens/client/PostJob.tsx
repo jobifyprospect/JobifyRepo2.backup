@@ -5,17 +5,17 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
-import React, {useState, useEffect, useCallback} from 'react';
-import {styles} from '../../styles/Globals';
-import {NavigationProp} from '@react-navigation/native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { styles } from '../../styles/Globals';
+import { NavigationProp } from '@react-navigation/native';
 import DynamicButton from '../../components/DynamicButton';
-import {createJob} from '../../services/firestore/jobs';
-import {showAlert} from '../../components/AlertDialog';
+import { createJob } from '../../services/firestore/jobs';
+import { showAlert } from '../../components/AlertDialog';
 import DynamicTextInput from '../../components/DynamicTextInput';
-import {FIRESTORE_TIMESTAMP} from '../../config/firebase';
-import {isNotEmpty} from '../../utils/Utils';
+import { FIRESTORE_TIMESTAMP } from '../../config/firebase';
+import { isNotEmpty } from '../../utils/Utils';
 import uuid from 'react-native-uuid';
-import {Job} from '../../services/interfaces/job';
+import { Job } from '../../services/interfaces/job';
 import BackButton from '../../components/BackButton';
 import {
   getCurrentUserUID,
@@ -23,12 +23,13 @@ import {
   getUser,
 } from '../../services/firestore/users';
 import LocationPickerInput from '../../components/LocationPickerInput';
+import DynamicDropdown from '../../components/DropDown';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-export default function PostJob({navigation}: RouterProps) {
+export default function PostJob({ navigation }: RouterProps) {
   const [title, setTitle] = useState('');
   const [pay, setPay] = useState('');
   const [schedule, setSchedule] = useState('');
@@ -41,9 +42,9 @@ export default function PostJob({navigation}: RouterProps) {
   const [currentUserId, setCurrentUserId] = useState<any>(null);
   const [selectedLocation, setSelectedLocation] = useState<
     | {
-        latitude: number;
-        longitude: number;
-      }
+      latitude: number;
+      longitude: number;
+    }
     | undefined
   >(undefined);
 
@@ -110,6 +111,7 @@ export default function PostJob({navigation}: RouterProps) {
         description: description.trim(),
         schedule: schedule.trim(),
         pay: parseInt(pay, 10),
+        rateType: rateType, // Assuming 'Daily' for now
         status: status || 'pending',
         jobId: uuid.v4().toString(),
         clientId: currentUserId,
@@ -119,7 +121,7 @@ export default function PostJob({navigation}: RouterProps) {
 
       await createJob(newJob);
       resetForm();
-      navigation.navigate('ClientDashboardScreen', {updateList: true});
+      navigation.navigate('ClientDashboardScreen', { updateList: true });
     } catch (error) {
       showAlert(
         'An error occurred while posting the job.',
@@ -141,6 +143,19 @@ export default function PostJob({navigation}: RouterProps) {
     status,
     navigation,
   ]);
+
+  type Option = {
+    id: string;
+    title: string;
+    description: string;
+  };
+
+  const [rateType, setRateType] = useState<string>('Daily')
+
+  const RateTypes: Option[] = [
+    { id: 'Daily', title: 'Daily', description: '' },
+    { id: 'Fixed', title: 'Fixed', description: '' }
+  ]
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -178,8 +193,17 @@ export default function PostJob({navigation}: RouterProps) {
             isValid={isNotEmpty(pay)}
             suffixIcon="peso-sign"
             label="Rate"
-            placeholder="Rate/hr"
+            placeholder="Rate"
             isRequired
+          />
+
+          <DynamicDropdown
+            label="Payment Type"
+            placeholder=" - Select Payment Type -"
+            options={RateTypes}
+            value={rateType}
+            onSelect={setRateType}
+            isEnabled={!!rateType}
           />
 
           <DynamicTextInput
@@ -207,7 +231,7 @@ export default function PostJob({navigation}: RouterProps) {
             navigation={navigation}
           />
           <DynamicTextInput
-            label="Description"
+            label="Job Description"
             value={description}
             onChangeText={setDescription}
             isValid={isNotEmpty(description)}

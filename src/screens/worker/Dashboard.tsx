@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import {
   Image,
   Pressable,
 } from 'react-native';
-import {NavigationProp, useFocusEffect} from '@react-navigation/native';
-import {FIREBASE_AUTH, jobsRef} from '../../config/firebase';
+import { NavigationProp, useFocusEffect } from '@react-navigation/native';
+import { FIREBASE_AUTH, jobsRef } from '../../config/firebase';
 import {
   getAllJobsWithUserDetails,
   queryJobWithUserDetails,
@@ -19,27 +19,27 @@ import {
 import NotificationsButton from '../../components/NotificationsButton';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import Colors from '../../styles/Colors';
-import {formatCurrency, formatDateToReadable} from '../../utils/Utils';
-import {styles} from '../../styles/Globals';
-import {onAuthStateChanged} from '@react-native-firebase/auth';
+import { formatCurrency, formatDateToReadable } from '../../utils/Utils';
+import { styles } from '../../styles/Globals';
+import { onAuthStateChanged } from '@react-native-firebase/auth';
 import {
   getCurrentUserUID,
   getUser,
   storeFcmToken,
 } from '../../services/firestore/users';
-import {firebase} from '@react-native-firebase/messaging';
-import {showAlert} from '../../components/AlertDialog';
-import {useFCMToken} from '../../config/FCMTokenContext';
+import { firebase } from '@react-native-firebase/messaging';
+import { showAlert } from '../../components/AlertDialog';
+import { useFCMToken } from '../../config/FCMTokenContext';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Dashboard = ({navigation}: RouterProps) => {
+const Dashboard = ({ navigation }: RouterProps) => {
   const [myListings, setMyListings] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentRoleId, setCurrentRoleId] = useState<string | undefined>(
     undefined,
@@ -52,19 +52,19 @@ const Dashboard = ({navigation}: RouterProps) => {
       return; // Early return if no role ID
     }
 
-    setLoading(true); // Set loading to true while fetching
+    setIsLoading(true); // Set loading to true while fetching
     try {
       const jobs = await getAllJobsWithUserDetails();
       setMyListings(jobs);
       setSearchResults(jobs);
 
       if (!jobs) {
-        setLoading(false);
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
       setRefreshing(false); // Stop refreshing after data fetch
     }
   }, []);
@@ -103,68 +103,32 @@ const Dashboard = ({navigation}: RouterProps) => {
   );
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(
-      FIREBASE_AUTH,
-      async (user: any) => {
-        if (user) {
-          const currentRole = await getUser(user.uid);
-          const uid = await getCurrentUserUID();
-          if (currentRole) {
-            setCurrentRoleId(currentRole.defaultRole);
-          }
-          await storeFcmToken(uid, fcmToken); // Store the new token
-        } else {
-          // Reset state when user logs out or there is no user
-          setMyListings([]);
-          setSearchResults([]);
-          setSearch('');
-          setLoading(false);
+    const unsubscribeAuth = onAuthStateChanged(FIREBASE_AUTH, async (user: any) => {
+      if (user) {
+        const currentRole = await getUser(user.uid);
+        const uid = await getCurrentUserUID();
+        if (currentRole) {
+          setCurrentRoleId(currentRole.defaultRole);
         }
-      },
-    );
-
-    // Cleanup auth listener on unmount
-    return () => unsubscribeAuth();
-  }, [fcmToken]);
-
-  // Fetch jobs when currentRoleId changes
-  useEffect(() => {
-    if (currentRoleId) {
-      fetchJobs(currentRoleId);
-    }
-  }, [currentRoleId, fetchJobs]);
-
-  // Fetch jobs when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      if (currentRoleId) {
-        fetchJobs(currentRoleId);
-      }
-    }, [fetchJobs, currentRoleId]),
-  );
-  useEffect(() => {
-    const unsubscribe = firebase.messaging().onMessage(async remoteMessage => {
-      if (remoteMessage) {
-        // Check for the logged-in user
-        const currentUser = FIREBASE_AUTH.currentUser;
-        if (currentUser) {
-          showAlert('Notification', 'There is a new notification', () =>
-            navigation.navigate('Notification'),
-          );
-        } else {
-          console.log('ON MESSAGE: No user is logged in.');
-        }
-
-        console.log('ON MESSAGE', remoteMessage);
+        await storeFcmToken(uid, fcmToken);
+      } else {
+        setMyListings([]);
+        setSearchResults([]);
+        setSearch('');
+        setIsLoading(false);
       }
     });
-    return unsubscribe;
-  }, [navigation]);
 
-  useEffect(() => {
-    const unsubscribe = jobsRef.onSnapshot(
+    const unsubscribeMessaging = firebase.messaging().onMessage(async remoteMessage => {
+      if (remoteMessage && FIREBASE_AUTH.currentUser) {
+        showAlert('Notification', 'There is a new notification', () =>
+          navigation.navigate('Notification'),
+        );
+      }
+    });
+
+    const unsubscribeJobs = jobsRef.onSnapshot(
       snapshot => {
-        console.log('Snapshot: ' + snapshot.size);
         if (!snapshot.empty) {
           onRefresh();
         }
@@ -174,9 +138,27 @@ const Dashboard = ({navigation}: RouterProps) => {
       },
     );
 
-    // Cleanup listener on unmount
-    return () => unsubscribe();
-  }, [onRefresh]);
+    // Cleanup function
+    return () => {
+      unsubscribeAuth();
+      unsubscribeMessaging();
+      unsubscribeJobs();
+    };
+  }, [fcmToken, navigation, onRefresh]);
+
+  useEffect(() => {
+    if (currentRoleId) {
+      fetchJobs(currentRoleId);
+    }
+  }, [currentRoleId, fetchJobs]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (currentRoleId) {
+        fetchJobs(currentRoleId);
+      }
+    }, [fetchJobs, currentRoleId]),
+  );
 
   return (
     <View style={localStyles.container}>
@@ -189,7 +171,7 @@ const Dashboard = ({navigation}: RouterProps) => {
         </SafeAreaView>
 
         <>
-          {loading ? ( // Render loading indicator when loading
+          {isLoading ? ( // Render loading indicator when loading
             <ActivityIndicator
               style={localStyles.container}
               size="large"
@@ -225,21 +207,21 @@ const Dashboard = ({navigation}: RouterProps) => {
                   />
                 }
                 keyExtractor={item => item?.job?.jobId?.toString()}
-                renderItem={({item, index}) => {
+                renderItem={({ item, index }) => {
                   const currentItemDate = formatDateToReadable(
                     item?.job?.createdAt ?? undefined,
                   );
                   const previousItemDate =
                     index > 0
                       ? formatDateToReadable(
-                          myListings[index - 1]?.job?.createdAt,
-                        )
+                        myListings[index - 1]?.job?.createdAt,
+                      )
                       : null;
                   const nextItemDate =
                     index < myListings.length - 1
                       ? formatDateToReadable(
-                          myListings[index + 1]?.job?.createdAt,
-                        )
+                        myListings[index + 1]?.job?.createdAt,
+                      )
                       : null;
 
                   const isGroupStart = currentItemDate !== previousItemDate;
@@ -297,7 +279,7 @@ const Dashboard = ({navigation}: RouterProps) => {
                           <View style={localStyles.profileContainer}>
                             {item?.user?.profilePicture ? (
                               <Image
-                                source={{uri: item?.user?.profilePicture}}
+                                source={{ uri: item?.user?.profilePicture }}
                                 style={localStyles.profileImage}
                               />
                             ) : (

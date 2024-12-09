@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { styles } from '../styles/Globals';
 import Colors from '../styles/Colors';
@@ -80,7 +80,6 @@ export default function Transaction({ navigation, route }: TransactionProps) {
   );
 
   const fetchJobs = useCallback(async () => {
-    setRefreshing(true); // Start the refreshing spinner
     try {
       const uid: string | null = await getCurrentUserUID();
       const workerUid: string | null = await getUserDefaultUserUid();
@@ -99,13 +98,17 @@ export default function Transaction({ navigation, route }: TransactionProps) {
       console.error('Failed to fetch jobs:', error);
     } finally {
       setIsLoading(false); // Stop the loading spinner
-      setRefreshing(false); // Stop the refreshing spinner
     }
   }, [role]);
 
-  const onRefresh = useCallback(() => {
-    fetchDefaultRole();
-    fetchJobs(); // Refresh the job data
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchDefaultRole();
+      await fetchJobs();
+    } finally {
+      setRefreshing(false);
+    }
   }, [fetchDefaultRole, fetchJobs]);
 
   // const fetchApplications = useCallback(async () => {
@@ -120,7 +123,7 @@ export default function Transaction({ navigation, route }: TransactionProps) {
   useFocusEffect(
     useCallback(() => {
       fetchJobs();
-      
+
       // fetchApplications();
     }, [fetchJobs]),
   );
@@ -134,8 +137,15 @@ export default function Transaction({ navigation, route }: TransactionProps) {
     }
   }
 
-  isLoading && <Text> Loading ... </Text>;
-  
+  if (isLoading && !refreshing) {
+    return (
+      <View style={localStyles.contentLoading}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.mediumText}> Loading Transactions.. </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={localStyles.container}>
       <View style={localStyles.btnContainerEnd}>
@@ -351,5 +361,11 @@ const localStyles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     // marginRight: 10,
+  },
+  contentLoading: {
+    flex: 1,
+    rowGap: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -7,6 +7,7 @@ export interface Job {
   status?: 'open' | 'closed' | 'pending'; // Possible statuses
   schedule: Date | any;
   location?: string;
+  rateType?: string
   mapLocation?: {
     latitude: number;
     longitude: number;

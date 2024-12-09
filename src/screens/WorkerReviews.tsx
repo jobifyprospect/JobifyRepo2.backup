@@ -1,19 +1,19 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {View, Text, StyleSheet, SafeAreaView, ScrollView} from 'react-native';
-import {NavigationProp, Route} from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { NavigationProp, Route } from '@react-navigation/native';
 import BackButton from '../components/BackButton';
 import Colors from '../styles/Colors';
-import {styles} from '../styles/Globals';
-import {Review} from '../services/interfaces/review';
+import { styles } from '../styles/Globals';
+import { Review } from '../services/interfaces/review';
 import ProfilePicture from '../components/GetProfilePicture'; // Adapt to client usage
 import GetFullName from '../components/GetFullName';
-import {getReviewsByWorkerId} from '../services/firestore/reviews';
-import Svg, {Path} from 'react-native-svg';
-import {formatCurrency, formatDateToReadable} from '../utils/Utils';
+import { getReviewsByWorkerId } from '../services/firestore/reviews';
+import Svg, { Path } from 'react-native-svg';
+import { formatCurrency, formatDate, formatDateToReadable } from '../utils/Utils';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
-  route: Route<string, {worker_id: string}>;
+  route: Route<string, { worker_id: string }>;
 }
 const ratingDescriptions = [
   'Poor Job',
@@ -22,7 +22,7 @@ const ratingDescriptions = [
   'Very Good',
   'Excellent',
 ];
-export default function WorkerReviews({navigation, route}: RouterProps) {
+export default function WorkerReviews({ navigation, route }: RouterProps) {
   const params_workerId = route.params.worker_id;
 
   const [reviews, setReviews] = useState<Review[] | null>(null);
@@ -66,12 +66,12 @@ export default function WorkerReviews({navigation, route}: RouterProps) {
                     size={50}
                     type={'client'}
                   />
-                  <View style={localStyles.row}>
+                  <View style={{ flexDirection: 'column', flex: 1 }}>
                     <View>
                       <GetFullName uuId={review.clientId} type={'client'} />
                     </View>
                     <Text style={styles.smallText}>
-                      {formatDateToReadable(review.createdAt)}
+                      {formatDate(review.createdAt)}
                     </Text>
                   </View>
                 </View>
@@ -86,7 +86,7 @@ export default function WorkerReviews({navigation, route}: RouterProps) {
                     {formatCurrency(review.amount)}
                   </Text>
                 </View>
-                <View style={localStyles.row}>
+                <View style={{ flexDirection: 'column' }}>
                   <Text style={styles.smallText}>
                     Start: {formatDateToReadable(review.startDate)}
                   </Text>
@@ -109,7 +109,7 @@ export default function WorkerReviews({navigation, route}: RouterProps) {
                 </Text>
 
                 <View style={localStyles.starsContainer}>
-                  {Array.from({length: 5}, (_, index) => {
+                  {Array.from({ length: 5 }, (_, index) => {
                     const starValue = index + 1;
                     return (
                       <Svg

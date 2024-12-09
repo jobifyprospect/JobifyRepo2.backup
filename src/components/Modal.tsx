@@ -57,8 +57,8 @@ const CounterOfferModal = forwardRef<
             onChangeText={setPay}
             isValid={isNumberOnly(pay)}
             suffixIcon="peso-sign"
-            label="Pay Rate / hr"
-            placeholder="Rate/hr"
+            label="Propose your own rate for this job."
+            placeholder="-"
             isRequired
           />
 

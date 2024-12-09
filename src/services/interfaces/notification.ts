@@ -1,4 +1,4 @@
-import {FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
+import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 export interface Notification {
   id: string; // Unique identifier for the notification
@@ -6,11 +6,12 @@ export interface Notification {
   subtitle: string; // Subtitle or description of the notification
   senderId: string;
   receiverId: string;
+  params?: { id1?: string, id2?: string, id3?: string, component?: string };
   createdAt:
-    | FirebaseFirestoreTypes.Timestamp
-    | FirebaseFirestoreTypes.FieldValue;
+  | FirebaseFirestoreTypes.Timestamp
+  | FirebaseFirestoreTypes.FieldValue;
   updatedAt:
-    | FirebaseFirestoreTypes.Timestamp
-    | FirebaseFirestoreTypes.FieldValue;
+  | FirebaseFirestoreTypes.Timestamp
+  | FirebaseFirestoreTypes.FieldValue;
   isRead: boolean; // Read status of the notification
 }

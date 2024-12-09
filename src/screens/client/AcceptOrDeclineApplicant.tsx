@@ -14,7 +14,7 @@ import { NavigationProp, Route } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { User } from '../../services/interfaces/user';
 import { getCurrentUserUID, getIdByRoleId, getUser, getUserDetailsByWorkerId } from '../../services/firestore/users';
-import { getJob, updateJobAssignedWorker, updateJob } from '../../services/firestore/jobs';
+import { getJob, updateJobAssignedWorker } from '../../services/firestore/jobs';
 import { Job } from '../../services/interfaces/job';
 import { styles } from '../../styles/Globals';
 import { getAddress } from '../../services/firestore/addresses';
@@ -27,7 +27,6 @@ import TextButton from '../../components/TextButton';
 import { formatCurrency } from '../../utils/Utils';
 import { Notification } from '../../services/interfaces/notification';
 import uuid from 'react-native-uuid';
-import { showAlert } from '../../components/AlertDialog';
 import { createNotification } from '../../services/firestore/notifications';
 
 interface RouterProps {
@@ -64,7 +63,7 @@ export default function AcceptOrDeclineApplicant({
             const clientIdByRole = await getIdByRoleId(
               currentUserData.defaultRole,
             );
-            setCurrentUserId(clientIdByRole?.workerId || null);
+            setCurrentUserId(!clientIdByRole?.workerId ? clientIdByRole?.clientId : clientIdByRole?.workerId);
           }
         }
       } catch (error) {
@@ -148,7 +147,13 @@ export default function AcceptOrDeclineApplicant({
           receiverId: receiverId,
           isRead: false,
           createdAt: FIRESTORE_TIMESTAMP,
-          updatedAt: FIRESTORE_TIMESTAMP
+          updatedAt: FIRESTORE_TIMESTAMP,
+          ...(type === 'accepted' && {
+            params: {
+              component: 'JobDetailsWorker',
+              id1: job?.jobId
+            }
+          })
         };
 
         await createNotification(notificationData);
@@ -249,7 +254,7 @@ export default function AcceptOrDeclineApplicant({
                     </View>
                   )}
                 </View>
-                <View>
+                <View style={{ flex: 1, justifyContent: 'center' }}>
                   <Text style={localStyles.nameContainer}>
                     {worker?.firstName} {worker?.lastName}
                   </Text>
@@ -301,12 +306,21 @@ export default function AcceptOrDeclineApplicant({
             </View>
 
             <View style={localStyles.cardFooter}>
-              <Text style={localStyles.cardContentHeader}>
-                Asking Rate / hr
-              </Text>
-              <Text style={localStyles.footerTextXL}>
-                {formatCurrency(application?.offer ?? 0)}
-              </Text>
+              <View>
+                <View style={{ alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                  <Text style={{ textAlign: 'right' }}> Payment Type: </Text>
+                  <Text style={localStyles.footerTextXL}>
+                    {job?.rateType ? job.rateType : 'Daily'}
+                  </Text>
+                </View>
+
+                <View>
+                  <Text style={{ textAlign: 'right' }}> Rate </Text>
+                  <Text style={localStyles.footerTextXL}>
+                    {formatCurrency(application?.offer ?? 0)}
+                  </Text>
+                </View>
+              </View>
 
               <View style={localStyles.actionBtnGroup}>
                 {application && (
@@ -371,7 +385,7 @@ const localStyles = StyleSheet.create({
     paddingTop: 25,
     flex: 1,
   },
-  nameContainer: { fontWeight: '600', fontSize: 24 },
+  nameContainer: { fontWeight: '600', fontSize: 22, flex: 1, textAlign: 'left', justifyContent: 'center', paddingVertical: 10 },
   screen: {
     flex: 1,
     paddingTop: 24,

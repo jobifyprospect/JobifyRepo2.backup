@@ -76,10 +76,13 @@ export default function ManageWorker({
       receiverId: receiverId,
       isRead: false,
       createdAt: FIRESTORE_TIMESTAMP,
-      updatedAt: FIRESTORE_TIMESTAMP
+      updatedAt: FIRESTORE_TIMESTAMP,
+      params: {
+        component: 'JobDetailsWorker',
+        id1: job?.jobId
+      }
     };
 
-    console.log('paylod to send: ', notificationData)
     await createNotification(notificationData);
     const payload: Partial<TimeRecord> = {
       acceptedBy: currentUserId
@@ -129,7 +132,7 @@ export default function ManageWorker({
       const res = await getApplication(params_appId)
       setApplication(res)
     }
-    
+
     fetchApplicationDetails()
     fetchCurrentUserId();
   }, []);
@@ -252,7 +255,7 @@ export default function ManageWorker({
                 </View>
               )}
             </View>
-            <View>
+            <View style={{ flex: 1, justifyContent: 'center' }}>
               <Text style={localStyles.nameContainer}>
                 {worker?.firstName} {worker?.lastName}
               </Text>
@@ -319,7 +322,7 @@ const localStyles = StyleSheet.create({
     paddingTop: 25,
     flex: 1,
   },
-  nameContainer: { fontWeight: '600', fontSize: 24 },
+  nameContainer: { fontWeight: '600', fontSize: 22, flex: 1, textAlign: 'left', justifyContent: 'center', paddingVertical: 10 },
   screen: {
     flex: 1,
     paddingTop: 24,

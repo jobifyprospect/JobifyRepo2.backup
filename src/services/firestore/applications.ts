@@ -111,7 +111,7 @@ export const updateApplication = async (
 ): Promise<void> => {
   try {
     await applicationsRef.doc(applicationId).update(updates);
-    showAlert('Application Accepted', '');
+    showAlert(`Application ${updates.status}`, '');
   } catch (error) {
     showAlert('Error', 'Failed to update application.');
     console.error(error);

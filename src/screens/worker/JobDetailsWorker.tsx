@@ -63,11 +63,11 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     function getValidTimestamp() {
         const timestamp = firestore.FieldValue.serverTimestamp();
         if (timestamp && typeof timestamp === 'object' && '_methodName' in timestamp) {
-          return timestamp;
+            return timestamp;
         }
         // Fallback to current date if serverTimestamp() doesn't work as expected
         return firestore.Timestamp.now();
-      }
+    }
 
     async function fetchTimeRecords() {
 
@@ -153,8 +153,16 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             receiverId: receiverId,
             isRead: false,
             createdAt: currentTimestamp,
-            updatedAt: currentTimestamp
+            updatedAt: currentTimestamp,
+            params: {
+                component: 'ManageWorker',
+                id1: currentUserId,
+                id2: job?.jobId,
+                id3: application?.applicationId
+            },
         };
+
+        console.log('timein payload: ', notificationData)
         await createNotification(notificationData);
         setIsSubmitting(false);
         setIsConfirmingTimeIn(false)
@@ -185,6 +193,12 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             isRead: false,
             createdAt: currentTimestamp,
             updatedAt: currentTimestamp,
+            params: {
+                component: 'ManageWorker',
+                id1: currentUserId,
+                id2: job?.jobId,
+                id3: application?.applicationId
+            },
         };
 
         await createNotification(notificationData);
@@ -231,9 +245,9 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     }, [job])
 
     useEffect(() => {
-        if (job?.jobId) {
+        if (job?.jobId && currentUserId) {
             const unsubscribe = applicationsRef
-                .where('jobId', '==', job.jobId)
+                .where('jobId', '==', id)
                 .where('workerId', '==', currentUserId)
                 .onSnapshot(
                     snapshot => {
@@ -249,6 +263,8 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                 );
             return () => unsubscribe();
         }
+
+        console.log('Fetched app: ', application)
     }, [job?.jobId]);
 
     useEffect(() => {
@@ -372,10 +388,21 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                             </View>
 
                             <View style={localStyles.cardFooter}>
-                                <Text style={localStyles.cardContentHeader}>Rate / hr </Text>
-                                <Text style={localStyles.footerTextXL}>
-                                    {formatCurrency(job?.pay ?? 0)}
-                                </Text>
+                                <View>
+                                    <View style={{ alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                                        <Text style={{ textAlign: 'right' }}> Payment Type: </Text>
+                                        <Text style={localStyles.footerTextXL}>
+                                            {job?.rateType ? job.rateType : 'Daily'}
+                                        </Text>
+                                    </View>
+
+                                    <View>
+                                        <Text style={{ textAlign: 'right' }}> Rate </Text>
+                                        <Text style={localStyles.footerTextXL}>
+                                            {formatCurrency(job?.pay ?? 0)}
+                                        </Text>
+                                    </View>
+                                </View>
                             </View>
                         </View>
                     </ScrollView>
