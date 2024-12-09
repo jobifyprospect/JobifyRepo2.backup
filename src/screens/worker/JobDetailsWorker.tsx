@@ -81,7 +81,6 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                 setIsAccepted(false)
             }
         }
-        console.log('res for time records: ', res)
     }
     const fetchJobAndApplicants = useCallback(async () => {
         setIsLoading(true); // Set loading to true at the start
@@ -115,11 +114,6 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             );
         }
     };
-
-    const onRefresh = useCallback(() => {
-        setRefreshing(true); // Start the refreshing spinner
-        fetchJobAndApplicants(); // Refresh both job and applicants
-    }, [fetchJobAndApplicants]);
 
     async function getClientInfo() {
         const res = job && await getClientDetails(job.clientId)
@@ -212,13 +206,14 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             try {
                 const uid: string | null = await getCurrentUserUID();
                 if (uid) {
+
                     const currentUserData = await getUser(uid);
 
                     if (currentUserData && currentUserData.defaultRole) {
                         const clientIdByRole = await getIdByRoleId(
                             currentUserData.defaultRole,
                         );
-                        setCurrentUserId(clientIdByRole?.workerId || null);
+                        setCurrentUserId(!clientIdByRole?.workerId ? clientIdByRole?.clientId : clientIdByRole?.workerId);
                     }
                 }
             } catch (error) {
@@ -227,8 +222,10 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             }
         };
 
-        fetchCurrentUserId();
-    }, []);
+        if (!currentUserId) {
+            fetchCurrentUserId();
+        }
+    }, [currentUserId]);
 
     useEffect(() => {
         getClientInfo();
@@ -245,7 +242,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     }, [job])
 
     useEffect(() => {
-        if (job?.jobId && currentUserId) {
+        if (!application) {
             const unsubscribe = applicationsRef
                 .where('jobId', '==', id)
                 .where('workerId', '==', currentUserId)
@@ -264,13 +261,13 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             return () => unsubscribe();
         }
 
-        console.log('Fetched app: ', application)
-    }, [job?.jobId]);
+        console.log('Fetched app: ', application, id, currentUserId)
+    }, [id, currentUserId, application]);
 
     useEffect(() => {
-        if (job?.jobId) {
+        if (id && currentUserId) {
             const unsubscribe = timeRecordsRef
-                .where('jobId', '==', job.jobId)
+                .where('jobId', '==', id)
                 .where('workerId', '==', currentUserId)
                 .onSnapshot(
                     snapshot => {
@@ -286,7 +283,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                 );
             return () => unsubscribe();
         }
-    }, [job?.jobId]);
+    }, [id, currentUserId]);
 
 
 

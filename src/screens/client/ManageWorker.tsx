@@ -285,7 +285,7 @@ export default function ManageWorker({
 
             <Text style={styles.mediumTextBlue}> Actions </Text>
             <View style={{ rowGap: 4 }}>
-              {workerTimeRecord && workerTimeRecord?.acceptedBy !== "" ?
+              {workerTimeRecord?.acceptedBy ?
                 <Text style={styles.boldText}> You have already approved this worker's time logs. </Text>
                 :
                 <DynamicButton disabled={workerTimeRecord?.time_in && workerTimeRecord.time_out ? false : true} title="Approve worker time logs" onPress={async () => approveWorkerTimeLogs()} />
