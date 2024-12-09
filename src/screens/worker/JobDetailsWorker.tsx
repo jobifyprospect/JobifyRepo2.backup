@@ -417,7 +417,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
 
                         {record?.time_out ?
                             <>
-                                {record?.acceptedBy !== "" ? <Text> Your time has been approved by the client. </Text> : <Text> You have sent a time-out request but it has not yet been approved by your client. </Text>}
+                                {record?.acceptedBy ? <Text> Your time has been approved by the client. </Text> : <Text> You have sent a time-out request but it has not yet been approved by your client. </Text>}
                             </>
                             :
                             null
