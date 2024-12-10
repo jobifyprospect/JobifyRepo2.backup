@@ -120,7 +120,7 @@ export default function ManageWorker({
             const clientIdByRole = await getIdByRoleId(
               currentUserData.defaultRole,
             );
-            setCurrentUserId(clientIdByRole?.workerId || null);
+            setCurrentUserId(!clientIdByRole?.workerId ? clientIdByRole?.clientId : clientIdByRole?.workerId);
           }
         }
       } catch (error) {

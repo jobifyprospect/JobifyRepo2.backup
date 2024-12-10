@@ -8,6 +8,8 @@ export interface User {
   email?: string | null;
   profilePicture?: string;
   validationId?: string;
+  frontId? : string;
+  backId? : string;
   addressId?: string;
   phoneNumber: string;
   defaultRole?: string;

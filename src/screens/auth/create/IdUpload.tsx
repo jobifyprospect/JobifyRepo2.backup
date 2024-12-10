@@ -138,6 +138,8 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
         email: userEmail,
         defaultRole: userType === 'client' ? clientRoleId : workerRoleId,
         profilePicture: selfieImageUrl,
+        frontId: frontImageUrl,
+        backId: backImageUrl,
         validationId,
         addressId,
         phoneNumber,
@@ -194,6 +196,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
 
       await createNotification(newNotification); // Call the function to create the notification
       showAlert('Success', 'Account created successfully!');
+      navigation.navigate('Success');
     } catch (error) {
       setIsNewUser(false);
       console.error('Error during account creation:', error);
@@ -214,7 +217,6 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
       Alert.alert('Error', 'Failed to create account. Please try again.');
     } finally {
       setIsSubmitting(false);
-      navigation.navigate('Success');
     }
   };
 
