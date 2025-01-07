@@ -1,6 +1,6 @@
-import {showAlert} from '../../components/AlertDialog';
-import {workersRef} from '../../config/firebase';
-import {Worker} from '../interfaces/worker';
+import { showAlert } from '../../components/AlertDialog';
+import { workersRef } from '../../config/firebase';
+import { Worker } from '../interfaces/worker';
 
 export const createWorker = async (worker: Worker): Promise<void> => {
   try {

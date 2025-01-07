@@ -7,8 +7,8 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import {styles} from '../styles/Globals';
+import React, { useCallback, useEffect, useState } from 'react';
+import { styles } from '../styles/Globals';
 import {
   FIREBASE_AUTH,
   // FIRESTORE_TIMESTAMP
@@ -19,22 +19,25 @@ import {
   removeFcmToken,
   updateUserRole,
 } from '../services/firestore/users';
-import {showAlert} from '../components/AlertDialog';
+import { showAlert } from '../components/AlertDialog';
 import Colors from '../styles/Colors';
 import DynamicButton from '../components/DynamicButton';
-import {User} from '../services/interfaces/user';
-import {Address} from '../services/interfaces/address';
-import {Validation} from '../services/interfaces/validation';
-import {formatAddress} from '../utils/FormatAddress';
-import {faCheckCircle} from '@fortawesome/free-solid-svg-icons';
-import {library} from '@fortawesome/fontawesome-svg-core';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {NavigationProp, useFocusEffect} from '@react-navigation/native';
+import { User } from '../services/interfaces/user';
+import { Address } from '../services/interfaces/address';
+import { Validation } from '../services/interfaces/validation';
+import { formatAddress } from '../utils/FormatAddress';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { NavigationProp, useFocusEffect } from '@react-navigation/native';
 import TextButton from '../components/TextButton';
-import {getWorkerIdByRoleId} from '../services/firestore/roles';
-import {calculateAverageRating} from '../services/firestore/reviews';
-import Svg, {Path} from 'react-native-svg';
+import { getWorkerIdByRoleId } from '../services/firestore/roles';
+import { calculateAverageRating } from '../services/firestore/reviews';
+import Svg, { Path } from 'react-native-svg';
 import { removeIsNewUser } from '../shared/AuthUtils';
+import Badge from '../components/Badge';
+import { getWorker } from '../services/firestore/workers';
+import { Worker } from '../services/interfaces/worker';
 // import {createNotification} from '../services/firestore/notifications';
 // import uuid from 'react-native-uuid';
 // import {useFCMToken} from '../config/FCMTokenContext';
@@ -44,13 +47,14 @@ interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Profile = ({navigation}: RouterProps) => {
+const Profile = ({ navigation }: RouterProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
   const [validation, setValidation] = useState<Validation | null>(null);
   const [loading, setLoading] = useState<boolean>(true); // Track loading state
   const [userId, setUserId] = useState<string>(''); // Track loading state
   const [workerId, setWorkerId] = useState<string>(''); // Track loading state
+  const [worker, setWorker] = useState<Worker | null>();
   // const fcmToken = useFCMToken();
   const [averageRating, setAverageRating] = useState(0);
   useEffect(() => {
@@ -70,10 +74,11 @@ const Profile = ({navigation}: RouterProps) => {
         setUserId(uid);
         if (fetchedUserDetails && fetchedUserDetails.length > 0) {
           // eslint-disable-next-line @typescript-eslint/no-shadow
-          const {user, address, validation} = fetchedUserDetails[0];
+          const { user, address, validation } = fetchedUserDetails[0];
           setUser(user);
           setAddress(address);
           setValidation(validation);
+
           if (user?.defaultRole) {
             const fetchedWorkerId = await getWorkerIdByRoleId(user.defaultRole);
             setWorkerId(fetchedWorkerId || '');
@@ -93,10 +98,25 @@ const Profile = ({navigation}: RouterProps) => {
     }
   }, []);
 
+  async function fetchWorkerDetails() {
+    console.log('Current worker id: ', workerId)
+
+    if (!workerId) {
+      return;
+    }
+
+    const worker = await getWorker(workerId);
+    setWorker(worker);
+  }
+  useEffect(() => {
+    fetchWorkerDetails();
+  }, [workerId])
+
   // Use useFocusEffect to refetch user profile when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       fetchUserProfile();
+      fetchWorkerDetails()
     }, [fetchUserProfile]), // Empty dependency array ensures it runs when the screen is focused
   );
 
@@ -202,7 +222,7 @@ const Profile = ({navigation}: RouterProps) => {
                 {user.profilePicture ? (
                   <View>
                     <Image
-                      source={{uri: user.profilePicture}}
+                      source={{ uri: user.profilePicture }}
                       style={localStyles.profileImage}
                     />
                     {/* Show verification icon */}
@@ -245,7 +265,7 @@ const Profile = ({navigation}: RouterProps) => {
                     <Text
                       style={[localStyles.modeText, styles.smallSemiBoldText]}>
                       {user?.defaultRole?.toString() ===
-                      user?.roleId?.[0]?.toString()
+                        user?.roleId?.[0]?.toString()
                         ? 'Client Mode'
                         : 'Worker Mode'}
                     </Text>
@@ -260,37 +280,57 @@ const Profile = ({navigation}: RouterProps) => {
               <View style={localStyles.divider} />
               {/* Rating Details */}
               {workerId && (
-                <View style={localStyles.contactDetails}>
-                  <Text style={styles.boldText}>Ratings</Text>
-                  <View style={localStyles.gap} />
-                  <View style={styles.starsContainer}>
-                    {Array.from({length: 5}, (_, index) => {
-                      const starValue = index + 1;
-                      return (
-                        <Svg
-                          key={index}
-                          width={24}
-                          height={24}
-                          viewBox="0 0 24 24"
-                          fill={
-                            averageRating >= starValue
-                              ? Colors.primary
-                              : Colors.placeholder
-                          }>
-                          <Path d="M12 .587l3.668 7.429 8.2 1.193-5.934 5.787 1.401 8.172L12 18.896l-7.335 3.872 1.4-8.172-5.933-5.787 8.2-1.193L12 .587z" />
-                        </Svg>
-                      );
-                    })}
+                <View>
+                  {/* here */}
+                  {worker ?
+                    <View style={localStyles.badges}>
+                      <Text style={styles.boldText}> Badges </Text>
+                      <View style={localStyles.gap} />
+                      <View style={localStyles.badgeContainer}>
+                        {worker.badges && worker.badges.length > 0 ? (
+                          worker.badges.map((badge) => (
+                            <Badge key={badge} img={badge} />
+                          ))
+                        ) : (
+                          <Text> Complete an assessment to earn badges. </Text>
+                        )}
+                      </View>
+                    </View>
+                    :
+                    null}
+
+                  <View>
+                    <Text style={styles.boldText}>Ratings</Text>
+                    <View style={localStyles.gap} />
+                    <View style={styles.starsContainer}>
+                      {Array.from({ length: 5 }, (_, index) => {
+                        const starValue = index + 1;
+                        return (
+                          <Svg
+                            key={index}
+                            width={24}
+                            height={24}
+                            viewBox="0 0 24 24"
+                            fill={
+                              averageRating >= starValue
+                                ? Colors.primary
+                                : Colors.placeholder
+                            }>
+                            <Path d="M12 .587l3.668 7.429 8.2 1.193-5.934 5.787 1.401 8.172L12 18.896l-7.335 3.872 1.4-8.172-5.933-5.787 8.2-1.193L12 .587z" />
+                          </Svg>
+                        );
+                      })}
+                    </View>
+                    <TextButton
+                      title="View My Reviews"
+                      onPress={async () =>
+                        navigation.navigate('WorkerReviews', {
+                          worker_id: workerId,
+                        })
+                      }
+                    />
+                    <View style={localStyles.divider} />
                   </View>
-                  <TextButton
-                    title="View My Reviews"
-                    onPress={async () =>
-                      navigation.navigate('WorkerReviews', {
-                        worker_id: workerId,
-                      })
-                    }
-                  />
-                  <View style={localStyles.divider} />
                 </View>
               )}
               {/* Contact Details */}
@@ -315,6 +355,11 @@ const Profile = ({navigation}: RouterProps) => {
             <Text>No user data available</Text> // Display if user is null after loading
           )}
 
+          <DynamicButton
+            title="Assessments"
+            type="primary"
+            onPress={async () => navigation.navigate('AssessmentSelection', {workerId: workerId})}
+          />
           <DynamicButton
             title="Change Password"
             type="primary"
@@ -367,6 +412,15 @@ const Profile = ({navigation}: RouterProps) => {
 };
 
 const localStyles = StyleSheet.create({
+  badges: {
+    alignItems: 'flex-start'
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 10,
+    gap: 4
+  },
   container: {
     paddingHorizontal: 30,
     flex: 1,

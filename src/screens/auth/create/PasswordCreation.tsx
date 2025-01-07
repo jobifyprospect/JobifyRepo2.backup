@@ -61,7 +61,7 @@ const PasswordCreation = ({navigation, route}: PasswordCreationProps) => {
   );
 
   const isFormValid = () => {
-    return isPasswordValid && password === passwordConfirmation;
+    return isPasswordValid && password === passwordConfirmation && password.length > 0 && passwordConfirmation.length > 0;
   };
 
   return (

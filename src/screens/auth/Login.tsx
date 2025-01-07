@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -9,24 +9,24 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import {FIREBASE_AUTH} from '../../config/firebase';
-import {showAlert} from '../../components/AlertDialog';
+import { FIREBASE_AUTH } from '../../config/firebase';
+import { showAlert } from '../../components/AlertDialog';
 import DynamicTextInput from '../../components/DynamicTextInput';
 import DynamicButton from '../../components/DynamicButton';
 import TextButton from '../../components/TextButton';
-import {NavigationProp} from '@react-navigation/native';
-import {styles} from '../../styles/Globals';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faFacebookF, faGoogle} from '@fortawesome/free-brands-svg-icons';
+import { NavigationProp } from '@react-navigation/native';
+import { styles } from '../../styles/Globals';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faFacebookF, faGoogle } from '@fortawesome/free-brands-svg-icons';
 import Colors from '../../styles/Colors';
 import Background from '../../components/Background';
-import {isEmailValid, isPasswordValid} from '../../utils/Utils';
+import { isEmailValid, isPasswordValid } from '../../utils/Utils';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Login = ({navigation}: RouterProps) => {
+const Login = ({ navigation }: RouterProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [suffixIcon, setSuffixIcon] = useState('eye');
@@ -36,7 +36,7 @@ const Login = ({navigation}: RouterProps) => {
   const auth = FIREBASE_AUTH;
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
-  const buttonRef = useRef<{triggerPress: () => void}>(null);
+  const buttonRef = useRef<{ triggerPress: () => void }>(null);
 
   const handleChildClick = () => {
     setObscure(!obscure);
@@ -118,6 +118,7 @@ const Login = ({navigation}: RouterProps) => {
           <View style={loginScreenStyles.textButtonContainer}>
             <TextButton
               title="Forgot Password?"
+              disabled={true}
               onPress={() => {
                 Keyboard.dismiss();
                 resetForm();
@@ -142,29 +143,6 @@ const Login = ({navigation}: RouterProps) => {
             }
             type="primary"
           />
-          <View style={loginScreenStyles.subContainer}>
-            <Text style={styles.smallText}>or Connect With</Text>
-            <View style={loginScreenStyles.logoContainer}>
-              <TouchableOpacity
-                style={loginScreenStyles.iconButton}
-                onPress={() => {}}>
-                <FontAwesomeIcon
-                  icon={faGoogle}
-                  size={20}
-                  color={Colors.primary}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={loginScreenStyles.iconButton}
-                onPress={() => {}}>
-                <FontAwesomeIcon
-                  icon={faFacebookF}
-                  size={20}
-                  color={Colors.primary}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
       </View>
     </TouchableWithoutFeedback>

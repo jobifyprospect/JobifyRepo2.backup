@@ -15,6 +15,7 @@ export const FIRESTORE_TIMESTAMP =
 export const rolesRef = FIRESTORE_DB.collection('roles');
 export const usersRef = FIRESTORE_DB.collection('users');
 export const jobsRef = FIRESTORE_DB.collection('jobs');
+export const assessmentsRef = FIRESTORE_DB.collection('assessments');
 export const workersRef = FIRESTORE_DB.collection('workers');
 export const addressesRef = FIRESTORE_DB.collection('addresses');
 export const validationsRef = FIRESTORE_DB.collection('validations');

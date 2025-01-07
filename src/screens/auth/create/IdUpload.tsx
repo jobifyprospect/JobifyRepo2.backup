@@ -196,7 +196,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
 
       await createNotification(newNotification); // Call the function to create the notification
       showAlert('Success', 'Account created successfully!');
-      navigation.navigate('Success');
+      navigation.navigate('Login');
     } catch (error) {
       setIsNewUser(false);
       console.error('Error during account creation:', error);
