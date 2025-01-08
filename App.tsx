@@ -29,7 +29,6 @@ import AddressDetails from './src/screens/auth/create/AddressDetails';
 import LoginInfo from './src/screens/auth/create/LoginInfo';
 import PasswordCreation from './src/screens/auth/create/PasswordCreation';
 import IDUpload from './src/screens/auth/create/IdUpload';
-import Success from './src/screens/utils/Success';
 
 import { getRole } from './src/services/firestore/roles';
 import { showAlert } from './src/components/AlertDialog';
@@ -401,11 +400,6 @@ export default function App() {
               <Stack.Screen
                 name="IDUpload"
                 component={IDUpload}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Success"
-                component={Success}
                 options={{ headerShown: false }}
               />
               <Stack.Screen

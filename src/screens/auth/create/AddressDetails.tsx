@@ -117,6 +117,7 @@ const AddressDetails = ({navigation, route}: AddressDetailsProps) => {
             value={region}
             onSelect={handleRegionSelect}
             isEnabled={!!country}
+            isRequired
           />
 
           <DynamicDropdown
@@ -126,6 +127,7 @@ const AddressDetails = ({navigation, route}: AddressDetailsProps) => {
             value={province}
             onSelect={handleProvinceSelect}
             isEnabled={!!region}
+            isRequired
           />
 
           <DynamicDropdown
@@ -135,6 +137,7 @@ const AddressDetails = ({navigation, route}: AddressDetailsProps) => {
             value={city}
             onSelect={handleCitySelect}
             isEnabled={!!province}
+            isRequired
           />
 
           <DynamicTextInput

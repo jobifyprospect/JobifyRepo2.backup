@@ -21,7 +21,7 @@ type CountryData = {
 export const countryData: CountryData = {
   Philippines: {
     Regions: {
-      'Ilocos Region': {
+      'Region I - Ilocos Region ': {
         Provinces: {
           'Ilocos Norte': {
             Cities: ['Laoag City', 'Batac City', 'Paoay', 'Pagudpud', 'Sarrat'],
@@ -31,7 +31,7 @@ export const countryData: CountryData = {
           },
         },
       },
-      'Cagayan Valley': {
+      'Region II - Cagayan Valley': {
         Provinces: {
           Cagayan: {
             Cities: [
@@ -71,7 +71,7 @@ export const countryData: CountryData = {
           },
         },
       },
-      'Central Luzon': {
+      'Region III - Central Luzon': {
         Provinces: {
           Aurora: {
             Cities: [
@@ -123,7 +123,7 @@ export const countryData: CountryData = {
           },
         },
       },
-      'Southern Tagalog': {
+      'Region IV-A - CALABARZON': {
         Provinces: {
           Batangas: {
             Cities: [
@@ -160,7 +160,7 @@ export const countryData: CountryData = {
           },
         },
       },
-      'Bicol Region': {
+      'Region V - Bicol Region': {
         Provinces: {
           Albay: {
             Cities: [
@@ -191,7 +191,7 @@ export const countryData: CountryData = {
           },
         },
       },
-      Visayas: {
+      'Region VI - Western Visayas': {
         Provinces: {
           Bohol: {
             Cities: [
@@ -243,76 +243,523 @@ export const countryData: CountryData = {
           },
         },
       },
-      Mindanao: {
+      'Region VII - Central Visayas': {
         Provinces: {
-          Bukidnon: {
+          Bohol: {
             Cities: [
-              'Malaybalay City',
-              'Valencia City',
-              'Maramag',
-              'Manolo Fortich',
-              'Libona',
+              'Tagbilaran City',
+              'Dauis',
+              'Tubigon',
+              'Maribojoc',
+              'Panglao',
             ],
           },
-          Davao: {
+          Cebu: {
             Cities: [
-              'Davao City',
-              'Tagum City',
-              'Panabo City',
-              'Digos City',
-              'Samal City',
+              'Cebu City',
+              'Lapu-Lapu City',
+              'Mandaue City',
+              'Talisay City',
+              'Carcar City',
             ],
           },
-          'Misamis Oriental': {
+          Iloilo: {
+            Cities: ['Iloilo City', 'Passi City', 'Oton', 'Jaro', 'Leganes'],
+          },
+          Leyte: {
             Cities: [
-              'Cagayan de Oro City',
-              'Gingoog City',
-              'El Salvador City',
-              'Villanueva',
-              'Oroquieta City',
+              'Tacloban City',
+              'Ormoc City',
+              'Palo',
+              'Baybay City',
+              'Jaro',
             ],
           },
-          'Zamboanga del Norte': {
+          'Negros Occidental': {
             Cities: [
-              'Dipolog City',
-              'Dapitan City',
-              'Sergio Osmeña Sr.',
-              'Jose Dalman',
-              'Siayan',
+              'Bacolod City',
+              'Silay City',
+              'Talisay City',
+              'Escalante City',
+              'San Carlos City',
             ],
           },
-          'Zamboanga del Sur': {
+          'Negros Oriental': {
             Cities: [
-              'Pagadian City',
-              'Zamboanga City',
-              'Tukuran',
-              'Dimataling',
-              'Labangan',
+              'Dumaguete City',
+              'Bais City',
+              'Bayawan City',
+              'Guihulngan City',
+              'Tanjay City',
             ],
           },
-          'Lanao del Norte': {
+        },
+      },
+      'Region VIII - Eastern Visayas': {
+        Provinces: {
+          Bohol: {
             Cities: [
-              'Iligan City',
-              'Kapatagan',
-              'Balo-i',
-              'Linamon',
-              'Sultan Naga Dimaporo',
+              'Tagbilaran City',
+              'Dauis',
+              'Tubigon',
+              'Maribojoc',
+              'Panglao',
             ],
           },
-          'Lanao del Sur': {
+          Cebu: {
             Cities: [
-              'Marawi City',
-              'Buadiposo-Buntong',
-              'Masiu',
-              'Lumba-Bayabao',
-              'Ganassi',
+              'Cebu City',
+              'Lapu-Lapu City',
+              'Mandaue City',
+              'Talisay City',
+              'Carcar City',
             ],
           },
-          Sulu: {
-            Cities: ['Jolo', 'Patikul', 'Talipao', 'Maimbung', 'Indanan'],
+          Iloilo: {
+            Cities: ['Iloilo City', 'Passi City', 'Oton', 'Jaro', 'Leganes'],
           },
-          'Tawi-Tawi': {
-            Cities: ['Bongao', 'Mapun', 'Sapa-Sapa', 'Languyan', 'Sitangkai'],
+          Leyte: {
+            Cities: [
+              'Tacloban City',
+              'Ormoc City',
+              'Palo',
+              'Baybay City',
+              'Jaro',
+            ],
+          },
+          'Negros Occidental': {
+            Cities: [
+              'Bacolod City',
+              'Silay City',
+              'Talisay City',
+              'Escalante City',
+              'San Carlos City',
+            ],
+          },
+          'Negros Oriental': {
+            Cities: [
+              'Dumaguete City',
+              'Bais City',
+              'Bayawan City',
+              'Guihulngan City',
+              'Tanjay City',
+            ],
+          },
+        },
+      },
+      'Region IX - Zamboanga Peninsula': {
+        Provinces: {
+          Bohol: {
+            Cities: [
+              'Tagbilaran City',
+              'Dauis',
+              'Tubigon',
+              'Maribojoc',
+              'Panglao',
+            ],
+          },
+          Cebu: {
+            Cities: [
+              'Cebu City',
+              'Lapu-Lapu City',
+              'Mandaue City',
+              'Talisay City',
+              'Carcar City',
+            ],
+          },
+          Iloilo: {
+            Cities: ['Iloilo City', 'Passi City', 'Oton', 'Jaro', 'Leganes'],
+          },
+          Leyte: {
+            Cities: [
+              'Tacloban City',
+              'Ormoc City',
+              'Palo',
+              'Baybay City',
+              'Jaro',
+            ],
+          },
+          'Negros Occidental': {
+            Cities: [
+              'Bacolod City',
+              'Silay City',
+              'Talisay City',
+              'Escalante City',
+              'San Carlos City',
+            ],
+          },
+          'Negros Oriental': {
+            Cities: [
+              'Dumaguete City',
+              'Bais City',
+              'Bayawan City',
+              'Guihulngan City',
+              'Tanjay City',
+            ],
+          },
+        },
+      },
+      'Region X - Northern Mindanao': {
+        Provinces: {
+          Bohol: {
+            Cities: [
+              'Tagbilaran City',
+              'Dauis',
+              'Tubigon',
+              'Maribojoc',
+              'Panglao',
+            ],
+          },
+          Cebu: {
+            Cities: [
+              'Cebu City',
+              'Lapu-Lapu City',
+              'Mandaue City',
+              'Talisay City',
+              'Carcar City',
+            ],
+          },
+          Iloilo: {
+            Cities: ['Iloilo City', 'Passi City', 'Oton', 'Jaro', 'Leganes'],
+          },
+          Leyte: {
+            Cities: [
+              'Tacloban City',
+              'Ormoc City',
+              'Palo',
+              'Baybay City',
+              'Jaro',
+            ],
+          },
+          'Negros Occidental': {
+            Cities: [
+              'Bacolod City',
+              'Silay City',
+              'Talisay City',
+              'Escalante City',
+              'San Carlos City',
+            ],
+          },
+          'Negros Oriental': {
+            Cities: [
+              'Dumaguete City',
+              'Bais City',
+              'Bayawan City',
+              'Guihulngan City',
+              'Tanjay City',
+            ],
+          },
+        },
+      },
+      'Region XI - Davao Region': {
+        Provinces: {
+          Bohol: {
+            Cities: [
+              'Tagbilaran City',
+              'Dauis',
+              'Tubigon',
+              'Maribojoc',
+              'Panglao',
+            ],
+          },
+          Cebu: {
+            Cities: [
+              'Cebu City',
+              'Lapu-Lapu City',
+              'Mandaue City',
+              'Talisay City',
+              'Carcar City',
+            ],
+          },
+          Iloilo: {
+            Cities: ['Iloilo City', 'Passi City', 'Oton', 'Jaro', 'Leganes'],
+          },
+          Leyte: {
+            Cities: [
+              'Tacloban City',
+              'Ormoc City',
+              'Palo',
+              'Baybay City',
+              'Jaro',
+            ],
+          },
+          'Negros Occidental': {
+            Cities: [
+              'Bacolod City',
+              'Silay City',
+              'Talisay City',
+              'Escalante City',
+              'San Carlos City',
+            ],
+          },
+          'Negros Oriental': {
+            Cities: [
+              'Dumaguete City',
+              'Bais City',
+              'Bayawan City',
+              'Guihulngan City',
+              'Tanjay City',
+            ],
+          },
+        },
+      },
+      'Region XII - SOCCSKSARGEN': {
+        Provinces: {
+          Bohol: {
+            Cities: [
+              'Tagbilaran City',
+              'Dauis',
+              'Tubigon',
+              'Maribojoc',
+              'Panglao',
+            ],
+          },
+          Cebu: {
+            Cities: [
+              'Cebu City',
+              'Lapu-Lapu City',
+              'Mandaue City',
+              'Talisay City',
+              'Carcar City',
+            ],
+          },
+          Iloilo: {
+            Cities: ['Iloilo City', 'Passi City', 'Oton', 'Jaro', 'Leganes'],
+          },
+          Leyte: {
+            Cities: [
+              'Tacloban City',
+              'Ormoc City',
+              'Palo',
+              'Baybay City',
+              'Jaro',
+            ],
+          },
+          'Negros Occidental': {
+            Cities: [
+              'Bacolod City',
+              'Silay City',
+              'Talisay City',
+              'Escalante City',
+              'San Carlos City',
+            ],
+          },
+          'Negros Oriental': {
+            Cities: [
+              'Dumaguete City',
+              'Bais City',
+              'Bayawan City',
+              'Guihulngan City',
+              'Tanjay City',
+            ],
+          },
+        },
+      },
+      'Region XIII - Caraga': {
+        Provinces: {
+          Bohol: {
+            Cities: [
+              'Tagbilaran City',
+              'Dauis',
+              'Tubigon',
+              'Maribojoc',
+              'Panglao',
+            ],
+          },
+          Cebu: {
+            Cities: [
+              'Cebu City',
+              'Lapu-Lapu City',
+              'Mandaue City',
+              'Talisay City',
+              'Carcar City',
+            ],
+          },
+          Iloilo: {
+            Cities: ['Iloilo City', 'Passi City', 'Oton', 'Jaro', 'Leganes'],
+          },
+          Leyte: {
+            Cities: [
+              'Tacloban City',
+              'Ormoc City',
+              'Palo',
+              'Baybay City',
+              'Jaro',
+            ],
+          },
+          'Negros Occidental': {
+            Cities: [
+              'Bacolod City',
+              'Silay City',
+              'Talisay City',
+              'Escalante City',
+              'San Carlos City',
+            ],
+          },
+          'Negros Oriental': {
+            Cities: [
+              'Dumaguete City',
+              'Bais City',
+              'Bayawan City',
+              'Guihulngan City',
+              'Tanjay City',
+            ],
+          },
+        },
+      },
+      'NCR - National Capital Region': {
+        Provinces: {
+          Bohol: {
+            Cities: [
+              'Tagbilaran City',
+              'Dauis',
+              'Tubigon',
+              'Maribojoc',
+              'Panglao',
+            ],
+          },
+          Cebu: {
+            Cities: [
+              'Cebu City',
+              'Lapu-Lapu City',
+              'Mandaue City',
+              'Talisay City',
+              'Carcar City',
+            ],
+          },
+          Iloilo: {
+            Cities: ['Iloilo City', 'Passi City', 'Oton', 'Jaro', 'Leganes'],
+          },
+          Leyte: {
+            Cities: [
+              'Tacloban City',
+              'Ormoc City',
+              'Palo',
+              'Baybay City',
+              'Jaro',
+            ],
+          },
+          'Negros Occidental': {
+            Cities: [
+              'Bacolod City',
+              'Silay City',
+              'Talisay City',
+              'Escalante City',
+              'San Carlos City',
+            ],
+          },
+          'Negros Oriental': {
+            Cities: [
+              'Dumaguete City',
+              'Bais City',
+              'Bayawan City',
+              'Guihulngan City',
+              'Tanjay City',
+            ],
+          },
+        },
+      },
+      'CAR - Cordillera Administrative Region': {
+        Provinces: {
+          Bohol: {
+            Cities: [
+              'Tagbilaran City',
+              'Dauis',
+              'Tubigon',
+              'Maribojoc',
+              'Panglao',
+            ],
+          },
+          Cebu: {
+            Cities: [
+              'Cebu City',
+              'Lapu-Lapu City',
+              'Mandaue City',
+              'Talisay City',
+              'Carcar City',
+            ],
+          },
+          Iloilo: {
+            Cities: ['Iloilo City', 'Passi City', 'Oton', 'Jaro', 'Leganes'],
+          },
+          Leyte: {
+            Cities: [
+              'Tacloban City',
+              'Ormoc City',
+              'Palo',
+              'Baybay City',
+              'Jaro',
+            ],
+          },
+          'Negros Occidental': {
+            Cities: [
+              'Bacolod City',
+              'Silay City',
+              'Talisay City',
+              'Escalante City',
+              'San Carlos City',
+            ],
+          },
+          'Negros Oriental': {
+            Cities: [
+              'Dumaguete City',
+              'Bais City',
+              'Bayawan City',
+              'Guihulngan City',
+              'Tanjay City',
+            ],
+          },
+        },
+      },
+      'BARMM - Bangsamoro Autonomous Region in Muslim Mindanao': {
+        Provinces: {
+          Bohol: {
+            Cities: [
+              'Tagbilaran City',
+              'Dauis',
+              'Tubigon',
+              'Maribojoc',
+              'Panglao',
+            ],
+          },
+          Cebu: {
+            Cities: [
+              'Cebu City',
+              'Lapu-Lapu City',
+              'Mandaue City',
+              'Talisay City',
+              'Carcar City',
+            ],
+          },
+          Iloilo: {
+            Cities: ['Iloilo City', 'Passi City', 'Oton', 'Jaro', 'Leganes'],
+          },
+          Leyte: {
+            Cities: [
+              'Tacloban City',
+              'Ormoc City',
+              'Palo',
+              'Baybay City',
+              'Jaro',
+            ],
+          },
+          'Negros Occidental': {
+            Cities: [
+              'Bacolod City',
+              'Silay City',
+              'Talisay City',
+              'Escalante City',
+              'San Carlos City',
+            ],
+          },
+          'Negros Oriental': {
+            Cities: [
+              'Dumaguete City',
+              'Bais City',
+              'Bayawan City',
+              'Guihulngan City',
+              'Tanjay City',
+            ],
           },
         },
       },

@@ -1,4 +1,4 @@
-import React, {useState, forwardRef, useImperativeHandle} from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import Colors from '../styles/Colors';
-import {styles} from '../styles/Globals';
+import { styles } from '../styles/Globals';
+import { dynamicTextInputStyles } from '../styles/DynamicTextInput';
 
 interface Option {
   id: string;
@@ -20,6 +21,7 @@ interface DynamicDropdownProps {
   label: string;
   placeholder: string;
   options: Option[];
+  isRequired?: boolean;
   value?: string;
   onSelect: (id: string) => void;
   isEnabled: boolean;
@@ -31,6 +33,7 @@ const DynamicDropdown = forwardRef(
       label,
       placeholder,
       options,
+      isRequired,
       value,
       onSelect,
       isEnabled,
@@ -52,7 +55,7 @@ const DynamicDropdown = forwardRef(
       },
     }));
 
-    const renderOption = ({item, index}: {item: Option; index: number}) => {
+    const renderOption = ({ item, index }: { item: Option; index: number }) => {
       const isFirst = index === 0;
       const hasTopBorder = !isFirst ? 1 : 0;
 
@@ -60,7 +63,7 @@ const DynamicDropdown = forwardRef(
         <TouchableOpacity
           style={[
             dropdownStyles.optionContainer,
-            {borderTopWidth: hasTopBorder},
+            { borderTopWidth: hasTopBorder },
             item.id === value && dropdownStyles.selectedOption,
           ]}
           onPress={() => handleOptionSelect(item.id)}>
@@ -76,19 +79,24 @@ const DynamicDropdown = forwardRef(
 
     return (
       <View style={dropdownStyles.container}>
-        <View style={dropdownStyles.labelContainer}>
-          <Text style={styles.smallSemiBoldText}>{label}</Text>
+        <View style={dynamicTextInputStyles.labelContainer}>
+          <Text style={styles.smallSemiBoldText}>
+            {label}{' '}
+            {isRequired && (
+              <Text style={dynamicTextInputStyles.required}>*</Text>
+            )}
+          </Text>
         </View>
         <TouchableOpacity
           style={[
             dropdownStyles.dropdownContainer,
-            {borderColor: value ? Colors.placeholder : Colors.placeholder},
+            { borderColor: value ? Colors.placeholder : Colors.placeholder },
           ]}
           onPress={() => isEnabled && setIsOpen(true)}>
           <Text
             style={[
               dropdownStyles.selectedText,
-              {color: value ? Colors.labelText : Colors.placeholder},
+              { color: value ? Colors.labelText : Colors.placeholder },
             ]}>
             {value || placeholder}
           </Text>
@@ -122,6 +130,8 @@ const dropdownStyles = StyleSheet.create({
     marginVertical: 8,
   },
   labelContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
     marginBottom: 6,
   },
   dropdownContainer: {
