@@ -232,13 +232,13 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             <Text style={styles.largeHeading}>Verification Process</Text>
           </View>
           <Text style={styles.regularText}>
-            Upload your ID and selfie. Selfie Image will be used as your profile
+            Upload your valid government ID and selfie. Selfie Image will be used as your profile
             picture
           </Text>
 
           {/* ID Front Upload */}
           <View style={idUploadStyles.imageContainer}>
-            <Text style={styles.smallSemiBoldText}>ID Front</Text>
+            <Text style={styles.smallSemiBoldText}>Government ID Front</Text>
             {idImageFront ? (
               <TouchableOpacity onPress={() => captureImage('front')}>
                 <Image
@@ -257,7 +257,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
 
           {/* ID Back Upload */}
           <View style={idUploadStyles.imageContainer}>
-            <Text style={styles.smallSemiBoldText}>ID Back</Text>
+            <Text style={styles.smallSemiBoldText}>Government ID Back</Text>
             {idImageBack ? (
               <TouchableOpacity onPress={() => captureImage('back')}>
                 <Image
