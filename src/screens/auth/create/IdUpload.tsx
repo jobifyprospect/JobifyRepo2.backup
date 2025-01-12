@@ -341,7 +341,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             ) : (
               <DynamicButton
                 title="Capture ID Front"
-                onPress={() => captureImage('front')}
+                onPress={() => captureImage('front2')}
                 type="primary"
               />
             )}
@@ -360,7 +360,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             ) : (
               <DynamicButton
                 title="Capture ID Back"
-                onPress={() => captureImage('back')}
+                onPress={() => captureImage('back2')}
                 type="primary"
               />
             )}
