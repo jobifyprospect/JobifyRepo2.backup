@@ -334,7 +334,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             {idImageFront ? (
               <TouchableOpacity onPress={() => captureImage('front2')}>
                 <Image
-                  source={{ uri: idImageFront }}
+                  source={{ uri: idImage2Front }}
                   style={idUploadStyles.image}
                 />
               </TouchableOpacity>
@@ -353,7 +353,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             {idImageBack ? (
               <TouchableOpacity onPress={() => captureImage('back2')}>
                 <Image
-                  source={{ uri: idImageBack }}
+                  source={{ uri: idImage2Back }}
                   style={idUploadStyles.image}
                 />
               </TouchableOpacity>
