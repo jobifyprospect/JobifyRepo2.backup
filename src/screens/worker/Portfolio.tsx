@@ -326,7 +326,6 @@ export default function Portfolio({ navigation, route }: RouterProps) {
                                     }}
                                     onError={(error) => {
                                         console.log(error);
-                                        showAlert('Error', 'Failed to load PDF. Please try again later.');
                                     }}
                                     onPressLink={(uri) => {
                                         console.log(`Link pressed: ${uri}`);
