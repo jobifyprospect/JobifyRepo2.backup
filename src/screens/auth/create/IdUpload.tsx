@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -9,39 +9,49 @@ import {
   Keyboard,
   TouchableOpacity,
 } from 'react-native';
-import { launchCamera } from 'react-native-image-picker';
+import {launchCamera} from 'react-native-image-picker';
 import Colors from '../../../styles/Colors';
-import { styles } from '../../../styles/Globals';
+import {styles} from '../../../styles/Globals';
 import Background from '../../../components/Background';
 import DynamicButton from '../../../components/DynamicButton';
-import { firebase } from '@react-native-firebase/firestore';
-import { createAddress } from '../../../services/firestore/addresses';
-import { createRole } from '../../../services/firestore/roles';
-import { createUser } from '../../../services/firestore/users';
-import { uploadImage } from '../../../services/storage/id-upload';
-import { Address } from '../../../services/interfaces/address';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../interfaces/RouterStackInterfaceParams';
-import { User } from '../../../services/interfaces/user';
-import { Role } from '../../../services/interfaces/role';
-import { showAlert } from '../../../components/AlertDialog';
+import {firebase} from '@react-native-firebase/firestore';
+import {createAddress} from '../../../services/firestore/addresses';
+import {createRole} from '../../../services/firestore/roles';
+import {createUser} from '../../../services/firestore/users';
+import {uploadImage} from '../../../services/storage/id-upload';
+import {Address} from '../../../services/interfaces/address';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
+import {User} from '../../../services/interfaces/user';
+import {Role} from '../../../services/interfaces/role';
+import {showAlert} from '../../../components/AlertDialog';
 import uuid from 'react-native-uuid';
-import { deleteUploadedImage } from '../../../services/storage/id-delete';
-import { convertImageToBase64 } from '../../../utils/Utils';
-import { FIREBASE_AUTH, FIRESTORE_TIMESTAMP } from '../../../config/firebase';
-import { Notification } from '../../../services/interfaces/notification';
-import { createNotification } from '../../../services/firestore/notifications';
-import { createClient } from '../../../services/firestore/clients';
-import { createWorker } from '../../../services/firestore/workers';
-import { Client } from '../../../services/interfaces/client';
-import { Worker } from '../../../services/interfaces/worker';
-import { setIsNewUser } from '../../../shared/AuthUtils';
+import {deleteUploadedImage} from '../../../services/storage/id-delete';
+import {convertImageToBase64} from '../../../utils/Utils';
+import {FIREBASE_AUTH, FIRESTORE_TIMESTAMP} from '../../../config/firebase';
+import {Notification} from '../../../services/interfaces/notification';
+import {createNotification} from '../../../services/firestore/notifications';
+import {createClient} from '../../../services/firestore/clients';
+import {createWorker} from '../../../services/firestore/workers';
+import {Client} from '../../../services/interfaces/client';
+import {Worker} from '../../../services/interfaces/worker';
+import {setIsNewUser} from '../../../shared/AuthUtils';
+import {uploadFile} from '../../../services/storage/file-upload';
 
 type IDUploadProps = NativeStackScreenProps<RootStackParamList, 'IDUpload'>;
 
-const IDUpload = ({ navigation, route }: IDUploadProps) => {
-  const { userType, firstName, lastName, phoneNumber, address, email, password } =
-    route.params;
+const IDUpload = ({navigation, route}: IDUploadProps) => {
+  const {
+    userType,
+    firstName,
+    lastName,
+    phoneNumber,
+    address,
+    email,
+    password,
+    pdfPortfolio,
+    certificationImages,
+  } = route.params;
 
   const [idImageFront, setIdImageFront] = useState<string>('');
   const [idImageBack, setIdImageBack] = useState<string>('');
@@ -80,6 +90,8 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
     let frontImageUrl: string | null = null;
     let backImageUrl: string | null = null;
     let selfieImageUrl: string | null = null;
+    let pdfPortfolioUrl: string | null = null;
+    let certificationImageUrls: string[] = [];
 
     try {
       const authUser = await FIREBASE_AUTH.createUserWithEmailAndPassword(
@@ -116,6 +128,24 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
         true,
       );
 
+      if (pdfPortfolio) {
+        pdfPortfolioUrl = await uploadFile(
+          pdfPortfolio,
+          `pdf-portfolio/${userId}.pdf`,
+        );
+      }
+
+      for (const image of certificationImages) {
+        const imageBase64 = await convertImageToBase64(image);
+        if (imageBase64) {
+          const imageUrl = await uploadImage(
+            imageBase64,
+            `certification-images/${userId}_${uuid.v4()}.jpg`,
+            true,
+          );
+          certificationImageUrls.push(imageUrl);
+        }
+      }
       const newAddress: Address = {
         addressId,
         ...address,
@@ -143,6 +173,8 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
         validationId,
         addressId,
         phoneNumber,
+        pdfPortfolio: pdfPortfolioUrl,
+        certificationImages: certificationImageUrls,
       };
       await createUser(newUser);
 
@@ -196,7 +228,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
 
       await createNotification(newNotification); // Call the function to create the notification
       showAlert('Success', 'Account created successfully!');
-      await firebase.auth().signOut();
+      // navigation.navigate('Login');
     } catch (error) {
       setIsNewUser(false);
       console.error('Error during account creation:', error);
@@ -232,8 +264,8 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             <Text style={styles.largeHeading}>Verification Process</Text>
           </View>
           <Text style={styles.regularText}>
-            Upload your valid government ID and selfie. Selfie Image will be used as your profile
-            picture
+            Upload your valid government ID and selfie. Selfie Image will be
+            used as your profile picture
           </Text>
 
           {/* ID Front Upload */}
@@ -242,7 +274,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             {idImageFront ? (
               <TouchableOpacity onPress={() => captureImage('front')}>
                 <Image
-                  source={{ uri: idImageFront }}
+                  source={{uri: idImageFront}}
                   style={idUploadStyles.image}
                 />
               </TouchableOpacity>
@@ -261,7 +293,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             {idImageBack ? (
               <TouchableOpacity onPress={() => captureImage('back')}>
                 <Image
-                  source={{ uri: idImageBack }}
+                  source={{uri: idImageBack}}
                   style={idUploadStyles.image}
                 />
               </TouchableOpacity>
@@ -280,7 +312,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             {selfieImage ? (
               <TouchableOpacity onPress={() => captureImage('selfie')}>
                 <Image
-                  source={{ uri: selfieImage }}
+                  source={{uri: selfieImage}}
                   style={idUploadStyles.image}
                 />
               </TouchableOpacity>

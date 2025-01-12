@@ -1,4 +1,4 @@
-import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import {FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
 
 export interface User {
   userId: string;
@@ -8,17 +8,19 @@ export interface User {
   email?: string | null;
   profilePicture?: string;
   validationId?: string;
-  frontId? : string;
-  backId? : string;
+  frontId?: string;
+  backId?: string;
   addressId?: string;
   phoneNumber: string;
   defaultRole?: string;
   createdAt:
-  | FirebaseFirestoreTypes.Timestamp
-  | FirebaseFirestoreTypes.FieldValue;
+    | FirebaseFirestoreTypes.Timestamp
+    | FirebaseFirestoreTypes.FieldValue;
   updatedAt:
-  | FirebaseFirestoreTypes.Timestamp
-  | FirebaseFirestoreTypes.FieldValue;
+    | FirebaseFirestoreTypes.Timestamp
+    | FirebaseFirestoreTypes.FieldValue;
   roleId?: string[];
   notificationIds?: string[];
+  pdfPortfolio?: string | null;
+  certificationImages?: string[];
 }

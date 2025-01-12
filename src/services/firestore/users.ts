@@ -1,5 +1,5 @@
-import { onAuthStateChanged } from '@react-native-firebase/auth';
-import { showAlert } from '../../components/AlertDialog';
+import {onAuthStateChanged} from '@react-native-firebase/auth';
+import {showAlert} from '../../components/AlertDialog';
 import {
   addressesRef,
   FIREBASE_AUTH,
@@ -7,13 +7,12 @@ import {
   usersRef,
   validationsRef,
 } from '../../config/firebase';
-import { Address } from '../interfaces/address';
-import { Role } from '../interfaces/role';
-import { User } from '../interfaces/user';
-import { UserDetails } from '../interfaces/userDetails';
-import { Validation } from '../interfaces/validation';
+import {Address} from '../interfaces/address';
+import {Role} from '../interfaces/role';
+import {User} from '../interfaces/user';
+import {UserDetails} from '../interfaces/userDetails';
+import {Validation} from '../interfaces/validation';
 import firestore from '@react-native-firebase/firestore';
-import messaging from '@react-native-firebase/messaging';
 
 export const createUser = async (user: User): Promise<void> => {
   try {
@@ -296,7 +295,7 @@ export const storeFcmToken = async (
       {
         fcmToken: token,
       },
-      { merge: true }, // This will update the existing document or create a new one
+      {merge: true}, // This will update the existing document or create a new one
     );
     console.log('FCM token stored successfully');
   } catch (error) {
@@ -317,7 +316,10 @@ export const removeFcmToken = async (userId: string) => {
 };
 
 // Function to handle token refresh
-export const handleTokenRefresh = async (userId: string | null, token: string | null) => {
+export const handleTokenRefresh = async (
+  userId: string | null,
+  token: string | null,
+) => {
   if (!userId) {
     return;
   }
@@ -348,7 +350,7 @@ export const getCurrentUserUID = () => {
 
 export async function getIdByRoleId(
   roleId: string,
-): Promise<{ clientId?: string; workerId?: string } | null> {
+): Promise<{clientId?: string; workerId?: string} | null> {
   try {
     // Fetch the user document that matches the given roleId
     const userSnapshot = await rolesRef.where('roleId', '==', roleId).get();
@@ -371,9 +373,7 @@ export async function getIdByRoleId(
   }
 }
 
-export async function getIdByRoleId2(
-  id: string,
-): Promise<string | null> {
+export async function getIdByRoleId2(id: string): Promise<string | null> {
   try {
     // Create a query that checks if 'roleId' array contains the passed 'id'
     const userQuery = usersRef.where('roleId', 'array-contains', id);

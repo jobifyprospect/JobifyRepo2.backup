@@ -61,7 +61,12 @@ const PasswordCreation = ({navigation, route}: PasswordCreationProps) => {
   );
 
   const isFormValid = () => {
-    return isPasswordValid && password === passwordConfirmation && password.length > 0 && passwordConfirmation.length > 0;
+    return (
+      isPasswordValid &&
+      password === passwordConfirmation &&
+      password.length > 0 &&
+      passwordConfirmation.length > 0
+    );
   };
 
   return (
@@ -122,7 +127,7 @@ const PasswordCreation = ({navigation, route}: PasswordCreationProps) => {
                 if (obscure2 === false) {
                   setObscure2(true);
                 }
-                navigation.navigate('IDUpload', {
+                navigation.navigate('FilesUpload', {
                   userType,
                   firstName,
                   lastName,

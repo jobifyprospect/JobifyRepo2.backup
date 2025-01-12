@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import 'react-native-get-random-values';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Login from './src/screens/auth/Login';
 import Transaction from './src/screens/Transaction';
 import Profile from './src/screens/Profile';
-import { onAuthStateChanged } from '@react-native-firebase/auth';
-import { FIREBASE_AUTH, usersRef } from './src/config/firebase';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import {onAuthStateChanged} from '@react-native-firebase/auth';
+import {FIREBASE_AUTH, usersRef} from './src/config/firebase';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import AssessmentScreen from './src/screens/AssessmentScreen';
 import AssessmentSelection from './src/screens/AssessmentSelection';
 import {
@@ -17,24 +17,24 @@ import {
   faUser,
   faBell,
 } from '@fortawesome/free-solid-svg-icons';
-import { library } from '@fortawesome/fontawesome-svg-core';
+import {library} from '@fortawesome/fontawesome-svg-core';
 import WorkerDashboard from './src/screens/worker/Dashboard'; // worker dashboard
 import ClientDashboard from './src/screens/client/Dashboard'; // client dashboard
 import ForgotPassword from './src/screens/auth/forgot/ForgotPassword';
-import { Platform } from 'react-native';
+import {Platform} from 'react-native';
 import UserTypeSelection from './src/screens/auth/create/UserTypeSelection';
 import PersonalDetails from './src/screens/auth/create/PersonalDetails';
-import { RootStackParamList } from './src/screens/interfaces/RouterStackInterfaceParams';
+import {RootStackParamList} from './src/screens/interfaces/RouterStackInterfaceParams';
 import AddressDetails from './src/screens/auth/create/AddressDetails';
 import LoginInfo from './src/screens/auth/create/LoginInfo';
 import PasswordCreation from './src/screens/auth/create/PasswordCreation';
 import IDUpload from './src/screens/auth/create/IdUpload';
 
-import { getRole } from './src/services/firestore/roles';
-import { showAlert } from './src/components/AlertDialog';
+import {getRole} from './src/services/firestore/roles';
+import {showAlert} from './src/components/AlertDialog';
 import Notification from './src/screens/Notification';
 import PostJob from './src/screens/client/PostJob';
-import { enableScreens } from 'react-native-screens';
+import {enableScreens} from 'react-native-screens';
 import SplashScreen from './src/screens/Splashscreen';
 import LoadingScreen from './src/screens/utils/LoadingScreen';
 import JobDetailsClient from './src/screens/client/JobDetailsClient';
@@ -43,14 +43,15 @@ import ManageWorker from './src/screens/client/ManageWorker';
 import ApplyToJob from './src/screens/worker/ApplyToJob';
 import ChangePassword from './src/screens/auth/ChangePassword';
 import EditUserDetails from './src/screens/EditUserDetails';
-import messaging, { firebase } from '@react-native-firebase/messaging';
-import { FCMTokenProvider } from './src/config/FCMTokenContext';
+import messaging, {firebase} from '@react-native-firebase/messaging';
+import {FCMTokenProvider} from './src/config/FCMTokenContext';
 import WorkerReviews from './src/screens/WorkerReviews';
 import MapScreen from './src/screens/MapScreen';
 import WriteReviewScreen from './src/screens/client/WriteReview';
-import { getIsNewUser, setIsNewUser } from './src/shared/AuthUtils';
+import {getIsNewUser, setIsNewUser} from './src/shared/AuthUtils';
 
 import JobDetailsWorker from './src/screens/worker/JobDetailsWorker';
+import FilesUpload from './src/screens/auth/create/FilesUpload';
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
 const DELAY_MS = 10000;
@@ -70,19 +71,19 @@ firebase.messaging().setBackgroundMessageHandler(async remoteMessage => {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<RootStackParamList>();
 
-export const HomeIcon = ({ color }: { color: string }) => (
+export const HomeIcon = ({color}: {color: string}) => (
   <FontAwesomeIcon icon={faHouse} size={16} color={color} />
 );
 
-export const TransactionIcon = ({ color }: { color: string }) => (
+export const TransactionIcon = ({color}: {color: string}) => (
   <FontAwesomeIcon icon={faFile} size={16} color={color} />
 );
 
-export const ProfileIcon = ({ color }: { color: string }) => (
+export const ProfileIcon = ({color}: {color: string}) => (
   <FontAwesomeIcon icon={faUser} size={16} color={color} />
 );
 
-const DashboardStack = ({ role }: { role: string | null }) => {
+const DashboardStack = ({role}: {role: string | null}) => {
   const DashboardComponent =
     role === 'worker' ? WorkerDashboard : ClientDashboard;
   const [isLoading, setIsLoading] = useState(true);
@@ -101,24 +102,24 @@ const DashboardStack = ({ role }: { role: string | null }) => {
         <Stack.Screen
           name="Loading"
           component={LoadingScreen}
-          options={{ headerShown: false }} // Hide header for Loading Screen
+          options={{headerShown: false}} // Hide header for Loading Screen
         />
       ) : (
         <>
           <Stack.Screen
             name="ClientDashboardScreen"
             component={DashboardComponent}
-            options={{ headerShown: false }} // Dashboard Screen
+            options={{headerShown: false}} // Dashboard Screen
           />
           <Stack.Screen
             name="Notification"
             component={Notification}
-            options={{ title: 'Notifications', headerShown: false }} // Notification Screen
+            options={{title: 'Notifications', headerShown: false}} // Notification Screen
           />
           <Stack.Screen
             name="EditUserDetails"
             component={EditUserDetails}
-            options={{ headerShown: false }}
+            options={{headerShown: false}}
           />
         </>
       )}
@@ -126,14 +127,14 @@ const DashboardStack = ({ role }: { role: string | null }) => {
   );
 };
 
-const TabLayout = ({ role }: { role: string | null }) => {
+const TabLayout = ({role}: {role: string | null}) => {
   return (
     <Tab.Navigator
       detachInactiveScreens={false}
-      screenOptions={({ route }) => ({
+      screenOptions={({route}) => ({
         tabBarActiveTintColor: '#00A1D7',
         tabBarInactiveTintColor: '#979090',
-        tabBarLabelStyle: { fontSize: 12 },
+        tabBarLabelStyle: {fontSize: 12},
         tabBarStyle: {
           position: 'absolute',
           bottom: Platform.OS === 'ios' ? 40 : 20,
@@ -146,12 +147,12 @@ const TabLayout = ({ role }: { role: string | null }) => {
           paddingBottom: 10,
           paddingTop: 10,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
+          shadowOffset: {width: 0, height: 2},
           shadowOpacity: 0.3,
           shadowRadius: 4,
         },
         // eslint-disable-next-line react/no-unstable-nested-components
-        tabBarIcon: ({ color, focused }) => {
+        tabBarIcon: ({color, focused}) => {
           switch (route.name) {
             case 'Home':
               return <HomeIcon color={focused ? color : '#979090'} />;
@@ -167,18 +168,18 @@ const TabLayout = ({ role }: { role: string | null }) => {
       <Tab.Screen
         name="Home"
         children={() => <DashboardStack role={role} />} // Stack for Dashboard
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Tab.Screen
         name="Transaction"
         component={Transaction}
-        initialParams={{ _role: role as string }}
-        options={{ headerShown: false }}
+        initialParams={{_role: role as string}}
+        options={{headerShown: false}}
       />
       <Tab.Screen
         name="Profile"
         component={Profile}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
     </Tab.Navigator>
   );
@@ -291,37 +292,37 @@ export default function App() {
               <Stack.Screen
                 name="Inside"
                 children={() => <TabLayout role={role} />}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 name="Post"
                 component={PostJob}
-                options={{ title: 'Post', headerShown: false }}
+                options={{title: 'Post', headerShown: false}}
               />
               <Stack.Screen
                 name="ChangePassword"
                 component={ChangePassword}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 name="EditUserDetails"
                 component={EditUserDetails}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 name="MapScreen"
                 component={MapScreen}
-                options={{ title: 'Map', headerShown: false }}
+                options={{title: 'Map', headerShown: false}}
               />
               <Stack.Screen
                 name="JobDetailsClient"
                 component={JobDetailsClient}
-                options={{ title: 'JobDetailsClient', headerShown: false }} // Job Details, Client View Screen
+                options={{title: 'JobDetailsClient', headerShown: false}} // Job Details, Client View Screen
               />
               <Stack.Screen
                 name="JobDetailsWorker"
                 component={JobDetailsWorker}
-                options={{ title: 'JobDetailsWorker', headerShown: false }} // Job Details, Worker View Screen
+                options={{title: 'JobDetailsWorker', headerShown: false}} // Job Details, Worker View Screen
               />
               <Stack.Screen
                 name="AcceptOrDeclineApplicant"
@@ -342,27 +343,27 @@ export default function App() {
               <Stack.Screen
                 name="AssessmentScreen"
                 component={AssessmentScreen}
-                options={{ title: 'AssessmentScreen', headerShown: false }}
+                options={{title: 'AssessmentScreen', headerShown: false}}
               />
               <Stack.Screen
                 name="AssessmentSelection"
                 component={AssessmentSelection}
-                options={{ title: 'AssessmentSelection', headerShown: false }}
+                options={{title: 'AssessmentSelection', headerShown: false}}
               />
               <Stack.Screen
                 name="ApplyToJob"
                 component={ApplyToJob}
-                options={{ title: 'ApplyToJob', headerShown: false }} // Job Application, Worker View Screen
+                options={{title: 'ApplyToJob', headerShown: false}} // Job Application, Worker View Screen
               />
               <Stack.Screen
                 name="WorkerReviews"
                 component={WorkerReviews}
-                options={{ title: 'WorkerReviews', headerShown: false }} // Worker Reviews
+                options={{title: 'WorkerReviews', headerShown: false}} // Worker Reviews
               />
               <Stack.Screen
                 name="WriteReview"
                 component={WriteReviewScreen}
-                options={{ title: 'Write a Review', headerShown: false }} // Custom header title
+                options={{title: 'Write a Review', headerShown: false}} // Custom header title
               />
             </>
           ) : (
@@ -370,42 +371,47 @@ export default function App() {
               <Stack.Screen
                 name="Login"
                 component={Login}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 name="UserTypeSelection"
                 component={UserTypeSelection}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 name="PersonalDetails"
                 component={PersonalDetails}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 name="AddressDetails"
                 component={AddressDetails}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 name="LoginInfo"
                 component={LoginInfo}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 name="PasswordCreation"
                 component={PasswordCreation}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 name="IDUpload"
                 component={IDUpload}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="FilesUpload"
+                component={FilesUpload}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 name="Forgot"
                 component={ForgotPassword}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
             </>
           )}
