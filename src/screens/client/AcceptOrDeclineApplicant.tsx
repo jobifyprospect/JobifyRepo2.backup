@@ -28,6 +28,10 @@ import { formatCurrency } from '../../utils/Utils';
 import { Notification } from '../../services/interfaces/notification';
 import uuid from 'react-native-uuid';
 import { createNotification } from '../../services/firestore/notifications';
+import Badge from '../../components/Badge';
+import { Worker } from '../../services/interfaces/worker';
+import { BadgeType } from '../../services/interfaces/badge';
+import { getWorker } from '../../services/firestore/workers';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -42,7 +46,8 @@ export default function AcceptOrDeclineApplicant({
   const params_jobId = route.params.job_id;
   const params_appId = route.params.app_id;
 
-  const [worker, setWorker] = useState<User | null>(null);
+  const [worker, setWorker] = useState<any>(null);
+  const [badges, setBadges] = useState<BadgeType[]>([]);
   const [workerAddress, setWorkerAddress] = useState<Address | null>(null);
   const [application, setApplication] = useState<Application | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -79,8 +84,13 @@ export default function AcceptOrDeclineApplicant({
     setLoadingWorker(true);
     try {
       if (params_workerId) {
-        const workerDetails = await getUserDetailsByWorkerId(params_workerId);
-        workerDetails && setWorker(workerDetails);
+        const userDetails = await getUserDetailsByWorkerId(params_workerId);
+        userDetails && setWorker(userDetails[0].user);
+
+        const worker = await getWorker(params_workerId);
+        if (worker) {
+          setBadges(worker.badges as BadgeType[]);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch worker details:', error);
@@ -135,16 +145,13 @@ export default function AcceptOrDeclineApplicant({
         updatedAt: FIRESTORE_TIMESTAMP,
       };
       if (params_appId) {
-        const receiverDetails = await getUserDetailsByWorkerId(application?.workerId as string);
-        const receiverId = receiverDetails?.userId as string;
-
         // Create and send notification
         const notificationData: Notification = {
           id: uuid.v4().toString(), // Generate a unique notification ID
           title: 'New Job Application',
           subtitle: `Your application has been ${type} for ${job?.title}`,
           senderId: currentUserId,
-          receiverId: receiverId,
+          receiverId: worker.userId,
           isRead: false,
           createdAt: FIRESTORE_TIMESTAMP,
           updatedAt: FIRESTORE_TIMESTAMP,
@@ -178,6 +185,7 @@ export default function AcceptOrDeclineApplicant({
   // Fetch address once worker is fetched
   useEffect(() => {
     fetchAddress();
+    console.log('current worker: ', worker)
   }, [fetchAddress, worker]);
 
   useEffect(() => {
@@ -236,9 +244,8 @@ export default function AcceptOrDeclineApplicant({
             <View style={localStyles.contentRow}>
               <Pressable
                 onPress={async () =>
-                  navigation.navigate('WorkerReviews', {
-                    worker_id: params_workerId,
-                    app_id: application?.applicationId,
+                  navigation.navigate('ViewWorkerProfile', {
+                    workerId: params_workerId,
                   })
                 }
                 style={localStyles.contentItemRow}>
@@ -258,20 +265,26 @@ export default function AcceptOrDeclineApplicant({
                   <Text style={localStyles.nameContainer}>
                     {worker?.firstName} {worker?.lastName}
                   </Text>
-                  <TextButton
-                    title="View Reviews"
-                    onPress={async () =>
-                      navigation.navigate('WorkerReviews', {
-                        worker_id: params_workerId,
-                        app_id: application?.applicationId,
-                      })
-                    }
-                  />
+                  <Text style={styles.smallText}> View Worker Profile </Text>
                 </View>
               </Pressable>
             </View>
 
             <View style={localStyles.cardContent}>
+              <View style={localStyles.contentRow}>
+                <Text style={localStyles.cardContentHeader}>Badges</Text>
+                <View style={localStyles.badgeContainer}>
+                  {badges?.length === 0 ?
+                    <Text> No badges. </Text>
+                    :
+                    <>
+                      {badges?.map((badge: BadgeType, index: number) => (
+                        <Badge key={badge} img={badge} />
+                      ))}
+                    </>
+                  }
+                </View>
+              </View>
               <View style={localStyles.contentRow}>
                 <Text style={localStyles.cardContentHeader}>Contact Info</Text>
                 <View>
@@ -377,6 +390,12 @@ export default function AcceptOrDeclineApplicant({
 }
 
 const localStyles = StyleSheet.create({
+  badgeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 10,
+    gap: 4
+  },
   actionBtnGroup: {
     marginVertical: 24,
   },

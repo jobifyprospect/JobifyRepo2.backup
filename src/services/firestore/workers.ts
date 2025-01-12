@@ -24,6 +24,25 @@ export const getWorker = async (
   }
 };
 
+export const getWorkerRealtime = (
+  workerId: string,
+  onUpdate: (worker: Worker | undefined) => void
+) => {
+  return workersRef.doc(workerId).onSnapshot(
+    (doc) => {
+      if (doc.exists) {
+        onUpdate(doc.data() as Worker);
+      } else {
+        onUpdate(undefined);
+      }
+    },
+    (error) => {
+      console.error('Error listening to worker updates:', error);
+      showAlert('Error', 'Failed to listen to worker updates.');
+    }
+  );
+};
+
 export const updateWorker = async (
   workerId: string,
   updates: Partial<Worker>,

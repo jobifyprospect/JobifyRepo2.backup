@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,38 +9,38 @@ import {
   Keyboard,
   TouchableOpacity,
 } from 'react-native';
-import {launchCamera} from 'react-native-image-picker';
+import { launchCamera } from 'react-native-image-picker';
 import Colors from '../../../styles/Colors';
-import {styles} from '../../../styles/Globals';
+import { styles } from '../../../styles/Globals';
 import Background from '../../../components/Background';
 import DynamicButton from '../../../components/DynamicButton';
-import {firebase} from '@react-native-firebase/firestore';
-import {createAddress} from '../../../services/firestore/addresses';
-import {createRole} from '../../../services/firestore/roles';
-import {createUser} from '../../../services/firestore/users';
-import {uploadImage} from '../../../services/storage/id-upload';
-import {Address} from '../../../services/interfaces/address';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
-import {User} from '../../../services/interfaces/user';
-import {Role} from '../../../services/interfaces/role';
-import {showAlert} from '../../../components/AlertDialog';
+import { firebase } from '@react-native-firebase/firestore';
+import { createAddress } from '../../../services/firestore/addresses';
+import { createRole } from '../../../services/firestore/roles';
+import { createUser } from '../../../services/firestore/users';
+import { uploadImage } from '../../../services/storage/id-upload';
+import { Address } from '../../../services/interfaces/address';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../interfaces/RouterStackInterfaceParams';
+import { User } from '../../../services/interfaces/user';
+import { Role } from '../../../services/interfaces/role';
+import { showAlert } from '../../../components/AlertDialog';
 import uuid from 'react-native-uuid';
-import {deleteUploadedImage} from '../../../services/storage/id-delete';
-import {convertImageToBase64} from '../../../utils/Utils';
-import {FIREBASE_AUTH, FIRESTORE_TIMESTAMP} from '../../../config/firebase';
-import {Notification} from '../../../services/interfaces/notification';
-import {createNotification} from '../../../services/firestore/notifications';
-import {createClient} from '../../../services/firestore/clients';
-import {createWorker} from '../../../services/firestore/workers';
-import {Client} from '../../../services/interfaces/client';
-import {Worker} from '../../../services/interfaces/worker';
-import {setIsNewUser} from '../../../shared/AuthUtils';
-import {uploadFile} from '../../../services/storage/file-upload';
+import { deleteUploadedImage } from '../../../services/storage/id-delete';
+import { convertImageToBase64 } from '../../../utils/Utils';
+import { FIREBASE_AUTH, FIRESTORE_TIMESTAMP } from '../../../config/firebase';
+import { Notification } from '../../../services/interfaces/notification';
+import { createNotification } from '../../../services/firestore/notifications';
+import { createClient } from '../../../services/firestore/clients';
+import { createWorker } from '../../../services/firestore/workers';
+import { Client } from '../../../services/interfaces/client';
+import { Worker } from '../../../services/interfaces/worker';
+import { setIsNewUser } from '../../../shared/AuthUtils';
+import { uploadFile } from '../../../services/storage/file-upload';
 
 type IDUploadProps = NativeStackScreenProps<RootStackParamList, 'IDUpload'>;
 
-const IDUpload = ({navigation, route}: IDUploadProps) => {
+const IDUpload = ({ navigation, route }: IDUploadProps) => {
   const {
     userType,
     firstName,
@@ -55,10 +55,12 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
 
   const [idImageFront, setIdImageFront] = useState<string>('');
   const [idImageBack, setIdImageBack] = useState<string>('');
+  const [idImage2Front, setIdImage2Front] = useState<string>('');
+  const [idImage2Back, setIdImage2Back] = useState<string>('');
   const [selfieImage, setSelfieImage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const captureImage = (type: 'front' | 'back' | 'selfie') => {
+  const captureImage = (type: 'front' | 'back' | 'front2' | 'back2' | 'selfie') => {
     launchCamera(
       {
         mediaType: 'photo',
@@ -74,6 +76,10 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
             setIdImageFront(uri || '');
           } else if (type === 'back') {
             setIdImageBack(uri || '');
+          } else if (type === 'front2') {
+            setIdImage2Front(uri || '');
+          } else if (type === 'back2') {
+            setIdImage2Back(uri || '');
           } else {
             setSelfieImage(uri || '');
           }
@@ -89,6 +95,8 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
     let userEmail: string | null = null;
     let frontImageUrl: string | null = null;
     let backImageUrl: string | null = null;
+    let frontImage2Url: string | null = null;
+    let backImage2Url: string | null = null;
     let selfieImageUrl: string | null = null;
     let pdfPortfolioUrl: string | null = null;
     let certificationImageUrls: string[] = [];
@@ -106,6 +114,8 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
 
       const frontImageBase64 = await convertImageToBase64(idImageFront);
       const backImageBase64 = await convertImageToBase64(idImageBack);
+      const frontImage2Base64 = await convertImageToBase64(idImage2Front);
+      const backImage2Base64 = await convertImageToBase64(idImage2Back);
       const selfieImageBase64 = await convertImageToBase64(selfieImage);
 
       if (!frontImageBase64 || !backImageBase64 || !selfieImageBase64) {
@@ -120,6 +130,16 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
       backImageUrl = await uploadImage(
         backImageBase64,
         `id-images/${userId}_back.jpg`,
+        true,
+      );
+      frontImage2Url = await uploadImage(
+        frontImageBase64,
+        `id-images/${userId}_front2.jpg`,
+        true,
+      );
+      backImage2Url = await uploadImage(
+        backImageBase64,
+        `id-images/${userId}_back2.jpg`,
         true,
       );
       selfieImageUrl = await uploadImage(
@@ -170,6 +190,8 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
         profilePicture: selfieImageUrl,
         frontId: frontImageUrl,
         backId: backImageUrl,
+        frontId2: frontImage2Url,
+        backId2: backImage2Url,
         validationId,
         addressId,
         phoneNumber,
@@ -274,7 +296,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
             {idImageFront ? (
               <TouchableOpacity onPress={() => captureImage('front')}>
                 <Image
-                  source={{uri: idImageFront}}
+                  source={{ uri: idImageFront }}
                   style={idUploadStyles.image}
                 />
               </TouchableOpacity>
@@ -293,7 +315,45 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
             {idImageBack ? (
               <TouchableOpacity onPress={() => captureImage('back')}>
                 <Image
-                  source={{uri: idImageBack}}
+                  source={{ uri: idImageBack }}
+                  style={idUploadStyles.image}
+                />
+              </TouchableOpacity>
+            ) : (
+              <DynamicButton
+                title="Capture ID Back"
+                onPress={() => captureImage('back')}
+                type="primary"
+              />
+            )}
+          </View>
+
+          {/* ID 2 Front Upload */}
+          <View style={idUploadStyles.imageContainer}>
+            <Text style={styles.smallSemiBoldText}>Government ID #2 Front</Text>
+            {idImageFront ? (
+              <TouchableOpacity onPress={() => captureImage('front2')}>
+                <Image
+                  source={{ uri: idImageFront }}
+                  style={idUploadStyles.image}
+                />
+              </TouchableOpacity>
+            ) : (
+              <DynamicButton
+                title="Capture ID Front"
+                onPress={() => captureImage('front')}
+                type="primary"
+              />
+            )}
+          </View>
+
+          {/* ID 2 Back Upload */}
+          <View style={idUploadStyles.imageContainer}>
+            <Text style={styles.smallSemiBoldText}>Government ID #2 Back</Text>
+            {idImageBack ? (
+              <TouchableOpacity onPress={() => captureImage('back2')}>
+                <Image
+                  source={{ uri: idImageBack }}
                   style={idUploadStyles.image}
                 />
               </TouchableOpacity>
@@ -312,7 +372,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
             {selfieImage ? (
               <TouchableOpacity onPress={() => captureImage('selfie')}>
                 <Image
-                  source={{uri: selfieImage}}
+                  source={{ uri: selfieImage }}
                   style={idUploadStyles.image}
                 />
               </TouchableOpacity>
@@ -332,7 +392,7 @@ const IDUpload = ({navigation, route}: IDUploadProps) => {
               onPress={handleCreateAccount}
               type="primary"
               disabled={
-                isSubmitting || !idImageFront || !idImageBack || !selfieImage
+                isSubmitting || !idImageFront || !idImageBack || !selfieImage || !idImage2Front || !idImage2Back
               }
             />
             <DynamicButton

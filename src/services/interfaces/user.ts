@@ -10,6 +10,8 @@ export interface User {
   validationId?: string;
   frontId?: string;
   backId?: string;
+  frontId2?: string;
+  backId2?: string;
   addressId?: string;
   phoneNumber: string;
   defaultRole?: string;

@@ -63,9 +63,13 @@ export default function ManageWorker({
   }
 
   async function approveWorkerTimeLogs() {
-
     const receiverDetails = await getUserDetailsByWorkerId(application?.workerId as string);
-    const receiverId = receiverDetails?.userId as string;
+
+    if (!receiverDetails || receiverDetails.length === 0 || !receiverDetails[0].user) {
+      throw new Error('Failed to fetch receiver details');
+    }
+
+    const receiverId = receiverDetails[0].user.userId as string;
 
     // Create and send notification
     const notificationData: Notification = {
@@ -100,7 +104,7 @@ export default function ManageWorker({
     try {
       if (params_workerId) {
         const workerDetails = await getUserDetailsByWorkerId(params_workerId);
-        workerDetails && setWorker(workerDetails);
+        workerDetails && setWorker(workerDetails[0].user);
       }
     } catch (error) {
       console.error('Failed to fetch worker details:', error);

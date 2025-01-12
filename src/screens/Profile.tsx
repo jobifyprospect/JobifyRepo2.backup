@@ -6,6 +6,8 @@ import {
   Image,
   ActivityIndicator,
   ScrollView,
+  TextInput,
+  Modal
 } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { styles } from '../styles/Globals';
@@ -36,8 +38,9 @@ import { calculateAverageRating } from '../services/firestore/reviews';
 import Svg, { Path } from 'react-native-svg';
 import { removeIsNewUser } from '../shared/AuthUtils';
 import Badge from '../components/Badge';
-import { getWorker } from '../services/firestore/workers';
+import { getWorker, getWorkerRealtime, updateWorker } from '../services/firestore/workers';
 import { Worker } from '../services/interfaces/worker';
+import BioInputDialog from '../components/BioInputDialog';
 // import {createNotification} from '../services/firestore/notifications';
 // import uuid from 'react-native-uuid';
 // import {useFCMToken} from '../config/FCMTokenContext';
@@ -47,6 +50,7 @@ interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
+
 const Profile = ({ navigation }: RouterProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
@@ -55,12 +59,13 @@ const Profile = ({ navigation }: RouterProps) => {
   const [userId, setUserId] = useState<string>(''); // Track loading state
   const [workerId, setWorkerId] = useState<string>(''); // Track loading state
   const [worker, setWorker] = useState<Worker | null>();
+  const [isBioDialogVisible, setIsBioDialogVisible] = useState(false);
   // const fcmToken = useFCMToken();
   const [averageRating, setAverageRating] = useState(0);
   useEffect(() => {
     const fetchRating = async () => {
       const rating = await calculateAverageRating(workerId);
-      setAverageRating(rating);
+      setAverageRating(rating.averageRating);
     };
 
     fetchRating();
@@ -98,25 +103,33 @@ const Profile = ({ navigation }: RouterProps) => {
     }
   }, []);
 
-  async function fetchWorkerDetails() {
-    console.log('Current worker id: ', workerId)
-
-    if (!workerId) {
-      return;
-    }
-
-    const worker = await getWorker(workerId);
-    setWorker(worker);
-  }
   useEffect(() => {
-    fetchWorkerDetails();
-  }, [workerId])
+    let unsubscribe: (() => void) | undefined;
+
+    const setupWorkerListener = async () => {
+      if (workerId) {
+        unsubscribe = getWorkerRealtime(workerId, (updatedWorker) => {
+          if (updatedWorker) {
+            setWorker(updatedWorker);
+          }
+        });
+      }
+    };
+
+    setupWorkerListener();
+
+    // Cleanup function
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [workerId]);
 
   // Use useFocusEffect to refetch user profile when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       fetchUserProfile();
-      fetchWorkerDetails()
     }, [fetchUserProfile]), // Empty dependency array ensures it runs when the screen is focused
   );
 
@@ -144,46 +157,7 @@ const Profile = ({ navigation }: RouterProps) => {
     }
   }, []);
 
-  // const handleCreateTestNotification = async () => {
-  //   try {
-  //     // Prepare the notification data for Firestore
-  //     const notificationData = {
-  //       id: uuid.v4().toString(), // Generate a unique notification ID
-  //       title: 'Test Notification',
-  //       subtitle: 'This is a test notification.',
-  //       senderId: userId,
-  //       receiverId: userId, // Assuming you're sending it to the same user for the test
-  //       isRead: false,
-  //       createdAt: FIRESTORE_TIMESTAMP,
-  //       updatedAt: FIRESTORE_TIMESTAMP,
-  //       from: `client-${userId}`, // The ID of the user sending the notification
-  //       to: fcmToken, // The recipient's ID
-  //       // messageId: `client-${userId}`,
-  //       // threadId: `client-${userId}`,
-  //       notification: {
-  //         title: 'Test Notification',
-  //         body: 'This is a test notification body',
-  //       },
-  //     };
 
-  //     // Create the notification in Firestore
-  //     const newNotification = await createNotification(notificationData);
-
-  //     if (newNotification) {
-  //       console.log('Test notification created in Firestore:', newNotification);
-
-  //       // Show success message
-  //     } else {
-  //       showAlert('Error', 'Failed to create test notification.');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error creating and sending test notification:', error);
-  //     showAlert(
-  //       'Error',
-  //       'An error occurred while creating or sending the test notification.',
-  //     );
-  //   }
-  // };
   const logOutUser = async () => {
     await removeFcmToken(userId); // Remove token on logout
     FIREBASE_AUTH.signOut();
@@ -281,7 +255,41 @@ const Profile = ({ navigation }: RouterProps) => {
               {/* Rating Details */}
               {workerId && (
                 <View>
-                  {/* here */}
+                  <View>
+                    <Text style={styles.boldText}> Bio </Text>
+                    <View style={localStyles.gap} />
+                    {
+                      worker?.bio ? (
+                        <Text style={[styles.mediumRegularText, { color: Colors.labelText }]}>
+                          {worker.bio}
+                        </Text>
+                      ) : (
+                        <View>
+                          <DynamicButton
+                            title='Create a bio'
+                            onPress={() => setIsBioDialogVisible(true)}
+                          />
+                        </View>
+                      )
+                    }
+
+                    <BioInputDialog
+                      isVisible={isBioDialogVisible}
+                      onClose={() => setIsBioDialogVisible(false)}
+                      onSave={async (newBio) => {
+                        try {
+                          await updateWorker(workerId, { bio: newBio });
+                          // Update local state or refetch worker data
+                          setIsBioDialogVisible(false);
+                          // You might want to update the worker state here or refetch the data
+                        } catch (error) {
+                          console.error('Error updating bio:', error);
+                          showAlert('Error', 'Failed to update bio. Please try again.');
+                        }
+                      }}
+                    />
+                  </View>
+                  <View style={localStyles.divider} />
                   {worker ?
                     <View style={localStyles.badges}>
                       <Text style={styles.boldText}> Badges </Text>
@@ -298,7 +306,7 @@ const Profile = ({ navigation }: RouterProps) => {
                     </View>
                     :
                     null}
-
+                  <View style={localStyles.divider} />
                   <View>
                     <Text style={styles.boldText}>Ratings</Text>
                     <View style={localStyles.gap} />
@@ -355,11 +363,22 @@ const Profile = ({ navigation }: RouterProps) => {
             <Text>No user data available</Text> // Display if user is null after loading
           )}
 
-          <DynamicButton
-            title="Assessments"
-            type="primary"
-            onPress={async () => navigation.navigate('AssessmentSelection', {workerId: workerId})}
-          />
+
+          {
+            workerId &&
+            <>
+              <DynamicButton
+                title="Assessments"
+                type="primary"
+                onPress={async () => navigation.navigate('AssessmentSelection', { workerId: workerId })}
+              />
+              <DynamicButton
+                title="Portfolio and Certifications"
+                type="primary"
+                onPress={async () => navigation.navigate('Portfolio', { userId: userId, workerId: workerId })}
+              />
+            </>
+          }
           <DynamicButton
             title="Change Password"
             type="primary"

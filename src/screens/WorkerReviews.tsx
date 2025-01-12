@@ -22,6 +22,7 @@ const ratingDescriptions = [
   'Very Good',
   'Excellent',
 ];
+
 export default function WorkerReviews({ navigation, route }: RouterProps) {
   const params_workerId = route.params.worker_id;
 

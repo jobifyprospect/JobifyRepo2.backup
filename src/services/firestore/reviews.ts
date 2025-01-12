@@ -1,7 +1,7 @@
-import {showAlert} from '../../components/AlertDialog';
-import {FIRESTORE_DB} from '../../config/firebase';
-import {Review} from '../interfaces/review';
-import {getDocs, query, where} from '@react-native-firebase/firestore';
+import { showAlert } from '../../components/AlertDialog';
+import { FIRESTORE_DB } from '../../config/firebase';
+import { Review } from '../interfaces/review';
+import { getDocs, query, where } from '@react-native-firebase/firestore';
 
 const reviewsRef = FIRESTORE_DB.collection('reviews');
 
@@ -154,6 +154,7 @@ export const calculateAverageRating = async (workerId: string) => {
   const reviews = reviewsSnapshot.docs.map(doc => doc.data());
   const totalRatings = reviews.reduce((sum, review) => sum + review.rating, 0);
   const averageRating = reviews.length ? totalRatings / reviews.length : 0;
+  const reviewCount = reviews.length;
 
-  return averageRating;
+  return { averageRating, reviewCount };
 };

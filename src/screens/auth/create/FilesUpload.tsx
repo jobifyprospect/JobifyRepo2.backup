@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,21 +11,21 @@ import {
   Platform,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import Colors from '../../../styles/Colors';
-import {styles} from '../../../styles/Globals';
+import { styles } from '../../../styles/Globals';
 import Background from '../../../components/Background';
 import DynamicButton from '../../../components/DynamicButton';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../../interfaces/RouterStackInterfaceParams';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../interfaces/RouterStackInterfaceParams';
 
 type FilesUploadProps = NativeStackScreenProps<
   RootStackParamList,
   'FilesUpload'
 >;
 
-const FilesUpload = ({navigation, route}: FilesUploadProps) => {
-  const {userType, firstName, lastName, phoneNumber, address, email, password} =
+const FilesUpload = ({ navigation, route }: FilesUploadProps) => {
+  const { userType, firstName, lastName, phoneNumber, address, email, password } =
     route.params;
 
   const [pdfPortfolio, setPdfPortfolio] = useState<string>('');
@@ -167,6 +167,13 @@ const FilesUpload = ({navigation, route}: FilesUploadProps) => {
           <Text style={styles.regularText}>
             Upload your PDF portfolio and certification images.
           </Text>
+          <Text style={styles.smallText}>
+            This step is optional, you may upload these later in Jobify's profile section.
+          </Text>
+
+          <Text style={styles.errorText}>
+            While optional, these will help your clients more easily identify your skills and experience.
+          </Text>
 
           {/* PDF Upload */}
           <View style={filesUploadStyles.fileContainer}>
@@ -199,7 +206,7 @@ const FilesUpload = ({navigation, route}: FilesUploadProps) => {
                 <Text style={styles.smallSemiBoldText}>
                   Certificate {index + 1}
                 </Text>
-                <Image source={{uri}} style={filesUploadStyles.image} />
+                <Image source={{ uri }} style={filesUploadStyles.image} />
                 <DynamicButton
                   title="Remove Image"
                   onPress={() => removeCertificationImage(index)}
