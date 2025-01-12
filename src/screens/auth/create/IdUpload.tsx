@@ -118,7 +118,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
       const backImage2Base64 = await convertImageToBase64(idImage2Back);
       const selfieImageBase64 = await convertImageToBase64(selfieImage);
 
-      if (!frontImageBase64 || !backImageBase64 || !selfieImageBase64) {
+      if (!frontImageBase64 || !backImageBase64 || !frontImage2Base64 || !backImage2Base64 || !selfieImageBase64) {
         throw new Error('Failed to convert images to Base64.');
       }
 
@@ -133,12 +133,12 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
         true,
       );
       frontImage2Url = await uploadImage(
-        frontImageBase64,
+        frontImage2Base64,
         `id-images/${userId}_front2.jpg`,
         true,
       );
       backImage2Url = await uploadImage(
-        backImageBase64,
+        backImage2Base64,
         `id-images/${userId}_back2.jpg`,
         true,
       );
@@ -331,7 +331,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
           {/* ID 2 Front Upload */}
           <View style={idUploadStyles.imageContainer}>
             <Text style={styles.smallSemiBoldText}>Government ID #2 Front</Text>
-            {idImageFront ? (
+            {idImage2Front ? (
               <TouchableOpacity onPress={() => captureImage('front2')}>
                 <Image
                   source={{ uri: idImage2Front }}
@@ -350,7 +350,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
           {/* ID 2 Back Upload */}
           <View style={idUploadStyles.imageContainer}>
             <Text style={styles.smallSemiBoldText}>Government ID #2 Back</Text>
-            {idImageBack ? (
+            {idImage2Back ? (
               <TouchableOpacity onPress={() => captureImage('back2')}>
                 <Image
                   source={{ uri: idImage2Back }}
