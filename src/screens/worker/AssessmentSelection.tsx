@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
-import { getAllAssessments } from '../services/firestore/assessments';
+import { getAllAssessments } from '../../services/firestore/assessments';
 import { NavigationProp, Route } from '@react-navigation/native';
 
-import Colors from '../styles/Colors';
+import Colors from '../../styles/Colors';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;

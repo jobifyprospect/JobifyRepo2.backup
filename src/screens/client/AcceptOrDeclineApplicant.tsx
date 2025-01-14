@@ -84,8 +84,20 @@ export default function AcceptOrDeclineApplicant({
     setLoadingWorker(true);
     try {
       if (params_workerId) {
-        const userDetails = await getUserDetailsByWorkerId(params_workerId);
-        userDetails && setWorker(userDetails[0].user);
+        const [workerUserDetails, workerData] = await Promise.all([
+          getUserDetailsByWorkerId(params_workerId),
+          getWorker(params_workerId)
+        ]);
+
+        if (!workerUserDetails || !workerData) {
+          console.log('Failed to fetch worker profile.');
+          return null;
+        }
+
+        const [userDetails] = workerUserDetails;
+        const { user } = userDetails;
+
+        setWorker(user);
 
         const worker = await getWorker(params_workerId);
         if (worker) {
@@ -278,7 +290,7 @@ export default function AcceptOrDeclineApplicant({
                     <Text> No badges. </Text>
                     :
                     <>
-                      {badges?.map((badge: BadgeType, index: number) => (
+                      {badges.map((badge: BadgeType, index: number) => (
                         <Badge key={badge} img={badge} />
                       ))}
                     </>

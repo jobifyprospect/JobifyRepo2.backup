@@ -1,24 +1,21 @@
 import React from "react";
 import { NavigationProp, Route, useFocusEffect } from "@react-navigation/native";
 import { View, Text, SafeAreaView, StyleSheet, Image, ScrollView, ActivityIndicator, Dimensions } from "react-native";
-import { styles } from "../styles/Globals";
-import BackButton from "../components/BackButton";
-import { getWorkerFullName } from "../services/firestore/roles";
-import { showAlert } from "../components/AlertDialog";
+import { styles } from "../../styles/Globals";
+import BackButton from "../../components/BackButton";
+import { showAlert } from "../../components/AlertDialog";
 import { useCallback, useEffect, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import Colors from "../styles/Colors";
-import { Validation } from "../services/interfaces/validation";
-import { getUserDetailsByWorkerId } from "../services/firestore/users";
+import Colors from "../../styles/Colors";
+import { Validation } from "../../services/interfaces/validation";
+import { getUserDetailsByWorkerId } from "../../services/firestore/users";
 import Svg, { Path } from "react-native-svg";
-import TextButton from "../components/TextButton";
-import { calculateAverageRating } from '../services/firestore/reviews';
-import GetProfilePicture from "../components/GetProfilePicture";
-import GetFullName from "../components/GetFullName";
-import Badge from "../components/Badge";
-import { getWorker } from "../services/firestore/workers";
-import { Worker } from "../services/interfaces/worker";
-import { User } from "../services/interfaces/user";
+import TextButton from "../../components/TextButton";
+import { calculateAverageRating } from "../../services/firestore/reviews";
+import GetProfilePicture from "../../components/GetProfilePicture";
+import Badge from "../../components/Badge";
+import { getWorker } from "../../services/firestore/workers";
+import { Worker } from "../../services/interfaces/worker";
+import { User } from "../../services/interfaces/user";
 import Pdf from 'react-native-pdf';
 
 interface RouterProps {

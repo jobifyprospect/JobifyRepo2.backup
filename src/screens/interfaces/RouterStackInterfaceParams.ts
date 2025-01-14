@@ -9,6 +9,7 @@ export type RootStackParamList = {
   Home: undefined;
   AssessmentSelection: { workerId: string };
   ViewWorkerProfile: { workerId: string };
+  ViewClientProfile: { clientId: string };
   AssessmentScreen: { workerId: string, assessmentId: string };
   Portfolio: { workerId: string, userId: string };
   JobDetailsClient: { id: string };
@@ -116,6 +117,21 @@ export type RootStackParamList = {
       jobId: string;
       title: string;
       clientId: string;
+      createdAt:
+      | FirebaseFirestoreTypes.Timestamp
+      | FirebaseFirestoreTypes.FieldValue;
+      updatedAt:
+      | FirebaseFirestoreTypes.Timestamp
+      | FirebaseFirestoreTypes.FieldValue;
+      assignedWorker: string;
+    };
+  };
+  WriteFeedback: {
+    job: {
+      jobId: string;
+      title: string;
+      clientId: string;
+      workerId?: string;
       createdAt:
       | FirebaseFirestoreTypes.Timestamp
       | FirebaseFirestoreTypes.FieldValue;

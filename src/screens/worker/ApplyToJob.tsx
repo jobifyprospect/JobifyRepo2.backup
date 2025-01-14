@@ -5,6 +5,8 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Touchable,
+  TouchableOpacity,
 } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { styles } from '../../styles/Globals';
@@ -40,6 +42,7 @@ import { DocumentData } from 'firebase-admin/firestore';
 import { createNotification, sendNotification } from '../../services/firestore/notifications';
 import { Notification } from '../../services/interfaces/notification';
 import { getUserDetailsByClientId } from '../../services/firestore/users';
+import { getClient } from '../../services/firestore/clients';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -296,7 +299,13 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
             <View style={localStyles.sectionContainer}>
               <View style={localStyles.card}>
                 <View style={localStyles.cardContent}>
-                  <View style={localStyles.contentRow}>
+                  <TouchableOpacity style={[localStyles.contentRow, { borderWidth: 1, borderRadius: 5, }]}
+                    onPress={async () =>
+                      navigation.navigate('ViewClientProfile', {
+                        clientId: job?.clientId,
+                      })
+                    }
+                  >
                     <View style={localStyles.contentItemRow}>
                       <View style={localStyles.profileContainer}>
                         {client?.profilePicture ? (
@@ -316,9 +325,12 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
                         <Text style={localStyles.nameContainer}>
                           {client?.firstName} {client?.lastName}
                         </Text>
+                        <Text style={[styles.smallText, { color: Colors.primary }]}>
+                          View profile
+                        </Text>
                       </View>
                     </View>
-                  </View>
+                  </TouchableOpacity>
 
                   <View style={localStyles.contentRow}>
                     <Text style={localStyles.cardContentHeader}>
@@ -348,7 +360,7 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
                     />
                   </View>
                   <View style={localStyles.contentRow}>
-                    <Text style={localStyles.cardContentHeader}>Schedule </Text>
+                    <Text style={localStyles.cardContentHeader}> Schedule </Text>
                     <Text style={localStyles.contentTextRegular}>
                       {job?.schedule}
                     </Text>

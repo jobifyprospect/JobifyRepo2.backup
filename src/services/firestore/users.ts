@@ -1,5 +1,5 @@
-import {onAuthStateChanged} from '@react-native-firebase/auth';
-import {showAlert} from '../../components/AlertDialog';
+import { onAuthStateChanged } from '@react-native-firebase/auth';
+import { showAlert } from '../../components/AlertDialog';
 import {
   addressesRef,
   FIREBASE_AUTH,
@@ -7,12 +7,13 @@ import {
   usersRef,
   validationsRef,
 } from '../../config/firebase';
-import {Address} from '../interfaces/address';
-import {Role} from '../interfaces/role';
-import {User} from '../interfaces/user';
-import {UserDetails} from '../interfaces/userDetails';
-import {Validation} from '../interfaces/validation';
+import { Address } from '../interfaces/address';
+import { Role } from '../interfaces/role';
+import { User } from '../interfaces/user';
+import { UserDetails } from '../interfaces/userDetails';
+import { Validation } from '../interfaces/validation';
 import firestore from '@react-native-firebase/firestore';
+import messaging from '@react-native-firebase/messaging';
 
 export const createUser = async (user: User): Promise<void> => {
   try {
@@ -173,6 +174,75 @@ export const deleteUser = async (userId: string): Promise<void> => {
   }
 };
 
+
+export async function getUserDetailsByClientId2(
+  clientId: string,
+): Promise<Array<UserDetails> | null> {
+  try {
+    // Step 1: Find the role associated with the clientId
+    const roleSnapshot = await rolesRef
+      .where('clientId', '==', clientId) // Query using clientId directly
+      .limit(1)
+      .get();
+
+    if (roleSnapshot.empty) {
+      return null; // No role found for the provided clientId
+    }
+
+    // Get the role data from the first matching document
+    const roleDoc = roleSnapshot.docs[0];
+    const roleData = roleDoc.data() as Role; // Get the role data
+
+    // Step 2: Use the roleId to find the user details
+    const userDoc = await usersRef
+      .where('roleId', 'array-contains', roleData.roleId) // Fetch user by roleId
+      .limit(1)
+      .get();
+
+    const user = userDoc.empty ? null : userDoc.docs[0].data() as User; // Get the user data
+
+    if (!user) {
+      console.log('Error', 'No user found with the provided clientId');
+      throw new Error('No user found with the provided clientId');
+    }
+
+    // Fetch related details concurrently using Promise.all
+    const [validationDoc, addressDoc, roleDocs] = await Promise.all([
+      user.validationId
+        ? validationsRef.doc(user.validationId).get()
+        : Promise.resolve(null),
+      user.addressId
+        ? addressesRef.doc(user.addressId).get()
+        : Promise.resolve(null),
+      user.roleId && user.roleId.length > 0
+        ? Promise.all(user.roleId.map(roleId => rolesRef.doc(roleId).get()))
+        : Promise.resolve([]),
+    ]);
+
+    const validation = validationDoc?.exists
+      ? (validationDoc.data() as Validation)
+      : null;
+    const address = addressDoc?.exists ? (addressDoc.data() as Address) : null;
+    const roles =
+      roleDocs.length > 0
+        ? roleDocs.map(roleDoc => roleDoc.data() as Role)
+        : [];
+
+    return [
+      {
+        validation,
+        address,
+        role: roles.length > 0 ? roles[0] : null, // Assuming you're interested in the first role only
+        user,
+      },
+    ];
+  } catch (error) {
+    console.error('Error fetching user by clientId:', error);
+    return null;
+  }
+}
+
+
 // Function to get user details by clientId
 export async function getUserDetailsByClientId(
   clientId: string,
@@ -277,6 +347,43 @@ export async function getUserDetailsByWorkerId(
   }
 }
 
+// export async function getUserDetailsByWorkerId(
+//   workerId: string,
+// ): Promise<User | null> {
+//   try {
+//     // Step 1: Find the role associated with the workerId
+//     const roleSnapshot = await rolesRef
+//       .where('workerId', '==', workerId) // Query using workerId directly
+//       .limit(1)
+//       .get();
+
+//     if (roleSnapshot.empty) {
+//       return null; // No role found for the provided workerId
+//     }
+
+//     // Get the role data from the first matching document
+//     const roleDoc = roleSnapshot.docs[0];
+//     const roleData = roleDoc.data() as Role; // Get the role data
+
+//     // Step 2: Use the roleId to find the user details
+//     const userSnapshot = await usersRef
+//       .where('roleId', 'array-contains', roleData.roleId) // Fetch user by roleId
+//       .limit(1)
+//       .get();
+
+//     if (userSnapshot.empty) {
+//       return null; // No user found with the roleId
+//     }
+
+//     // Get the user document and return the user details
+//     const userDoc = userSnapshot.docs[0];
+//     return userDoc.data() as User; // Return user details
+//   } catch (error) {
+//     console.error('Error fetching user by workerId:', error);
+//     return null;
+//   }
+// }
+
 // Function to update the user's defaultRole
 export const updateUserRole = async (
   userId: string,
@@ -324,7 +431,7 @@ export const storeFcmToken = async (
       {
         fcmToken: token,
       },
-      {merge: true}, // This will update the existing document or create a new one
+      { merge: true }, // This will update the existing document or create a new one
     );
     console.log('FCM token stored successfully');
   } catch (error) {
@@ -345,10 +452,7 @@ export const removeFcmToken = async (userId: string) => {
 };
 
 // Function to handle token refresh
-export const handleTokenRefresh = async (
-  userId: string | null,
-  token: string | null,
-) => {
+export const handleTokenRefresh = async (userId: string | null, token: string | null) => {
   if (!userId) {
     return;
   }
@@ -379,7 +483,7 @@ export const getCurrentUserUID = () => {
 
 export async function getIdByRoleId(
   roleId: string,
-): Promise<{clientId?: string; workerId?: string} | null> {
+): Promise<{ clientId?: string; workerId?: string } | null> {
   try {
     // Fetch the user document that matches the given roleId
     const userSnapshot = await rolesRef.where('roleId', '==', roleId).get();
@@ -402,7 +506,9 @@ export async function getIdByRoleId(
   }
 }
 
-export async function getIdByRoleId2(id: string): Promise<string | null> {
+export async function getIdByRoleId2(
+  id: string,
+): Promise<string | null> {
   try {
     // Create a query that checks if 'roleId' array contains the passed 'id'
     const userQuery = usersRef.where('roleId', 'array-contains', id);

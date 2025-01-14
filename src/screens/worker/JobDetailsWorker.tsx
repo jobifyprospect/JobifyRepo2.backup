@@ -31,6 +31,8 @@ import { Notification } from '../../services/interfaces/notification';
 import { createNotification } from '../../services/firestore/notifications';
 import { serverTimestamp } from '@react-native-firebase/firestore';
 import firestore from '@react-native-firebase/firestore'
+import { getFeedbackByClientId } from '../../services/firestore/reviews';
+import { Feedback } from '../../services/interfaces/review';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -44,6 +46,9 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
         phoneNumber?: string;
         email?: string;
     }>();
+
+    const [feedback, setFeedback] = useState<Feedback>();
+
     const [job, setJob] = useState<Job>();
     const [loading, setIsLoading] = useState<boolean>(false);
     const [isDone, setIsDone] = useState<Boolean>(false);
@@ -69,6 +74,19 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
         return firestore.Timestamp.now();
     }
 
+    async function getFeedbackOnJob(id: string) {
+        const res = await getFeedbackByClientId(id);
+
+        if (!res) {
+            throw new Error('Failed to fetch feedback for this job.');
+        }
+
+        if (res.workerId === job?.assignedWorker) {
+            setFeedback(res);
+        }
+
+        return;
+    }
     async function fetchTimeRecords() {
 
         const res = job && await getTimeRecord(job.jobId, job.assignedWorker)
@@ -82,6 +100,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             }
         }
     }
+
     const fetchJobAndApplicants = useCallback(async () => {
         setIsLoading(true); // Set loading to true at the start
         try {
@@ -237,6 +256,11 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
 
     useEffect(() => {
         if (job) {
+            getFeedbackOnJob(job.clientId)
+        }
+    }, [job])
+    useEffect(() => {
+        if (job) {
             fetchTimeRecords()
         }
     }, [job])
@@ -284,7 +308,6 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             return () => unsubscribe();
         }
     }, [id, currentUserId]);
-
 
 
     if (loading && !refreshing) {
@@ -419,6 +442,37 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                             :
                             null
                         }
+                        <View style={{ marginTop: 48 }}>
+                            {record?.acceptedBy && job?.status === 'closed' ?
+                                <>
+                                    {feedback ?
+                                        <View style={{ backgroundColor: 'white', padding: 16, borderRadius: 10 }}>
+                                            <Text style={styles.mediumText}>Your Feedback:</Text>
+                                            <Text style={styles.mediumTextBlue}>{feedback.comment}</Text>
+                                        </View>
+                                        :
+                                        <DynamicButton
+                                            type="primary"
+                                            title="Write feedback for this client"
+                                            onPress={() =>
+                                                navigation.navigate('WriteFeedback', {
+                                                    job: {
+                                                        jobId: job?.jobId || '',
+                                                        title: job?.title || '',
+                                                        clientId: job?.clientId || '',
+                                                        createdAt: job?.createdAt || new Date(),
+                                                        updatedAt: job?.updatedAt || new Date(),
+                                                        assignedWorker: job?.assignedWorker || '',
+                                                    },
+                                                })
+                                            }
+                                        />
+                                    }
+                                </>
+                                :
+                                null
+                            }
+                        </View>
                     </ScrollView>
                 </View>
             }

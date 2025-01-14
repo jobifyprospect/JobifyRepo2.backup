@@ -107,6 +107,29 @@ export const getClientDetails = async (
   }
 };
 
+export const getClientUserDetails = async (
+  clientId: string,
+): Promise<User | null> => {
+  try {
+    const clientDoc = await clientsRef.doc(clientId).get();
+    if (clientDoc.exists) {
+      const clientData = clientDoc.data() as Worker;
+      const userId = clientData.userId;
+      const userDoc = await usersRef.doc(userId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data() as User;
+
+        return userData;
+      }
+    }
+    return null; // Return empty object if client or user not found
+  } catch (error) {
+    showAlert('Error', "Failed to retrieve client's details.");
+    console.error(error);
+    return null; // Return empty object on error
+  }
+};
+
 export const getWorkerProfilePicture = async (
   workerId: string,
 ): Promise<string | undefined> => {

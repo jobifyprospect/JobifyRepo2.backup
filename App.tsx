@@ -9,9 +9,10 @@ import Profile from './src/screens/Profile';
 import { onAuthStateChanged } from '@react-native-firebase/auth';
 import { FIREBASE_AUTH, usersRef } from './src/config/firebase';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import AssessmentScreen from './src/screens/AssessmentScreen';
-import AssessmentSelection from './src/screens/AssessmentSelection';
+import AssessmentScreen from './src/screens/worker/AssessmentScreen';
+import AssessmentSelection from './src/screens/worker/AssessmentSelection';
 import Portfolio from './src/screens/worker/Portfolio';
+import ViewClientProfile from './src/screens/worker/ViewClientProfile';
 import {
   faHouse,
   faFile,
@@ -53,7 +54,8 @@ import { getIsNewUser, setIsNewUser } from './src/shared/AuthUtils';
 
 import JobDetailsWorker from './src/screens/worker/JobDetailsWorker';
 import FilesUpload from './src/screens/auth/create/FilesUpload';
-import ViewWorkerProfile from './src/screens/ViewWorkerProfile';
+import ViewWorkerProfile from './src/screens/client/ViewWorkerProfile';
+import WriteFeedback from './src/screens/worker/WriteFeedback';
 library.add(faHouse, faFile, faUser, faBell);
 enableScreens();
 const DELAY_MS = 10000;
@@ -370,12 +372,22 @@ export default function App() {
               <Stack.Screen
                 name="ViewWorkerProfile"
                 component={ViewWorkerProfile}
-                options={{ title: 'WorkerReviews', headerShown: false }} // Worker Reviews
+                options={{ title: 'Worker Profile', headerShown: false }} // Worker Reviews
+              />
+              <Stack.Screen
+                name="ViewClientProfile"
+                component={ViewClientProfile}
+                options={{ title: 'Client Profile', headerShown: false }} // Worker Reviews
               />
               <Stack.Screen
                 name="WriteReview"
                 component={WriteReviewScreen}
                 options={{ title: 'Write a Review', headerShown: false }} // Custom header title
+              />
+              <Stack.Screen
+                name="WriteFeedback"
+                component={WriteFeedback}
+                options={{ title: 'Write Feedback', headerShown: false }} // Custom header title
               />
             </>
           ) : (

@@ -271,6 +271,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
       Alert.alert('Error', `Failed to create account, ${error} `);
     } finally {
       setIsSubmitting(false);
+      firebase.auth().signOut();
     }
   };
 
@@ -292,7 +293,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
 
           {/* ID Front Upload */}
           <View style={idUploadStyles.imageContainer}>
-            <Text style={styles.smallSemiBoldText}>Government ID Front</Text>
+            <Text style={styles.smallSemiBoldText}>Government ID Front <Text style={{color: 'red'}}> * </Text></Text>
             {idImageFront ? (
               <TouchableOpacity onPress={() => captureImage('front')}>
                 <Image
@@ -311,7 +312,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
 
           {/* ID Back Upload */}
           <View style={idUploadStyles.imageContainer}>
-            <Text style={styles.smallSemiBoldText}>Government ID Back</Text>
+            <Text style={styles.smallSemiBoldText}>Government ID Back  <Text style={{color: 'red'}}> * </Text></Text>
             {idImageBack ? (
               <TouchableOpacity onPress={() => captureImage('back')}>
                 <Image
@@ -330,7 +331,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
 
           {/* ID 2 Front Upload */}
           <View style={idUploadStyles.imageContainer}>
-            <Text style={styles.smallSemiBoldText}>Government ID #2 Front</Text>
+            <Text style={styles.smallSemiBoldText}>Government ID #2 Front <Text style={{color: 'red'}}> * </Text></Text>
             {idImage2Front ? (
               <TouchableOpacity onPress={() => captureImage('front2')}>
                 <Image
@@ -349,7 +350,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
 
           {/* ID 2 Back Upload */}
           <View style={idUploadStyles.imageContainer}>
-            <Text style={styles.smallSemiBoldText}>Government ID #2 Back</Text>
+            <Text style={styles.smallSemiBoldText}>Government ID #2 Back <Text style={{color: 'red'}}> * </Text></Text>
             {idImage2Back ? (
               <TouchableOpacity onPress={() => captureImage('back2')}>
                 <Image
@@ -368,7 +369,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
 
           {/* Selfie Upload */}
           <View style={idUploadStyles.imageContainer}>
-            <Text style={styles.smallSemiBoldText}>Selfie</Text>
+            <Text style={styles.smallSemiBoldText}>Selfie <Text style={{color: 'red'}}> * </Text></Text>
             {selfieImage ? (
               <TouchableOpacity onPress={() => captureImage('selfie')}>
                 <Image

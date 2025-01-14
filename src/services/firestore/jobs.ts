@@ -194,6 +194,20 @@ export function getJobsByClient(userId: string | null): Promise<Job[]> {
   });
 }
 
+export async function getJobCountByClientId(clientId: string): Promise<number> {
+  try {
+    const snapshot = await jobsRef
+      .where('clientId', '==', clientId)
+      .count()
+      .get();
+
+    return snapshot.data().count;
+  } catch (error) {
+    console.error('Error getting job count by clientId:', error);
+    throw error;
+  }
+}
+
 export function getJobsByWorker(workerId: string | null): Promise<Job[]> {
   console.log(workerId);
 

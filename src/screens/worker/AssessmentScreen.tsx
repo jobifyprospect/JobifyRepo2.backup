@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { getAssessment } from '../services/firestore/assessments';
+import { getAssessment } from '../../services/firestore/assessments';
 import { NavigationProp, Route } from '@react-navigation/native';
-import Colors from '../styles/Colors';
-import { styles } from '../styles/Globals';
-import DynamicButton from '../components/DynamicButton';
-import { updateWorker } from '../services/firestore/workers';
-import { Worker } from '../services/interfaces/worker';
-import { FIRESTORE_TIMESTAMP } from '../config/firebase';
+import Colors from '../../styles/Colors';
+import { styles } from '../../styles/Globals';
+import DynamicButton from '../../components/DynamicButton';
+import { updateWorker } from '../../services/firestore/workers';
+import { Worker } from '../../services/interfaces/worker';
+import { FIRESTORE_TIMESTAMP } from '../../config/firebase';
 import firestore from '@react-native-firebase/firestore';
-import { BadgeType } from '../services/interfaces/badge';
+import { BadgeType } from '../../services/interfaces/badge';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;

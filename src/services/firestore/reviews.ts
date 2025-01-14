@@ -1,9 +1,10 @@
 import { showAlert } from '../../components/AlertDialog';
 import { FIRESTORE_DB } from '../../config/firebase';
-import { Review } from '../interfaces/review';
+import { Review, Feedback } from '../interfaces/review';
 import { getDocs, query, where } from '@react-native-firebase/firestore';
 
 const reviewsRef = FIRESTORE_DB.collection('reviews');
+const feedbackRef = FIRESTORE_DB.collection('jobFeedbacks');
 
 export const createReview = async (review: Review): Promise<void> => {
   try {
@@ -14,12 +15,34 @@ export const createReview = async (review: Review): Promise<void> => {
   }
 };
 
+export const createFeedback = async (feedback: Feedback): Promise<void> => {
+  try {
+    await feedbackRef.doc(feedback.clientId).set(feedback);
+  } catch (error) {
+    showAlert('Error', 'Failed to create feedback.');
+    console.error(error);
+  }
+};
+
 export const getReview = async (
   reviewId: string,
 ): Promise<Review | undefined> => {
   try {
     const reviewDoc = await reviewsRef.doc(reviewId).get();
     return reviewDoc.exists ? (reviewDoc.data() as Review) : undefined;
+  } catch (error) {
+    showAlert('Error', 'Failed to retrieve review.');
+    console.error(error);
+    return undefined;
+  }
+};
+
+export const getFeedback = async (
+  feedbackId: string,
+): Promise<Feedback | undefined> => {
+  try {
+    const reviewDoc = await feedbackRef.doc(feedbackId).get();
+    return reviewDoc.exists ? (reviewDoc.data() as Feedback) : undefined;
   } catch (error) {
     showAlert('Error', 'Failed to retrieve review.');
     console.error(error);
@@ -100,6 +123,27 @@ export const getReviewsByWorkerId = async (
     throw error;
   }
 };
+
+export const getFeedbackByClientId = async (
+  clientId: string
+): Promise<Feedback | null> => {
+  try {
+    const feedbackSnapshot = await feedbackRef
+      .where('clientId', '==', clientId)
+      .get();
+
+    if (feedbackSnapshot.empty) {
+      console.log(`No feedback found for clientId: ${clientId}`);
+      return null;
+    }
+
+    return feedbackSnapshot.docs[0].data() as Feedback;
+  } catch (error) {
+    console.error(`Error fetching feedback for clientId ${clientId}:`, error);
+    throw error;
+  }
+};
+
 export async function getReviewForJob(
   jobTitle: string,
   clientId: string,
@@ -146,6 +190,7 @@ export async function getReviewForJob(
 //   });
 // }
 
+//for workers
 export const calculateAverageRating = async (workerId: string) => {
   const reviewsSnapshot = await reviewsRef // Replace with your actual collection name
     .where('workerId', '==', workerId)
@@ -157,4 +202,18 @@ export const calculateAverageRating = async (workerId: string) => {
   const reviewCount = reviews.length;
 
   return { averageRating, reviewCount };
+};
+
+//for clients
+export const calculateAverageRating2 = async (clientId: string) => {
+  const feedbackSnapshot = await feedbackRef // Replace with your actual collection name
+    .where('clientId', '==', clientId)
+    .get();
+
+  const reviews = feedbackSnapshot.docs.map(doc => doc.data());
+  const totalRatings = reviews.reduce((sum, review) => sum + review.rating, 0);
+  const averageRating = reviews.length ? totalRatings / reviews.length : 0;
+  const reviewCount = reviews.length;
+
+  return { averageRating, reviewCount, reviews };
 };
