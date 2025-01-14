@@ -16,6 +16,7 @@ import {
   getCurrentUserUID,
   getIdByRoleId,
   getUser,
+  getUserDetailsByClientId2,
 } from '../../services/firestore/users';
 import { FIRESTORE_TIMESTAMP } from '../../config/firebase';
 import {
@@ -43,10 +44,30 @@ import { createNotification, sendNotification } from '../../services/firestore/n
 import { Notification } from '../../services/interfaces/notification';
 import { getUserDetailsByClientId } from '../../services/firestore/users';
 import { getClient } from '../../services/firestore/clients';
+import { getAddress } from '../../services/firestore/addresses';
+import { Address } from '../../services/interfaces/address';
+import { formatAddress } from '../../utils/FormatAddress';
+import Svg, { Path } from 'react-native-svg';
+import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { calculateAverageRating2 } from '../../services/firestore/reviews';
+import { Validation } from '../../services/interfaces/validation';
+import Badge from '../../components/Badge';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
   route: RouteProp<RootStackParamList, 'ApplyToJob'>;
+}
+
+type clientRatings = {
+  averageRating: number,
+  reviewCount: number,
+  reviews: FirebaseFirestoreTypes.DocumentData[]
+  // reviews: {
+  //     clientId: string,
+  //     comment: string,
+  //     jobTitle: string,
+  //     rating: number
+  // }[]
 }
 
 export default function ApplyToJob({ navigation, route }: RouterProps) {
@@ -54,12 +75,28 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
   const [loading, setIsLoading] = useState<boolean>(false);
   const [client, setClient] = useState<User>();
   const [hasApplied, setHasApplied] = useState<boolean>(false);
+  const [address, setAddress] = useState<Address>();
   const [app, setApp] = useState<DocumentData | undefined>(undefined)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false); // State to track refreshing
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<any>(null);
+  const [validation, setValidation] = useState<Validation | null>(null);
+  const [clientRatings, setClientRatings] = useState<clientRatings>({
+    averageRating: 0,
+    reviewCount: 0,
+    reviews: []
+  });
+
+
   const job_id = route.params.id;
+
+  async function fetchClientRatings(id: string) {
+    const ratings = await calculateAverageRating2(id);
+
+    console.log('ratings: ', ratings)
+    setClientRatings(ratings);
+  }
 
   // Fetch the current user UID only once when the component mounts
   useEffect(() => {
@@ -222,11 +259,22 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
           const jobs = await getJob(job_id);
 
           if (jobs) {
-            const clientte = await getUserDetailsByClientId(
+            const clientte = await getUserDetailsByClientId2(
               jobs?.clientId as string,
             );
 
-            clientte && setClient(clientte);
+            if (!clientte) {
+              console.log('Failed to fetch client profile.');
+              return null;
+            }
+
+            const [userDetails] = clientte;
+            const { user, address, validation } = userDetails;
+
+            setClient(user as User);
+            setAddress(address as Address)
+            setValidation(validation as Validation);
+
             const appliedStatus = await hasWorkerApplied({
               jobId: job_id,
               workerId: currentUserIdProp,
@@ -247,6 +295,13 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
     },
     [job_id],
   );
+
+  useEffect(() => {
+    if (job) {
+      fetchClientRatings(job.clientId as string);
+    }
+  }, [job])
+
   const handleOpenMap = () => {
     if (job?.mapLocation?.longitude && job?.mapLocation?.latitude) {
       navigation.navigate('MapScreen', {
@@ -322,9 +377,36 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
                         )}
                       </View>
                       <View style={{ flex: 1, justifyContent: 'center' }}>
-                        <Text style={localStyles.nameContainer}>
-                          {client?.firstName} {client?.lastName}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text style={[localStyles.nameContainer, { flex: 1 }]}>
+                            {client?.firstName} {client?.lastName}
+                          </Text>
+                          {validation?.isAccountVerified === true && (
+                            <Badge img="verified" />
+                          )}
+                        </View>
+
+                        <View style={localStyles.starsContainer}>
+                          {Array.from({ length: 5 }, (_, index) => {
+                            const starValue = index + 1;
+                            return (
+                              <Svg
+                                key={index}
+                                width={24}
+                                height={24}
+                                viewBox="0 0 24 24"
+                                fill={
+                                  clientRatings.averageRating >= starValue
+                                    ? Colors.primary
+                                    : Colors.placeholder
+                                }>
+                                <Path d="M12 .587l3.668 7.429 8.2 1.193-5.934 5.787 1.401 8.172L12 18.896l-7.335 3.872 1.4-8.172-5.933-5.787 8.2-1.193L12 .587z" />
+                              </Svg>
+                            );
+                          })}
+                        </View>
+
+
                         <Text style={[styles.smallText, { color: Colors.primary }]}>
                           View profile
                         </Text>
@@ -337,11 +419,23 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
                       Contact Info
                     </Text>
                     <View>
-                      <Text style={localStyles.contentTextRegular}>
-                        Email: {client?.email}
+                      <Text style={styles.smallSemiBoldText}>
+                        Email:
                       </Text>
                       <Text style={localStyles.contentTextRegular}>
-                        Phone: {client?.phoneNumber}
+                        {client?.email}
+                      </Text>
+                      <Text style={styles.smallSemiBoldText}>
+                        Phone:
+                      </Text>
+                      <Text style={localStyles.contentTextRegular}>
+                        {client?.phoneNumber}
+                      </Text>
+                      <Text style={styles.smallSemiBoldText}>
+                        Address:
+                      </Text>
+                      <Text style={localStyles.contentTextRegular}>
+                        {formatAddress(address)}
                       </Text>
                     </View>
                   </View>
@@ -440,6 +534,16 @@ export default function ApplyToJob({ navigation, route }: RouterProps) {
 }
 
 const localStyles = StyleSheet.create({
+  modeText: {
+    flexShrink: 1, // Prevent the text from taking up full width
+    color: Colors.labelText, // Use your label text color
+    fontSize: 16, // Adjust font size as needed
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 10,
+  },
   actionBtnGroup: {
     marginVertical: 24,
   },

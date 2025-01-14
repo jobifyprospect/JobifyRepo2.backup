@@ -51,7 +51,7 @@ export const getTimeRecord = async (
     const timeRecord = querySnapshot.docs.map((doc) => doc.data() as TimeRecord);
     return timeRecord[0];
   } catch (error) {
-    showAlert('Error', 'Failed to search time records.');
+    console.log('Error', 'Failed to search time records.');
     console.error(error);
     return null; // Return empty array on error
   }

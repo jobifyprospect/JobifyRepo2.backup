@@ -53,7 +53,7 @@ export default function ManageWorker({
   const [currentUserId, setCurrentUserId] = useState<any>(null);
   const [loadingAddress, setLoadingAddress] = useState<boolean>(true);
 
-  const [workerTimeRecord, setWorkerTimeRecord] = useState<TimeRecord>();
+  const [workerTimeRecord, setWorkerTimeRecord] = useState<TimeRecord | null>();
 
   async function getWorkerTimeRecords() {
     const res = await getTimeRecord(params_jobId, params_workerId)
@@ -186,11 +186,12 @@ export default function ManageWorker({
   }, [fetchAddress, worker]);
 
   useEffect(() => {
-    if (!params_jobId) {
-      console.error('params_jobId is undefined or null');
+    if (!params_jobId || !params_workerId) {
+      console.error('params_jobId or params_workerId is undefined or null');
       return;
     }
 
+    console.log('received params appId: ', params_appId);
     try {
       const unsubscribe = timeRecordsRef
         .where('jobId', '==', params_jobId)
@@ -198,11 +199,11 @@ export default function ManageWorker({
         .onSnapshot(
           snapshot => {
             if (snapshot.empty) {
+              setWorkerTimeRecord(null);
               return;
             }
 
             const timeRecordsData = snapshot.docs[0]?.data() as TimeRecord;
-
             setWorkerTimeRecord(timeRecordsData);
           },
           error => {
@@ -210,11 +211,12 @@ export default function ManageWorker({
           },
         );
 
+      // Clean up the listener when the component unmounts
       return () => unsubscribe();
     } catch (error) {
       console.error('Error setting up Firestore onSnapshot:', error);
     }
-  }, [params_appId]);
+  }, [params_jobId, params_workerId]);
 
   const initials = `${worker?.firstName ?? ''}${worker?.lastName ?? ''
     }`.toUpperCase();
@@ -227,6 +229,73 @@ export default function ManageWorker({
         <Text style={styles.mediumText}>Loading Details...</Text>
       </View>
     );
+  }
+
+  async function acceptTimeIn() {
+    const receiverDetails = await getUserDetailsByWorkerId(application?.workerId as string);
+
+    if (!receiverDetails || receiverDetails.length === 0 || !receiverDetails[0].user) {
+      throw new Error('Failed to fetch receiver details');
+    }
+
+    const receiverId = receiverDetails[0].user.userId as string;
+
+    // Create and send notification
+    const notificationData: Notification = {
+      id: uuid.v4().toString(), // Generate a unique notification ID
+      title: 'Time-in Request approved.',
+      subtitle: `Your time-in have been approved for ${job?.title}`,
+      senderId: currentUserId,
+      receiverId: receiverId,
+      isRead: false,
+      createdAt: FIRESTORE_TIMESTAMP,
+      updatedAt: FIRESTORE_TIMESTAMP,
+      params: {
+        component: 'JobDetailsWorker',
+        id1: job?.jobId
+      }
+    };
+
+    await createNotification(notificationData);
+    const payload: Partial<TimeRecord> = {
+      acceptedTimeIn: true
+    }
+
+    const res = await updateRecord(payload, workerTimeRecord?.id)
+  }
+
+  async function acceptTimeOut() {
+    const receiverDetails = await getUserDetailsByWorkerId(application?.workerId as string);
+
+    if (!receiverDetails || receiverDetails.length === 0 || !receiverDetails[0].user) {
+      throw new Error('Failed to fetch receiver details');
+    }
+
+    const receiverId = receiverDetails[0].user.userId as string;
+
+    // Create and send notification
+    const notificationData: Notification = {
+      id: uuid.v4().toString(), // Generate a unique notification ID
+      title: 'Time-out Request approved.',
+      subtitle: `Your time-out have been approved for ${job?.title}`,
+      senderId: currentUserId,
+      receiverId: receiverId,
+      isRead: false,
+      createdAt: FIRESTORE_TIMESTAMP,
+      updatedAt: FIRESTORE_TIMESTAMP,
+      params: {
+        component: 'JobDetailsWorker',
+        id1: job?.jobId
+      }
+    };
+
+    await createNotification(notificationData);
+    const payload: Partial<TimeRecord> = {
+      acceptedTimeOut: true,
+      acceptedBy: currentUserId
+    }
+
+    const res = await updateRecord(payload, workerTimeRecord?.id)
   }
 
   return (
@@ -279,7 +348,11 @@ export default function ManageWorker({
             <Text style={styles.mediumTextBlue}> History </Text>
             <View style={{ rowGap: 4 }}>
               <View style={{ backgroundColor: 'white', height: 36, alignItems: 'center', justifyContent: 'center' }}>
-                {workerTimeRecord?.time_in ? <Text style={styles.boldText}> Time in: {formatDate(workerTimeRecord?.time_in)} </Text> : <Text> No time logs yet. </Text>}
+                {workerTimeRecord?.time_in ? <Text style={styles.boldText}>
+                  Time in: {formatDate(workerTimeRecord?.time_in)} </Text>
+                  :
+                  <Text> No time logs yet. </Text>
+                }
               </View>
 
               <View style={{ backgroundColor: 'white', height: 36, alignItems: 'center', justifyContent: 'center' }}>
@@ -288,9 +361,24 @@ export default function ManageWorker({
             </View>
 
             <Text style={styles.mediumTextBlue}> Actions </Text>
+            {workerTimeRecord?.acceptedTimeIn ?
+              <DynamicButton disabled type='secondary' title={`You approved a time-in at ${formatDate(workerTimeRecord?.time_in)}`} onPress={() => undefined} />
+              :
+              <>
+                {workerTimeRecord?.time_in && <DynamicButton type='primary' title={`Approve time in request, ${formatDate(workerTimeRecord?.time_in)}?`} onPress={async () => acceptTimeIn()} />}
+              </>
+            }
+            {workerTimeRecord?.acceptedTimeOut ?
+              <DynamicButton disabled type='secondary' title={`You approved a time-out at ${formatDate(workerTimeRecord?.time_in)}`} onPress={() => undefined} />
+              :
+              <>
+                {workerTimeRecord?.time_out && <DynamicButton type='primary' title={`Approve time out request, ${formatDate(workerTimeRecord?.time_out)}?`} onPress={async () => acceptTimeOut()} />}
+              </>
+            }
+
             <View style={{ rowGap: 4 }}>
               {workerTimeRecord?.acceptedBy ?
-                <Text style={styles.boldText}> You have already approved this worker's time logs. </Text>
+                <Text style={styles.boldText}> You have already approved this worker's time logs, you may mark the job as done on the job listing page. </Text>
                 :
                 <DynamicButton disabled={workerTimeRecord?.time_in && workerTimeRecord.time_out ? false : true} title="Approve worker time logs" onPress={async () => approveWorkerTimeLogs()} />
               }

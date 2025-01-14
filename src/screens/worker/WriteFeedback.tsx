@@ -69,6 +69,7 @@ export default function WriteFeedback({ navigation, route }: RouterProps) {
         }
 
         const newFeedback = {
+            applicationId: job.applicationId,
             feedbackId: uuid.v4().toString(),
             workerId: job.assignedWorker,
             clientId: job.clientId,

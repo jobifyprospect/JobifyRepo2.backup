@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
   ScrollView,
   TextInput,
-  Modal
+  Modal,
+  Dimensions
 } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { styles } from '../styles/Globals';
@@ -17,6 +18,10 @@ import {
 } from '../config/firebase';
 import {
   getCurrentUserUID,
+  getIdByRoleId,
+  getUser,
+  getUserDefaultRole,
+  getUserDefaultRoleUId,
   getUserDetails,
   removeFcmToken,
   updateUserRole,
@@ -33,14 +38,16 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { NavigationProp, useFocusEffect } from '@react-navigation/native';
 import TextButton from '../components/TextButton';
-import { getWorkerIdByRoleId } from '../services/firestore/roles';
-import { calculateAverageRating } from '../services/firestore/reviews';
+import { getClientDetails, getWorkerIdByRoleId } from '../services/firestore/roles';
+import { calculateAverageRating, calculateAverageRating2 } from '../services/firestore/reviews';
 import Svg, { Path } from 'react-native-svg';
 import { removeIsNewUser } from '../shared/AuthUtils';
 import Badge from '../components/Badge';
 import { getWorker, getWorkerRealtime, updateWorker } from '../services/firestore/workers';
 import { Worker } from '../services/interfaces/worker';
 import BioInputDialog from '../components/BioInputDialog';
+import { Client } from '../services/interfaces/client';
+import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 // import {createNotification} from '../services/firestore/notifications';
 // import uuid from 'react-native-uuid';
 // import {useFCMToken} from '../config/FCMTokenContext';
@@ -50,6 +57,11 @@ interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
+type clientRatings = {
+  averageRating: number,
+  reviewCount: number,
+  reviews: FirebaseFirestoreTypes.DocumentData[]
+}
 
 const Profile = ({ navigation }: RouterProps) => {
   const [user, setUser] = useState<User | null>(null);
@@ -60,8 +72,20 @@ const Profile = ({ navigation }: RouterProps) => {
   const [workerId, setWorkerId] = useState<string>(''); // Track loading state
   const [worker, setWorker] = useState<Worker | null>();
   const [isBioDialogVisible, setIsBioDialogVisible] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<any>('');
+  const [clientRatings, setClientRatings] = useState<clientRatings>({
+    averageRating: 0,
+    reviewCount: 0,
+    reviews: []
+
+  });
+
   // const fcmToken = useFCMToken();
   const [averageRating, setAverageRating] = useState(0);
+  const [averageRatingClient, setAverageRatingClient] = useState(0);
+
+
+
   useEffect(() => {
     const fetchRating = async () => {
       const rating = await calculateAverageRating(workerId);
@@ -70,9 +94,59 @@ const Profile = ({ navigation }: RouterProps) => {
 
     fetchRating();
   }, [workerId]);
+
+  //this essentially gets your current role id.
+  useEffect(() => {
+    const fetchCurrentUserId = async () => {
+      try {
+        const uid: string | null = await getCurrentUserUID();
+        if (uid) {
+          const currentUserData = await getUser(uid);
+
+          if (currentUserData && currentUserData.defaultRole) {
+            const clientIdByRole = await getIdByRoleId(
+              currentUserData.defaultRole,
+            );
+            setCurrentUserId(!clientIdByRole?.workerId ? clientIdByRole?.clientId : clientIdByRole?.workerId);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user ID:', error);
+      }
+    };
+
+    fetchCurrentUserId();
+  }, []);
+
+  useEffect(() => {
+    const fetchRating = async () => {
+      const rating = await calculateAverageRating2(userId);
+      setAverageRatingClient(rating.averageRating);
+    };
+
+    fetchRating();
+  }, [userId]);
+
+
+
+  useEffect(() => {
+    async function fetchClientRatings(id: string) {
+      const ratings = await calculateAverageRating2(id);
+      setClientRatings(ratings);
+    }
+
+    if (currentUserId) {
+      fetchClientRatings(currentUserId)
+
+      console.log('weeewoo', currentUserId);
+    }
+  }, [currentUserId])
+
   const fetchUserProfile = useCallback(async () => {
     try {
       const uid = await getCurrentUserUID();
+      const currentRole = await getUserDefaultRoleUId()
+
 
       if (uid) {
         const fetchedUserDetails = await getUserDetails(uid);
@@ -83,7 +157,9 @@ const Profile = ({ navigation }: RouterProps) => {
           setUser(user);
           setAddress(address);
           setValidation(validation);
+          if (currentRole === 'client') {
 
+          }
           if (user?.defaultRole) {
             const fetchedWorkerId = await getWorkerIdByRoleId(user.defaultRole);
             setWorkerId(fetchedWorkerId || '');
@@ -232,9 +308,18 @@ const Profile = ({ navigation }: RouterProps) => {
                 )}
 
                 <View style={localStyles.profileInfo}>
-                  <Text style={localStyles.profileName}>
-                    {user.firstName} {user.lastName}
-                  </Text>
+
+                  <View style={{ flexDirection: 'row', width: Dimensions.get('screen').width, alignItems: 'center', columnGap: 8 }}>
+                    <Text style={localStyles.profileName}>
+                      {user.firstName} {user.lastName}
+                    </Text>
+
+                    <Text style={[localStyles.modeText, styles.smallText]}>
+                      {validation?.isAccountVerified === true
+                        ? <Badge img='verified' />
+                        : '(Not Verified)'}
+                    </Text>
+                  </View>
                   <View style={localStyles.containMode}>
                     <Text
                       style={[localStyles.modeText, styles.smallSemiBoldText]}>
@@ -243,12 +328,42 @@ const Profile = ({ navigation }: RouterProps) => {
                         ? 'Client Mode'
                         : 'Worker Mode'}
                     </Text>
-                    <Text style={[localStyles.modeText, styles.smallText]}>
-                      {validation?.isAccountVerified === true
-                        ? ''
-                        : '(Not Verified)'}
-                    </Text>
                   </View>
+                  {
+                    !workerId ?
+                      <View>
+                        <View style={localStyles.gap} />
+                        <View style={localStyles.starsContainer}>
+                          {Array.from({ length: 5 }, (_, index) => {
+                            const starValue = index + 1;
+                            return (
+                              <Svg
+                                key={index}
+                                width={24}
+                                height={24}
+                                viewBox="0 0 24 24"
+                                fill={
+                                  clientRatings.averageRating >= starValue
+                                    ? Colors.primary
+                                    : Colors.placeholder
+                                }>
+                                <Path d="M12 .587l3.668 7.429 8.2 1.193-5.934 5.787 1.401 8.172L12 18.896l-7.335 3.872 1.4-8.172-5.933-5.787 8.2-1.193L12 .587z" />
+                              </Svg>
+                            );
+                          })}
+                        </View>
+                        <TextButton
+                          title="View reviews"
+                          onPress={async () =>
+                            navigation.navigate('ViewClientProfile', {
+                              clientId: currentUserId,
+                            })
+                          }
+                        />
+                      </View>
+                      :
+                      null
+                  }
                 </View>
               </View>
               <View style={localStyles.divider} />
@@ -431,6 +546,10 @@ const Profile = ({ navigation }: RouterProps) => {
 };
 
 const localStyles = StyleSheet.create({
+  starsContainer: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
   badges: {
     alignItems: 'flex-start'
   },

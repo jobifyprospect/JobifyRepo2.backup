@@ -22,6 +22,7 @@ export interface Review {
 }
 
 export interface Feedback {
+  applicationId?: string;
   feedbackId: string;
   workerId: string;
   clientId: string;

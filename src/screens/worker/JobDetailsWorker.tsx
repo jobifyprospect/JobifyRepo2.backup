@@ -6,7 +6,9 @@ import {
     ActivityIndicator,
     ScrollView,
     Pressable,
-    Modal
+    Modal,
+    TouchableOpacity,
+    Image
 } from 'react-native';
 import React, { SetStateAction, useCallback, useEffect, useState } from 'react';
 import { styles } from '../../styles/Globals';
@@ -33,6 +35,10 @@ import { serverTimestamp } from '@react-native-firebase/firestore';
 import firestore from '@react-native-firebase/firestore'
 import { getFeedbackByClientId } from '../../services/firestore/reviews';
 import { Feedback } from '../../services/interfaces/review';
+import { User } from '../../services/interfaces/user';
+import { getAddress } from '../../services/firestore/addresses';
+import { Address } from '../../services/interfaces/address';
+import { formatAddress } from '../../utils/FormatAddress';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -41,13 +47,9 @@ interface RouterProps {
 
 export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     const id = route.params.id;
-    const [client, setClient] = useState<{
-        fullName?: string;
-        phoneNumber?: string;
-        email?: string;
-    }>();
+    const [client, setClient] = useState<User>();
 
-    const [feedback, setFeedback] = useState<Feedback>();
+    const [feedback, setFeedback] = useState<Feedback | null>();
 
     const [job, setJob] = useState<Job>();
     const [loading, setIsLoading] = useState<boolean>(false);
@@ -59,7 +61,8 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     const [isConfirmingTimeIn, setIsConfirmingTimeIn] = useState<boolean>(false);
     const [isConfirmingTimeOut, setIsConfirmingTimeOut] = useState<boolean>(false);
     const [currentUserId, setCurrentUserId] = useState<any>(null);
-    const [application, setApplication] = useState<Application>();
+    const [application, setApplication] = useState<Application | null>();
+    const [address, setAddress] = useState<Address>();
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [record, setRecord] = useState<TimeRecord>();
     const [hasRecord, setHasRecord] = useState<boolean>(false)
@@ -74,6 +77,31 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
         return firestore.Timestamp.now();
     }
 
+    // const getAppId = useCallback(async () => {
+    //     if (!id || !currentUserId) {
+    //         console.error('id or currentUserId is undefined');
+    //         return;
+    //     }
+
+    //     try {
+    //         const querySnapshot = await applicationsRef
+    //             .where('jobId', '==', id)
+    //             .where('workerId', '==', currentUserId)
+    //             .limit(1)
+    //             .get();
+
+    //         if (!querySnapshot.empty) {
+    //             const applicationData = querySnapshot.docs[0].data() as Application;
+    //             setApplication(applicationData);
+    //         } else {
+    //             console.log('No matching application found');
+    //             setApplication(null);
+    //         }
+    //     } catch (error) {
+    //         console.error('Error fetching application:', error);
+    //     }
+    // }, [id, currentUserId]);
+
     async function getFeedbackOnJob(id: string) {
         const res = await getFeedbackByClientId(id);
 
@@ -81,7 +109,9 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             throw new Error('Failed to fetch feedback for this job.');
         }
 
-        if (res.workerId === job?.assignedWorker) {
+        if (res.workerId === job?.assignedWorker && res.applicationId === application?.applicationId) {
+
+            console.log('ressss: ', res)
             setFeedback(res);
         }
 
@@ -135,8 +165,16 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     };
 
     async function getClientInfo() {
-        const res = job && await getClientDetails(job.clientId)
-        setClient(res)
+        const clientte = await getUserDetailsByClientId(
+            job?.clientId as string,
+        );
+
+        clientte && setClient(clientte);
+
+        if (clientte) {
+            const address = await getAddress(clientte.addressId as string);
+            address && setAddress(address);
+        }
     }
 
     async function timeIn() {
@@ -161,7 +199,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
         const notificationData: Notification = {
             id: uuid.v4().toString(), // Generate a unique notification ID
             title: 'Worker Time in',
-            subtitle: `${name} has timed in for ${job?.title}`,
+            subtitle: `${name} has requested time-in for ${job?.title}`,
             senderId: currentUserId,
             receiverId: receiverId,
             isRead: false,
@@ -262,31 +300,34 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     useEffect(() => {
         if (job) {
             fetchTimeRecords()
+
         }
     }, [job])
 
     useEffect(() => {
-        if (!application) {
-            const unsubscribe = applicationsRef
-                .where('jobId', '==', id)
+        if (job?.clientId && currentUserId) {
+            const unsubscribe = firestore()
+                .collection('jobFeedbacks')
+                .where('clientId', '==', job.clientId)
                 .where('workerId', '==', currentUserId)
+                .where('applicationId', '==', application?.applicationId)
                 .onSnapshot(
-                    snapshot => {
-                        const applicationData = snapshot.docs.map(doc =>
-                            doc.data(),
-                        ) as Application[];
-                        setApplication(applicationData[0]);
-                        setIsLoading(false);
+                    (snapshot) => {
+                        if (!snapshot.empty) {
+                            const feedbackData = snapshot.docs[0].data() as Feedback;
+                            setFeedback(feedbackData);
+                        } else {
+                            setFeedback(null);
+                        }
                     },
-                    error => {
-                        console.error('Error getting documents:', error);
-                    },
+                    (error) => {
+                        console.error('Error listening to job feedback:', error);
+                    }
                 );
+
             return () => unsubscribe();
         }
-
-        console.log('Fetched app: ', application, id, currentUserId)
-    }, [id, currentUserId, application]);
+    }, [job?.clientId, currentUserId, application]);
 
     useEffect(() => {
         if (id && currentUserId) {
@@ -319,6 +360,8 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
         );
     }
 
+    const initials = `${client?.firstName}${client?.lastName}`.toUpperCase();
+
     return (
         <View style={localStyles.container}>
             <SafeAreaView style={localStyles.btnContainerBetween}>
@@ -332,20 +375,43 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                 </View>
             </View>
 
-            <View style={{ backgroundColor: 'white', padding: 8, marginBottom: 10 }}>
-                <Text style={styles.mediumText}>
-                    Client:
-                </Text>
-                <Text style={styles.mediumTextBlue}>
-                    {client?.fullName}
-                </Text>
-                <Text style={styles.boldText}>
-                    {client?.phoneNumber}
-                </Text>
-                <Text style={styles.boldText}>
-                    {client?.email}
-                </Text>
-            </View>
+            <TouchableOpacity style={[localStyles.contentRow, { borderWidth: 1, borderRadius: 5, }]}
+                onPress={async () =>
+                    navigation.navigate('ViewClientProfile', {
+                        clientId: job?.clientId,
+                    })
+                }
+            >
+                <View style={localStyles.contentItemRow}>
+                    <View style={localStyles.profileContainer}>
+                        {client?.profilePicture ? (
+                            <Image
+                                source={{ uri: client?.profilePicture }}
+                                style={localStyles.profileImage}
+                            />
+                        ) : (
+                            <View style={localStyles.initialsContainer}>
+                                <Text style={localStyles.initialsText}>
+                                    {initials}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
+                        <Text style={localStyles.nameContainer}>
+                            {client?.firstName} {client?.lastName}
+                        </Text>
+
+                        <Text style={styles.smallText}> {formatAddress(address)} </Text>
+                        <Text style={styles.smallText}> {client?.email} </Text>
+                        <Text style={styles.smallText}> {client?.phoneNumber} </Text>
+                        <Text style={[styles.smallText, { color: Colors.primary, marginLeft: 3 }]}>
+                            View profile
+                        </Text>
+                    </View>
+
+                </View>
+            </TouchableOpacity>
 
             <View style={localStyles.containTab}>
                 <Pressable
@@ -430,25 +496,50 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                 :
                 <View style={localStyles.sectionContainer}>
                     <ScrollView>
-                        {record && record?.time_in ? <Text style={styles.bold}> You timed in at: {formatDate(record.time_in)}</Text> : null}
-                        {record && record?.time_out ? <Text style={styles.bold}> You timed out at: {formatDate(record.time_out)}</Text> : null}
-                        <DynamicButton disabled={record?.time_in ? true : false} type='primary' title='Time in' onPress={() => setIsConfirmingTimeIn(true)} />
-                        <DynamicButton disabled={record?.time_in && !record?.time_out ? false : true} type='primary' title='Time out' onPress={() => setIsConfirmingTimeOut(true)} />
-
-                        {record?.time_out ?
+                        {record?.acceptedTimeIn ?
                             <>
-                                {record?.acceptedBy ? <Text> Your time has been approved by the client. </Text> : <Text> You have sent a time-out request but it has not yet been approved by your client. </Text>}
+                                {record && record?.time_in ? <Text style={styles.bold}> You timed in at: {formatDate(record.time_in)}</Text> : null}
                             </>
                             :
-                            null
+                            <>
+                                {record?.time_in && <Text> The client has not yet accepted your time-in request. </Text>}
+                            </>
                         }
+
+                        {record?.acceptedTimeOut ?
+                            <>
+                                {record && record?.time_out ? <Text style={styles.bold}> You timed out at: {formatDate(record.time_out)}</Text> : null}
+                            </>
+                            :
+                            <>
+                                {record?.time_in && <Text> The client has not yet accepted your time-out request. </Text>}
+                            </>
+                        }
+
+
+                        {job?.status === 'pending' ?
+                            <Text style={styles.contentText}> Actions will appear here once you've been accepted by the client. </Text>
+                            :
+                            <>
+                                <DynamicButton disabled={record?.time_in ? true : false} type='primary' title='Time in' onPress={() => setIsConfirmingTimeIn(true)} />
+
+                                {record?.acceptedTimeIn ?
+                                    <DynamicButton disabled={record?.time_in && !record?.time_out ? false : true} type='primary' title='Time out' onPress={() => setIsConfirmingTimeOut(true)} />
+                                    :
+                                    null
+                                }
+
+
+                            </>
+                        }
+
                         <View style={{ marginTop: 48 }}>
                             {record?.acceptedBy && job?.status === 'closed' ?
                                 <>
-                                    {feedback ?
+                                    {feedback?.applicationId === application?.applicationId ?
                                         <View style={{ backgroundColor: 'white', padding: 16, borderRadius: 10 }}>
                                             <Text style={styles.mediumText}>Your Feedback:</Text>
-                                            <Text style={styles.mediumTextBlue}>{feedback.comment}</Text>
+                                            <Text style={styles.mediumTextBlue}>{feedback?.comment}</Text>
                                         </View>
                                         :
                                         <DynamicButton
@@ -457,6 +548,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                                             onPress={() =>
                                                 navigation.navigate('WriteFeedback', {
                                                     job: {
+                                                        applicationId: application?.applicationId || '',
                                                         jobId: job?.jobId || '',
                                                         title: job?.title || '',
                                                         clientId: job?.clientId || '',
@@ -546,6 +638,18 @@ function ConfirmTimeOutDialog({ setIsConfirming, isConfirming, onConfirmTimeOut 
 }
 
 const localStyles = StyleSheet.create({
+    nameContainer: { fontWeight: '600', marginLeft: 3, fontSize: 22, flex: 1, textAlign: 'left', justifyContent: 'center', rowGap: 12 },
+    contentItemRow: { flexDirection: 'row', alignItems: 'center', height: 130, paddingHorizontal: 16 },
+    card: {
+        borderWidth: 1,
+        shadowOpacity: 1,
+        borderColor: Colors.primaryWithOpacity10,
+        shadowColor: Colors.primaryWithOpacity10,
+        flexDirection: 'column',
+        backgroundColor: Colors.white,
+        borderRadius: 5,
+        rowGap: 12,
+    },
     profileContainer: {
         marginRight: 10,
     },
@@ -673,7 +777,9 @@ const localStyles = StyleSheet.create({
         rowGap: 6,
         paddingTop: 0,
         paddingBottom: 16,
+        marginBottom: 16,
         borderColor: Colors.placeholder,
+        backgroundColor: Colors.white,
         borderBottomWidth: 1,
         borderBottomColor: Colors.placeholder,
     },

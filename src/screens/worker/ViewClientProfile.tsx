@@ -9,18 +9,15 @@ import Colors from "../../styles/Colors";
 import { Validation } from "../../services/interfaces/validation";
 import { getUserDetailsByClientId2 } from "../../services/firestore/users";
 import Svg, { Path } from "react-native-svg";
-import TextButton from "../../components/TextButton";
 import { calculateAverageRating2 } from "../../services/firestore/reviews";
 import GetProfilePicture from "../../components/GetProfilePicture";
 import Badge from "../../components/Badge";
 import { Client } from "../../services/interfaces/client";
 import { User } from "../../services/interfaces/user";
-import Pdf from 'react-native-pdf';
 import { getClient } from "../../services/firestore/clients";
 import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
-import { jobsRef } from "../../config/firebase";
-import { Job } from "../../services/interfaces/job";
 import { getJobCountByClientId } from "../../services/firestore/jobs";
+import { formatAddress } from "../../utils/FormatAddress";
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -31,12 +28,6 @@ type clientRatings = {
     averageRating: number,
     reviewCount: number,
     reviews: FirebaseFirestoreTypes.DocumentData[]
-    // reviews: {
-    //     clientId: string,
-    //     comment: string,
-    //     jobTitle: string,
-    //     rating: number
-    // }[]
 }
 
 const ViewClientProfile = ({ navigation, route }: RouterProps) => {
@@ -142,51 +133,72 @@ const ViewClientProfile = ({ navigation, route }: RouterProps) => {
     return (
         <SafeAreaView style={localStyles.container}>
             <BackButton onPress={async () => navigation.goBack()} />
+            <ScrollView>
 
+                <View style={[localStyles.screen]}>
+                    <RowItem>
+                        <GetProfilePicture type="client" uuId={id as string} size={90} />
+                        <View style={[localStyles.contentRow, { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}>
+                            <Text style={styles.largeHeading}> {clientUser?.firstName} {clientUser?.lastName} </Text>
+                            <Text style={[localStyles.modeText, styles.mediumTextBlue]}>
+                                {validation?.isAccountVerified === true
+                                    ? <Badge img="verified" />
+                                    : '(unverified)'}
+                            </Text>
+                        </View>
+                        <View style={localStyles.gap} />
+                        <View style={localStyles.contentRow}>
+                            <View>
+                                <Text style={styles.smallSemiBoldText}>
+                                    Email:
+                                </Text>
+                                <Text style={localStyles.contentTextRegular}>
+                                    {clientUser?.email}
+                                </Text>
+                                <Text style={styles.smallSemiBoldText}>
+                                    Phone:
+                                </Text>
+                                <Text style={localStyles.contentTextRegular}>
+                                    {clientUser?.phoneNumber}
+                                </Text>
+                                <Text style={styles.smallSemiBoldText}>
+                                    Address:
+                                </Text>
+                                <Text style={localStyles.contentTextRegular}>
+                                    {formatAddress(address)}
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={localStyles.starsContainer}>
+                            {Array.from({ length: 5 }, (_, index) => {
+                                const starValue = index + 1;
+                                return (
+                                    <Svg
+                                        key={index}
+                                        width={24}
+                                        height={24}
+                                        viewBox="0 0 24 24"
+                                        fill={
+                                            clientRatings.averageRating >= starValue
+                                                ? Colors.primary
+                                                : Colors.placeholder
+                                        }>
+                                        <Path d="M12 .587l3.668 7.429 8.2 1.193-5.934 5.787 1.401 8.172L12 18.896l-7.335 3.872 1.4-8.172-5.933-5.787 8.2-1.193L12 .587z" />
+                                    </Svg>
+                                );
+                            })}
+                        </View>
+                        <Text style={[styles.smallSemiBoldText, { color: Colors.primary }]}> ( Rating from {clientRatings.reviewCount} out of {jobCount} jobs ) </Text>
+                        <Text style={[styles.smallSemiBoldText, { color: Colors.primary }]}> Active jobs: {jobCount} </Text>
 
-            <View style={[localStyles.screen]}>
-                <RowItem>
-                    <GetProfilePicture type="client" uuId={id as string} size={90} />
-                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                        <Text style={styles.largeHeading}> {clientUser?.firstName} {clientUser?.lastName} </Text>
-                        <Text style={[localStyles.modeText, styles.mediumTextBlue]}>
-                            {validation?.isAccountVerified === true
-                                ? <Badge img="verified" />
-                                : '(unverified)'}
-                        </Text>
-                    </View>
-                    <View style={localStyles.gap} />
-                    <View style={localStyles.starsContainer}>
-                        {Array.from({ length: 5 }, (_, index) => {
-                            const starValue = index + 1;
-                            return (
-                                <Svg
-                                    key={index}
-                                    width={24}
-                                    height={24}
-                                    viewBox="0 0 24 24"
-                                    fill={
-                                        clientRatings.averageRating >= starValue
-                                            ? Colors.primary
-                                            : Colors.placeholder
-                                    }>
-                                    <Path d="M12 .587l3.668 7.429 8.2 1.193-5.934 5.787 1.401 8.172L12 18.896l-7.335 3.872 1.4-8.172-5.933-5.787 8.2-1.193L12 .587z" />
-                                </Svg>
-                            );
-                        })}
-                    </View>
-                    <Text style={[styles.smallSemiBoldText, { color: Colors.primary }]}> ( Rating from {clientRatings.reviewCount} out of {jobCount} jobs ) </Text>
-                    <Text style={[styles.smallSemiBoldText, { color: Colors.primary }]}> Active jobs: {jobCount} </Text>
+                        <Text> </Text>
+                    </RowItem>
 
-                    <Text> </Text>
-                </RowItem>
-
-                <RowItem>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Text style={styles.mediumText}> Worker Feedback </Text>
-                        <Text style={[styles.smallSemiBoldText, { color: Colors.primary }]}> ( {clientRatings.reviewCount} ) </Text>
-                    </View>
-                    <ScrollView>
+                    <RowItem>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Text style={styles.mediumText}> Worker Feedback </Text>
+                            <Text style={[styles.smallSemiBoldText, { color: Colors.primary }]}> ( {clientRatings.reviewCount} ) </Text>
+                        </View>
                         <View style={localStyles.gap} />
                         <View style={localStyles.divider} />
 
@@ -228,12 +240,9 @@ const ViewClientProfile = ({ navigation, route }: RouterProps) => {
                                 ))
                             }
                         </View>
-                    </ScrollView>
-                </RowItem>
-
-
-            </View>
-
+                    </RowItem>
+                </View>
+            </ScrollView>
         </SafeAreaView>
     )
 }
@@ -253,6 +262,22 @@ function RowItem({ children }: { children: React.ReactNode }) {
 
 
 const localStyles = StyleSheet.create({
+    contentRow: {
+        rowGap: 6,
+        paddingTop: 0,
+        paddingBottom: 16,
+        borderColor: Colors.placeholder,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.placeholder,
+    },
+    cardContentHeader: {
+        fontSize: 16,
+        fontWeight: '400',
+    },
+    contentTextRegular: {
+        fontSize: 14,
+        fontWeight: '300',
+    },
     reviewsContainer: {
         rowGap: 10,
     },

@@ -98,6 +98,7 @@ export type RootStackParamList = {
     pdfPortfolio: string;
     certificationImages: string[];
   };
+  WaitLogout: undefined;
   Success: undefined;
   Login: undefined;
   Forgot: undefined;
@@ -128,6 +129,7 @@ export type RootStackParamList = {
   };
   WriteFeedback: {
     job: {
+      [x: string]: any;
       jobId: string;
       title: string;
       clientId: string;

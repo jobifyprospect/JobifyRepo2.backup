@@ -7,6 +7,8 @@ export interface TimeRecord {
   workerId?: string;
   clientId?: string;
   acceptedBy?: string;
+  acceptedTimeIn?: boolean;
+  acceptedTimeOut?: boolean;
   time_in:
   | FirebaseFirestoreTypes.Timestamp
   | FirebaseFirestoreTypes.FieldValue;
