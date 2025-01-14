@@ -47,7 +47,7 @@ export default function AcceptOrDeclineApplicant({
   const params_appId = route.params.app_id;
 
   const [worker, setWorker] = useState<any>(null);
-  const [badges, setBadges] = useState<BadgeType[]>([]);
+  const [badges, setBadges] = useState<BadgeType[] | null>([]);
   const [workerAddress, setWorkerAddress] = useState<Address | null>(null);
   const [application, setApplication] = useState<Application | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -290,7 +290,7 @@ export default function AcceptOrDeclineApplicant({
                     <Text> No badges. </Text>
                     :
                     <>
-                      {badges.map((badge: BadgeType, index: number) => (
+                      {badges?.map((badge: BadgeType, index: number) => (
                         <Badge key={badge} img={badge} />
                       ))}
                     </>
