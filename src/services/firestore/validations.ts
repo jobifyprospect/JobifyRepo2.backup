@@ -1,6 +1,6 @@
-import {showAlert} from '../../components/AlertDialog';
-import {FIRESTORE_DB} from '../../config/firebase';
-import {Validation} from '../interfaces/validation';
+import { showAlert } from '../../components/AlertDialog';
+import { FIRESTORE_DB } from '../../config/firebase';
+import { Validation } from '../interfaces/validation';
 
 const validationsRef = FIRESTORE_DB.collection('validations');
 // Create a validation
@@ -50,4 +50,23 @@ export const deleteValidation = async (validationId: string): Promise<void> => {
     showAlert('Error', 'Failed to delete validation.');
     console.error(error);
   }
+};
+
+export const getValidationRealtime = (
+  validationId: string,
+  callback: (validation: Validation | null) => void
+): (() => void) => {
+  return validationsRef.doc(validationId).onSnapshot(
+    (doc) => {
+      if (doc.exists) {
+        callback(doc.data() as Validation);
+      } else {
+        callback(null);
+      }
+    },
+    (error) => {
+      console.error("Error listening to validation updates:", error);
+      callback(null);
+    }
+  );
 };

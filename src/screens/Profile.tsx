@@ -48,6 +48,7 @@ import { Worker } from '../services/interfaces/worker';
 import BioInputDialog from '../components/BioInputDialog';
 import { Client } from '../services/interfaces/client';
 import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { getValidationRealtime } from '../services/firestore/validations';
 // import {createNotification} from '../services/firestore/notifications';
 // import uuid from 'react-native-uuid';
 // import {useFCMToken} from '../config/FCMTokenContext';
@@ -229,6 +230,47 @@ const Profile = ({ navigation }: RouterProps) => {
       FIREBASE_AUTH.signOut();
     }
   }, []);
+
+  useEffect(() => {
+    let unsubscribeWorker: (() => void) | undefined;
+    let unsubscribeValidation: (() => void) | undefined;
+
+    const setupListeners = async () => {
+      if (workerId) {
+        unsubscribeWorker = getWorkerRealtime(workerId, (updatedWorker) => {
+          if (updatedWorker) {
+            setWorker(updatedWorker);
+          }
+        });
+      }
+
+      if (userId) {
+        unsubscribeValidation = getValidationRealtime(userId, (updatedValidation) => {
+          if (updatedValidation) {
+            setValidation(prevValidation => {
+              // Only update if there's a change
+              if (JSON.stringify(prevValidation) !== JSON.stringify(updatedValidation)) {
+                return updatedValidation;
+              }
+              return prevValidation;
+            });
+          }
+        });
+      }
+    };
+
+    setupListeners();
+
+    // Cleanup function
+    return () => {
+      if (unsubscribeWorker) {
+        unsubscribeWorker();
+      }
+      if (unsubscribeValidation) {
+        unsubscribeValidation();
+      }
+    };
+  }, [workerId, userId]);
 
 
   const logOutUser = async () => {
