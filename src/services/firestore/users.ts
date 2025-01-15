@@ -223,7 +223,21 @@ export async function getUserDetailsByClientId2(
     // Fetch related details concurrently using Promise.all
     const [validationDoc, addressDoc, roleDocs] = await Promise.all([
       user.validationId
-        ? validationsRef.doc(user.validationId).get()
+        ? validationsRef
+          .where(firestore.FieldPath.documentId(), '==', user.validationId)
+          .get()
+          .then(snapshot => {
+            if (snapshot.docs.length > 0) {
+              return snapshot.docs[0];
+            } else {
+              // If not found by document ID, try searching by validationId field
+              return validationsRef
+                .where('validationId', '==', user.validationId)
+                .limit(1)
+                .get()
+                .then(innerSnapshot => innerSnapshot.docs.length > 0 ? innerSnapshot.docs[0] : null);
+            }
+          })
         : Promise.resolve(null),
       user.addressId
         ? addressesRef.doc(user.addressId).get()
@@ -328,7 +342,21 @@ export async function getUserDetailsByWorkerId(
     // Fetch related details concurrently using Promise.all
     const [validationDoc, addressDoc, roleDocs] = await Promise.all([
       user.validationId
-        ? validationsRef.doc(user.validationId).get()
+        ? validationsRef
+          .where(firestore.FieldPath.documentId(), '==', user.validationId)
+          .get()
+          .then(snapshot => {
+            if (snapshot.docs.length > 0) {
+              return snapshot.docs[0];
+            } else {
+              // If not found by document ID, try searching by validationId field
+              return validationsRef
+                .where('validationId', '==', user.validationId)
+                .limit(1)
+                .get()
+                .then(innerSnapshot => innerSnapshot.docs.length > 0 ? innerSnapshot.docs[0] : null);
+            }
+          })
         : Promise.resolve(null),
       user.addressId
         ? addressesRef.doc(user.addressId).get()
