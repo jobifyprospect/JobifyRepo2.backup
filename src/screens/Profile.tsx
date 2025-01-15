@@ -128,7 +128,6 @@ const Profile = ({ navigation }: RouterProps) => {
   }, [userId]);
 
 
-
   useEffect(() => {
     async function fetchClientRatings(id: string) {
       const ratings = await calculateAverageRating2(id);
@@ -137,8 +136,6 @@ const Profile = ({ navigation }: RouterProps) => {
 
     if (currentUserId) {
       fetchClientRatings(currentUserId)
-
-      console.log('weeewoo', currentUserId);
     }
   }, [currentUserId])
 

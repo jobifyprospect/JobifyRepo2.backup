@@ -28,7 +28,7 @@ import uuid from 'react-native-uuid';
 import { formatDate } from '../../utils/Utils';
 import moment from 'moment';
 import { TimeRecord } from '../../services/interfaces/time_records';
-import { getCurrentUserUID, getIdByRoleId, getUser, getUserDetailsByClientId } from '../../services/firestore/users';
+import { getCurrentUserUID, getIdByRoleId, getUser, getUserDetailsByClientId, getUserDetailsByWorkerId } from '../../services/firestore/users';
 import { Notification } from '../../services/interfaces/notification';
 import { createNotification } from '../../services/firestore/notifications';
 import { serverTimestamp } from '@react-native-firebase/firestore';
@@ -39,6 +39,8 @@ import { User } from '../../services/interfaces/user';
 import { getAddress } from '../../services/firestore/addresses';
 import { Address } from '../../services/interfaces/address';
 import { formatAddress } from '../../utils/FormatAddress';
+import { getWorker } from '../../services/firestore/workers';
+import { Worker } from '../../services/interfaces/worker';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -61,6 +63,8 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     const [isConfirmingTimeIn, setIsConfirmingTimeIn] = useState<boolean>(false);
     const [isConfirmingTimeOut, setIsConfirmingTimeOut] = useState<boolean>(false);
     const [currentUserId, setCurrentUserId] = useState<any>(null);
+    const [worker, setWorker] = useState<Worker | null>();
+    const [workerUser, setWorkerUser] = useState<User>();
     const [application, setApplication] = useState<Application | null>();
     const [address, setAddress] = useState<Address>();
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -77,32 +81,64 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
         return firestore.Timestamp.now();
     }
 
-    // const getAppId = useCallback(async () => {
-    //     if (!id || !currentUserId) {
-    //         console.error('id or currentUserId is undefined');
-    //         return;
-    //     }
+    async function fetchWorkerData(id: string) {
+        setIsLoading(true);
+        try {
+            const [workerUserDetails, workerData] = await Promise.all([
+                getUserDetailsByWorkerId(id),
+                getWorker(id)
+            ]);
 
-    //     try {
-    //         const querySnapshot = await applicationsRef
-    //             .where('jobId', '==', id)
-    //             .where('workerId', '==', currentUserId)
-    //             .limit(1)
-    //             .get();
+            if (!workerUserDetails || !workerData) {
+                console.log('Failed to fetch worker profile.');
+                return null;
+            }
 
-    //         if (!querySnapshot.empty) {
-    //             const applicationData = querySnapshot.docs[0].data() as Application;
-    //             setApplication(applicationData);
-    //         } else {
-    //             console.log('No matching application found');
-    //             setApplication(null);
-    //         }
-    //     } catch (error) {
-    //         console.error('Error fetching application:', error);
-    //     }
-    // }, [id, currentUserId]);
+            const [userDetails] = workerUserDetails;
+            const { user } = userDetails;
+
+            setWorkerUser(user as User);
+            setWorker(workerData);
+
+            return { user, address, worker: workerData };
+        } catch (error) {
+            console.error('Error fetching worker data:', error);
+            showAlert('Error', 'Failed to fetch worker profile. Please try again later.');
+            return null;
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    const getAppId = useCallback(async () => {
+        if (!id || !currentUserId) {
+            console.error('id or currentUserId is undefined');
+            return;
+        }
+
+        try {
+            const querySnapshot = await applicationsRef
+                .where('jobId', '==', id)
+                .where('workerId', '==', currentUserId)
+                .limit(1)
+                .get();
+
+            if (!querySnapshot.empty) {
+                const applicationData = querySnapshot.docs[0].data() as Application;
+                setApplication(applicationData);
+            } else {
+                console.log('No matching application found');
+                setApplication(null);
+            }
+        } catch (error) {
+            console.error('Error fetching application:', error);
+        }
+    }, [id, currentUserId]);
 
     async function getFeedbackOnJob(id: string) {
+        if (id) return;
+
+
         const res = await getFeedbackByClientId(id);
 
         if (!res) {
@@ -117,9 +153,11 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
 
         return;
     }
-    async function fetchTimeRecords() {
+    async function fetchTimeRecords(jobId: string, workerId: string) {
 
-        const res = job && await getTimeRecord(job.jobId, job.assignedWorker)
+        if (jobId && workerId) return;
+
+        const res = job && await getTimeRecord(jobId, workerId)
         if (res !== null) {
             setRecord(res)
             setHasRecord(true)
@@ -148,7 +186,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             setIsLoading(false); // Set loading to false after both fetches are completed
             setRefreshing(false); // Stop refreshing if applicable
         }
-    }, [id, job?.clientId, job?.status, job?.title]);
+    }, [id]);
 
     const handleOpenMap = () => {
         if (job?.mapLocation?.longitude && job?.mapLocation?.latitude) {
@@ -164,10 +202,11 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
         }
     };
 
-    async function getClientInfo() {
-        const clientte = await getUserDetailsByClientId(
-            job?.clientId as string,
-        );
+    async function getClientInfo(clientId: string) {
+        if (!clientId) return;
+
+        console.log('fetching client info for: ', clientId)
+        const clientte = await getUserDetailsByClientId(clientId);
 
         clientte && setClient(clientte);
 
@@ -193,16 +232,17 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
 
         const receiverDetails = await getUserDetailsByClientId(job?.clientId as string);
         const receiverId = receiverDetails?.userId as string;
-        const name = `${receiverDetails?.firstName} ${receiverDetails?.lastName}`
+        const name = `${workerUser?.firstName} ${workerUser?.lastName}`
 
         // Create and send notification
         const notificationData: Notification = {
             id: uuid.v4().toString(), // Generate a unique notification ID
-            title: 'Worker Time in',
-            subtitle: `${name} has requested time-in for ${job?.title}`,
+            title: 'Worker Time-in Request',
+            subtitle: `${name} has requested time-in for Job: ${job?.title}`,
             senderId: currentUserId,
             receiverId: receiverId,
             isRead: false,
+
             createdAt: currentTimestamp,
             updatedAt: currentTimestamp,
             params: {
@@ -232,13 +272,13 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
 
         const receiverDetails = await getUserDetailsByClientId(job?.clientId as string);
         const receiverId = receiverDetails?.userId as string;
-        const name = `${receiverDetails?.firstName} ${receiverDetails?.lastName}`
+        const name = `${workerUser?.firstName} ${workerUser?.lastName}`
 
         // Create and send notification
         const notificationData: Notification = {
             id: uuid.v4().toString(), // Generate a unique notification ID
-            title: 'Time Out Request',
-            subtitle: `${name} has requested to time out for ${job?.title}`,
+            title: 'Worker Time Out Request',
+            subtitle: `${name} has requested to time out for Job: ${job?.title}`,
             senderId: currentUserId,
             receiverId: receiverId,
             isRead: false,
@@ -284,28 +324,31 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
         }
     }, [currentUserId]);
 
-    useEffect(() => {
-        getClientInfo();
-    }, [job])
 
     useEffect(() => {
         fetchJobAndApplicants(); // Initial fetch when the component mounts
     }, [fetchJobAndApplicants]);
 
     useEffect(() => {
-        if (job) {
-            getFeedbackOnJob(job.clientId)
-        }
-    }, [job])
-    useEffect(() => {
-        if (job) {
-            fetchTimeRecords()
 
+        if (job !== null && job?.clientId) {  // Add check for job.clientId
+            getClientInfo(job.clientId);
+            getFeedbackOnJob(job.clientId);
+            if (job.jobId && job.assignedWorker) {  // Add checks for these as well
+                fetchTimeRecords(job.jobId, job.assignedWorker);
+            }
         }
-    }, [job])
+    }, [job, id])
 
     useEffect(() => {
-        if (job?.clientId && currentUserId) {
+        if (id && currentUserId) {
+            getAppId();
+            fetchWorkerData(currentUserId)
+        }
+    }, [id, currentUserId, getAppId]);
+
+    useEffect(() => {
+        if (job && currentUserId && application) {
             const unsubscribe = firestore()
                 .collection('jobFeedbacks')
                 .where('clientId', '==', job.clientId)
@@ -327,7 +370,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
 
             return () => unsubscribe();
         }
-    }, [job?.clientId, currentUserId, application]);
+    }, [job, currentUserId, application]);
 
     useEffect(() => {
         if (id && currentUserId) {
@@ -382,35 +425,41 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                     })
                 }
             >
-                <View style={localStyles.contentItemRow}>
-                    <View style={localStyles.profileContainer}>
-                        {client?.profilePicture ? (
-                            <Image
-                                source={{ uri: client?.profilePicture }}
-                                style={localStyles.profileImage}
-                            />
-                        ) : (
-                            <View style={localStyles.initialsContainer}>
-                                <Text style={localStyles.initialsText}>
-                                    {initials}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
-                        <Text style={localStyles.nameContainer}>
-                            {client?.firstName} {client?.lastName}
-                        </Text>
+                {client ?
+                    <View style={localStyles.contentItemRow}>
+                        <View style={localStyles.profileContainer}>
+                            {client?.profilePicture ? (
+                                <Image
+                                    source={{ uri: client?.profilePicture }}
+                                    style={localStyles.profileImage}
+                                />
+                            ) : (
+                                <View style={localStyles.initialsContainer}>
+                                    <Text style={localStyles.initialsText}>
+                                        {initials}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
+                            <Text style={localStyles.nameContainer}>
+                                {client?.firstName} {client?.lastName}
+                            </Text>
 
-                        <Text style={styles.smallText}> {formatAddress(address)} </Text>
-                        <Text style={styles.smallText}> {client?.email} </Text>
-                        <Text style={styles.smallText}> {client?.phoneNumber} </Text>
-                        <Text style={[styles.smallText, { color: Colors.primary, marginLeft: 3 }]}>
-                            View profile
-                        </Text>
-                    </View>
+                            <Text style={styles.smallText}> {formatAddress(address)} </Text>
+                            <Text style={styles.smallText}> {client?.email} </Text>
+                            <Text style={styles.smallText}> {client?.phoneNumber} </Text>
+                            <Text style={[styles.smallText, { color: Colors.primary, marginLeft: 3 }]}>
+                                View profile
+                            </Text>
+                        </View>
 
-                </View>
+                    </View>
+                    :
+                    <View>
+                        <ActivityIndicator size="large" color={Colors.primary} />
+                    </View>
+                }
             </TouchableOpacity>
 
             <View style={localStyles.containTab}>
@@ -512,7 +561,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                             </>
                             :
                             <>
-                                {record?.time_in && <Text> The client has not yet accepted your time-out request. </Text>}
+                                {record?.time_out && <Text> The client has not yet accepted your time-out request. </Text>}
                             </>
                         }
 

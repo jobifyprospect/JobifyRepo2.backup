@@ -244,7 +244,7 @@ export default function ManageWorker({
     const notificationData: Notification = {
       id: uuid.v4().toString(), // Generate a unique notification ID
       title: 'Time-in Request approved.',
-      subtitle: `Your time-in have been approved for ${job?.title}`,
+      subtitle: `Your time-in has been approved for Job: ${job?.title}`,
       senderId: currentUserId,
       receiverId: receiverId,
       isRead: false,
@@ -277,7 +277,7 @@ export default function ManageWorker({
     const notificationData: Notification = {
       id: uuid.v4().toString(), // Generate a unique notification ID
       title: 'Time-out Request approved.',
-      subtitle: `Your time-out have been approved for ${job?.title}`,
+      subtitle: `Your time-out has been approved for Job:${job?.title}`,
       senderId: currentUserId,
       receiverId: receiverId,
       isRead: false,
@@ -380,7 +380,8 @@ export default function ManageWorker({
               {workerTimeRecord?.acceptedBy ?
                 <Text style={styles.boldText}> You have already approved this worker's time logs, you may mark the job as done on the job listing page. </Text>
                 :
-                <DynamicButton disabled={workerTimeRecord?.time_in && workerTimeRecord.time_out ? false : true} title="Approve worker time logs" onPress={async () => approveWorkerTimeLogs()} />
+                null
+                // <DynamicButton disabled={workerTimeRecord?.time_in && workerTimeRecord.time_out ? false : true} title="Approve worker time logs" onPress={async () => approveWorkerTimeLogs()} />
               }
             </View>
           </View>
