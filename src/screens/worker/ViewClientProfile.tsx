@@ -41,13 +41,12 @@ const ViewClientProfile = ({ navigation, route }: RouterProps) => {
         averageRating: 0,
         reviewCount: 0,
         reviews: []
-
     });
+    
     const [address, setAddress] = useState<any>();
     const [validation, setValidation] = useState<Validation | null>(null);
 
     const id = route.params.clientId ? route.params.clientId : null;
-
 
     async function fetchClientData(id: string) {
         setIsLoading(true);

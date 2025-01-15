@@ -31,9 +31,9 @@ import { TimeRecord } from '../../services/interfaces/time_records';
 import { getCurrentUserUID, getIdByRoleId, getUser, getUserDetailsByClientId, getUserDetailsByWorkerId } from '../../services/firestore/users';
 import { Notification } from '../../services/interfaces/notification';
 import { createNotification } from '../../services/firestore/notifications';
-import { serverTimestamp } from '@react-native-firebase/firestore';
+import { FirebaseFirestoreTypes, serverTimestamp } from '@react-native-firebase/firestore';
 import firestore from '@react-native-firebase/firestore'
-import { getFeedbackByClientId } from '../../services/firestore/reviews';
+import { calculateAverageRating2, getFeedbackByClientId } from '../../services/firestore/reviews';
 import { Feedback } from '../../services/interfaces/review';
 import { User } from '../../services/interfaces/user';
 import { getAddress } from '../../services/firestore/addresses';
@@ -41,10 +41,17 @@ import { Address } from '../../services/interfaces/address';
 import { formatAddress } from '../../utils/FormatAddress';
 import { getWorker } from '../../services/firestore/workers';
 import { Worker } from '../../services/interfaces/worker';
+import Svg, { Path } from 'react-native-svg';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
     route: Route<string, { id: string }>;
+}
+
+type clientRatings = {
+    averageRating: number,
+    reviewCount: number,
+    reviews: FirebaseFirestoreTypes.DocumentData[]
 }
 
 export default function JobDetailsWorker({ navigation, route }: RouterProps) {
@@ -71,6 +78,16 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
     const [record, setRecord] = useState<TimeRecord>();
     const [hasRecord, setHasRecord] = useState<boolean>(false)
     const [isAccepted, setIsAccepted] = useState<boolean>(false)
+    const [clientRatings, setClientRatings] = useState<clientRatings>({
+        averageRating: 0,
+        reviewCount: 0,
+        reviews: []
+    });
+
+    async function fetchClientRatings(id: string) {
+        const ratings = await calculateAverageRating2(id);
+        setClientRatings(ratings);
+    }
 
     function getValidTimestamp() {
         const timestamp = firestore.FieldValue.serverTimestamp();
@@ -336,6 +353,7 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
             getFeedbackOnJob(job.clientId);
             if (job.jobId && job.assignedWorker) {  // Add checks for these as well
                 fetchTimeRecords(job.jobId, job.assignedWorker);
+                fetchClientRatings(job.clientId)
             }
         }
     }, [job, id])
@@ -446,9 +464,29 @@ export default function JobDetailsWorker({ navigation, route }: RouterProps) {
                                 {client?.firstName} {client?.lastName}
                             </Text>
 
-                            <Text style={styles.smallText}> {formatAddress(address)} </Text>
                             <Text style={styles.smallText}> {client?.email} </Text>
                             <Text style={styles.smallText}> {client?.phoneNumber} </Text>
+                            <Text style={styles.smallText}> {formatAddress(address)} </Text>
+
+                            <View style={localStyles.starsContainer}>
+                                {Array.from({ length: 5 }, (_, index) => {
+                                    const starValue = index + 1;
+                                    return (
+                                        <Svg
+                                            key={index}
+                                            width={24}
+                                            height={24}
+                                            viewBox="0 0 24 24"
+                                            fill={
+                                                clientRatings.averageRating >= starValue
+                                                    ? Colors.primary
+                                                    : Colors.placeholder
+                                            }>
+                                            <Path d="M12 .587l3.668 7.429 8.2 1.193-5.934 5.787 1.401 8.172L12 18.896l-7.335 3.872 1.4-8.172-5.933-5.787 8.2-1.193L12 .587z" />
+                                        </Svg>
+                                    );
+                                })}
+                            </View>
                             <Text style={[styles.smallText, { color: Colors.primary, marginLeft: 3 }]}>
                                 View profile
                             </Text>
@@ -687,6 +725,11 @@ function ConfirmTimeOutDialog({ setIsConfirming, isConfirming, onConfirmTimeOut 
 }
 
 const localStyles = StyleSheet.create({
+    starsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        marginBottom: 10,
+    },
     nameContainer: { fontWeight: '600', marginLeft: 3, fontSize: 22, flex: 1, textAlign: 'left', justifyContent: 'center', rowGap: 12 },
     contentItemRow: { flexDirection: 'row', alignItems: 'center', height: 130, paddingHorizontal: 16 },
     card: {
