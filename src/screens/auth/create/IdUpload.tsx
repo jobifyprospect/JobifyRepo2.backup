@@ -55,12 +55,12 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
 
   const [idImageFront, setIdImageFront] = useState<string>('');
   const [idImageBack, setIdImageBack] = useState<string>('');
-  const [idImage2Front, setIdImage2Front] = useState<string>('');
-  const [idImage2Back, setIdImage2Back] = useState<string>('');
+  //const [idImage2Front, setIdImage2Front] = useState<string>('');
+  //const [idImage2Back, setIdImage2Back] = useState<string>('');
   const [selfieImage, setSelfieImage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const captureImage = (type: 'front' | 'back' | 'front2' | 'back2' | 'selfie') => {
+  const captureImage = (type: 'front' | 'back' | 'selfie') => {
     launchCamera(
       {
         mediaType: 'photo',
@@ -76,10 +76,6 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             setIdImageFront(uri || '');
           } else if (type === 'back') {
             setIdImageBack(uri || '');
-          } else if (type === 'front2') {
-            setIdImage2Front(uri || '');
-          } else if (type === 'back2') {
-            setIdImage2Back(uri || '');
           } else {
             setSelfieImage(uri || '');
           }
@@ -95,8 +91,8 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
     let userEmail: string | null = null;
     let frontImageUrl: string | null = null;
     let backImageUrl: string | null = null;
-    let frontImage2Url: string | null = null;
-    let backImage2Url: string | null = null;
+    //let frontImage2Url: string | null = null;
+    //let backImage2Url: string | null = null;
     let selfieImageUrl: string | null = null;
     let pdfPortfolioUrl: string | null = null;
     let certificationImageUrls: string[] = [];
@@ -114,11 +110,11 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
 
       const frontImageBase64 = await convertImageToBase64(idImageFront);
       const backImageBase64 = await convertImageToBase64(idImageBack);
-      const frontImage2Base64 = await convertImageToBase64(idImage2Front);
-      const backImage2Base64 = await convertImageToBase64(idImage2Back);
+      //const frontImage2Base64 = await convertImageToBase64(idImage2Front);
+      //const backImage2Base64 = await convertImageToBase64(idImage2Back);
       const selfieImageBase64 = await convertImageToBase64(selfieImage);
 
-      if (!frontImageBase64 || !backImageBase64 || !frontImage2Base64 || !backImage2Base64 || !selfieImageBase64) {
+      if (!frontImageBase64 || !backImageBase64 || !selfieImageBase64) {
         throw new Error('Failed to convert images to Base64.');
       }
 
@@ -130,16 +126,6 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
       backImageUrl = await uploadImage(
         backImageBase64,
         `id-images/${userId}_back.jpg`,
-        true,
-      );
-      frontImage2Url = await uploadImage(
-        frontImage2Base64,
-        `id-images/${userId}_front2.jpg`,
-        true,
-      );
-      backImage2Url = await uploadImage(
-        backImage2Base64,
-        `id-images/${userId}_back2.jpg`,
         true,
       );
       selfieImageUrl = await uploadImage(
@@ -190,8 +176,8 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
         profilePicture: selfieImageUrl,
         frontId: frontImageUrl,
         backId: backImageUrl,
-        frontId2: frontImage2Url,
-        backId2: backImage2Url,
+        //frontId2: frontImage2Url,
+        //backId2: backImage2Url,
         validationId,
         addressId,
         phoneNumber,
@@ -329,43 +315,6 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
             )}
           </View>
 
-          {/* ID 2 Front Upload */}
-          <View style={idUploadStyles.imageContainer}>
-            <Text style={styles.smallSemiBoldText}>Government ID #2 Front <Text style={{color: 'red'}}> * </Text></Text>
-            {idImage2Front ? (
-              <TouchableOpacity onPress={() => captureImage('front2')}>
-                <Image
-                  source={{ uri: idImage2Front }}
-                  style={idUploadStyles.image}
-                />
-              </TouchableOpacity>
-            ) : (
-              <DynamicButton
-                title="Capture ID Front"
-                onPress={() => captureImage('front2')}
-                type="primary"
-              />
-            )}
-          </View>
-
-          {/* ID 2 Back Upload */}
-          <View style={idUploadStyles.imageContainer}>
-            <Text style={styles.smallSemiBoldText}>Government ID #2 Back <Text style={{color: 'red'}}> * </Text></Text>
-            {idImage2Back ? (
-              <TouchableOpacity onPress={() => captureImage('back2')}>
-                <Image
-                  source={{ uri: idImage2Back }}
-                  style={idUploadStyles.image}
-                />
-              </TouchableOpacity>
-            ) : (
-              <DynamicButton
-                title="Capture ID Back"
-                onPress={() => captureImage('back2')}
-                type="primary"
-              />
-            )}
-          </View>
 
           {/* Selfie Upload */}
           <View style={idUploadStyles.imageContainer}>
@@ -393,7 +342,7 @@ const IDUpload = ({ navigation, route }: IDUploadProps) => {
               onPress={handleCreateAccount}
               type="primary"
               disabled={
-                isSubmitting || !idImageFront || !idImageBack || !selfieImage || !idImage2Front || !idImage2Back
+                isSubmitting || !idImageFront || !idImageBack || !selfieImage
               }
             />
             <DynamicButton

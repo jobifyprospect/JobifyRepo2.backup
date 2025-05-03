@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">jobify</string>
+    <string name="google_maps_api_key">AIzaSyAcZSwJsm3Q37zvp_HQAJaMHBMrhRbLcXI</string>
 </resources>
